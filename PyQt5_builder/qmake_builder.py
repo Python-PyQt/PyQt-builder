@@ -24,6 +24,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-# Publish the API.
-from .project import PyQt5Project
-from .qmake_builder import QmakeBuilder
+from sip5.builder import Builder
+
+
+class QMakeBuilder(Builder):
+    """ A builder that uses qmake as the underlying build system. """

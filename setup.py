@@ -52,6 +52,6 @@ setup(
         license='BSD',
         python_requires='>=3.5',
         # Comment when sip v5 is released.
-        #install_requires=['sip >=5.0 <5.1'],
+        #install_requires=['sip >=5.0, <5.1'],
         packages=find_packages()
      )

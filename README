@@ -1,0 +1,48 @@
+PyQt5-builder - The PEP 517 Compliant PyQt5 Build System
+========================================================
+
+What is PyQt5-builder?
+----------------------
+
+PyQt5-builder is the PEP 517 compliant build system for PyQt5 and projects that
+extend PyQt5.  It extends the sip5 build system and uses Qt's ``qmake`` to
+perform the actual compilation and installation of extension modules.
+
+Projects that use PyQt5-builder provide an appropriate ``pyproject.toml`` file
+and an optional ``project.py`` script.  Any PEP 517 compliant frontend, for
+example ``sip5-install`` or ``pip`` can then be used to build and install the
+project.
+
+
+Author
+------
+
+PyQt5-builder is copyright (c) Riverbank Computing Limited.  Its homepage is
+https://www.riverbankcomputing.com/software/pyqt/.
+
+Support may be obtained from the PyQt mailing list at
+https://www.riverbankcomputing.com/mailman/listinfo/pyqt/.
+
+
+License
+-------
+
+PyQt5-builder is released under the BSD license.
+
+
+Installation
+------------
+
+PyQt5-builder can be installed from PyPI::
+
+    pip install PyQt5-builder
+
+However you do not normally need to explicitly install it.  It will be
+installed automatically when it is needed.
+
+
+Documentation
+-------------
+
+The documentation for the latest release can be found
+`here <https://www.riverbankcomputing.com/static/Docs/PyQt5Docs/>`__.

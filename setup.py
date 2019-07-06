@@ -27,7 +27,7 @@
 import glob
 import os
 
-from setuptools import find_packages, setup
+from setuptools import find_namespace_packages, setup
 
 
 # Get the version number.
@@ -38,7 +38,7 @@ try:
     version_file.close()
 except FileNotFoundError:
     # Provide a minimal version file.
-    version = '0.0.dev0'
+    version = '0.1.0.dev0'
     version_file = open(version_file_name, 'w')
     version_file.write(
             'PYQT5_BUILDER_VERSION = 0\nPYQT5_BUILDER_VERSION_STR = \'%s\'\n' %
@@ -51,6 +51,7 @@ setup(
         version=version,
         license='BSD',
         python_requires='>=3.5',
-        install_requires=['sip5'],
-        packages=find_packages()
+        # Comment when sip v5 is released.
+        #install_requires=['sip >=5.0 <5.1'],
+        packages=find_namespace_packages()
      )

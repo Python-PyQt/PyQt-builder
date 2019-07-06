@@ -1,4 +1,4 @@
 syntax: glob
 .DS_Store
-PyQt5-builder.egg-info
+PyQt5_builder.egg-info
 PyQt5/builder/version.py

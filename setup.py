@@ -27,11 +27,11 @@
 import glob
 import os
 
-from setuptools import find_namespace_packages, setup
+from setuptools import find_packages, setup
 
 
 # Get the version number.
-version_file_name = os.path.join('PyQt5', 'builder', 'version.py')
+version_file_name = os.path.join('PyQt5_builder', 'version.py')
 try:
     version_file = open(version_file_name)
     version = version_file.read().strip().split('\n')[1].split()[-1][1:-1]
@@ -53,5 +53,5 @@ setup(
         python_requires='>=3.5',
         # Comment when sip v5 is released.
         #install_requires=['sip >=5.0 <5.1'],
-        packages=find_namespace_packages()
+        packages=find_packages()
      )

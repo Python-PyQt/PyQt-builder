@@ -24,8 +24,80 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from sip5.builder import Builder
+import os
+import sys
+
+from sip5.builder import Builder, Option, Project, PyProjectOptionException
 
 
-class QMakeBuilder(Builder):
-    """ A builder that uses qmake as the underlying build system. """
+class QmakeBuilder(Builder):
+    """ A project builder that uses qmake as the underlying build system. """
+
+    def compile(self):
+        """ Compile the project.  The returned opaque object is always None.
+        """
+
+        # TODO
+
+        return None
+
+    def get_options(self):
+        """ Return the sequence of configurable options. """
+
+        # Get the standard options.
+        options = super().get_options()
+
+        # Add our new options.
+        options.append(
+                Option('qmake', help="the pathname of qmake is FILE",
+                        metavar="FILE", tools='build install wheel'))
+
+        options.append(
+                Option('make', option_type=bool, inverted=True,
+                        help="do not run make or nmake", tools='build'))
+
+        return options
+
+    def install_into(self, opaque, target_dir, wheel_tag=None):
+        """ Install the project into a target directory. """
+
+        # TODO
+
+    def verify_configuration(self):
+        """ Verify the configuration. """
+
+        super().verify_configuration()
+
+        # Check we have a qmake.
+        if self.qmake:
+            if not self._is_exe(self.qmake):
+                raise PyProjectOptionException('qmake',
+                        "'{0}' is not a working qmake".format(self.qmake))
+        else:
+            self.qmake = self._find_exe('qmake')
+            if self.qmake is None:
+                raise PyProjectOptionException('qmake',
+                        "specify a working qmake or add it to PATH")
+
+        self.qmake = os.path.abspath(self.qmake)
+
+    @classmethod
+    def _find_exe(cls, exe):
+        """ Find an executable, ie. the first on the path. """
+
+        if sys.platform == 'win32':
+            exe += '.exe'
+
+        for d in os.environ.get('PATH', '').split(os.pathsep):
+            exe_path = os.path.join(d, exe)
+
+            if cls._is_exe(exe_path):
+                return exe_path
+
+        return None
+
+    @staticmethod
+    def _is_exe(exe):
+        """ Return True if an executable exists. """
+
+        return os.access(exe_path, os.X_OK)

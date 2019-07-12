@@ -24,64 +24,15 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-import os
-import sys
-
-from sip5.builder import Option, Project, PyProjectOptionException
+from sip5.builder import Project
 
 
 class PyQt5Project(Project):
     """ Encapsulate a PyQt5 based project. """
 
-    def get_options(self):
-        """ Return the sequence of configurable options. """
+    def get_builder(self):
+        """ Get the project builder. """
 
-        # Get the standard options.
-        options = super().get_options()
+        from .qmake_builder import QmakeBuilder
 
-        # Add our new options.
-        options.append(
-                Option('qmake', help="the pathname of qmake is FILE",
-                        metavar="FILE", tools='build install wheel'))
-
-        return options
-
-    def update(self):
-        """ Update the configuration. """
-
-        # Update anything we may depend on.
-        super().update()
-
-        # Check we have a qmake.
-        if self.qmake:
-            if not self._is_exe(self.qmake):
-                raise PyProjectOptionException('qmake',
-                        "'{0}' is not a working qmake".format(self.qmake))
-        else:
-            self.qmake = self._find_exe('qmake')
-            if self.qmake is None:
-                raise PyProjectOptionException('qmake',
-                        "specify a working qmake or add it to PATH")
-
-        self.qmake = os.path.abspath(self.qmake)
-
-    @classmethod
-    def _find_exe(cls, exe):
-        """ Find an executable, ie. the first on the path. """
-
-        if sys.platform == 'win32':
-            exe += '.exe'
-
-        for d in os.environ.get('PATH', '').split(os.pathsep):
-            exe_path = os.path.join(d, exe)
-
-            if cls._is_exe(exe_path):
-                return exe_path
-
-        return None
-
-    @staticmethod
-    def _is_exe(exe):
-        """ Return True if an executable exists. """
-
-        return os.access(exe_path, os.X_OK)
+        return QmakeBuilder(self)

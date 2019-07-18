@@ -63,12 +63,14 @@ class QmakeBuilder(Builder):
 
         # TODO
 
-    def verify_configuration(self):
-        """ Verify the configuration. """
+    def apply_defaults(self):
+        """ Set default values for options that haven't been set yet. """
 
-        super().verify_configuration()
+        super().apply_defaults()
 
-        # Check we have a qmake.
+        # Check we have a qmake.  Note that we don't do this in
+        # verify_configuration() because it is needed by setup() which is
+        # called first.
         if self.qmake:
             if not self._is_exe(self.qmake):
                 raise PyProjectOptionException('qmake',
@@ -80,6 +82,35 @@ class QmakeBuilder(Builder):
                         "specify a working qmake or add it to PATH")
 
         self.qmake = os.path.abspath(self.qmake)
+
+    def setup(self):
+        """ Setup the builder. """
+
+        self.project.progress("Querying qmake about your Qt installation")
+
+        self._qt_configuration = {}
+
+        pipe = os.popen(self.qmake + ' -query')
+
+        for line in pipe:
+            line = line.strip()
+
+            tokens = line.split(':', maxsplit=1)
+            if isinstance(tokens, list):
+                if len(tokens) != 2:
+                    raise UserException(
+                            "Unexpected output from qmake: '{0}'".format(line))
+
+                name, value = tokens
+            else:
+                name = tokens
+                value = None
+
+            name = name.replace('/', '_')
+
+            self._qt_configuration[name] = value
+
+        pipe.close()
 
     @classmethod
     def _find_exe(cls, exe):
@@ -97,7 +128,7 @@ class QmakeBuilder(Builder):
         return None
 
     @staticmethod
-    def _is_exe(exe):
+    def _is_exe(exe_path):
         """ Return True if an executable exists. """
 
         return os.access(exe_path, os.X_OK)

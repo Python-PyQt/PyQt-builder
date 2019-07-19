@@ -24,7 +24,18 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-# Publish the API.
-from .bindings import PyQt5Bindings
-from .project import PyQt5Project
-from .qmake_builder import QmakeBuilder
+import os
+
+from sip5.builder import Bindings
+
+
+class PyQt5Bindings(Bindings):
+    """ A base class for all PyQt5-based bindings. """
+
+    def __init__(self, name, project):
+        """ Initialise the bindings. """
+
+        # The (not very good) naming convention used by MetaSIP.
+        sip_file = os.path.join(name, name + 'mod.sip')
+
+        super().__init__(project, name=name, sip_file=sip_file)

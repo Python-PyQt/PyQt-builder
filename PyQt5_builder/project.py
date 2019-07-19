@@ -30,6 +30,15 @@ from sip5.builder import Project
 class PyQt5Project(Project):
     """ Encapsulate a PyQt5 based project. """
 
+    def __init__(self, **kwargs):
+        """ Initialise the project. """
+
+        super().__init__(**kwargs)
+
+        # These can be overridden in pyproject.toml but not by the user on the
+        # command line.
+        self.sip_module = 'PyQt5.sip'
+
     def get_builder(self):
         """ Get the project builder. """
 

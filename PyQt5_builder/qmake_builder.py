@@ -27,7 +27,8 @@
 import os
 import sys
 
-from sip5.builder import Builder, Option, Project, PyProjectOptionException
+from sip5.builder import (Builder, Option, Project, PyProjectOptionException,
+        UserException)
 
 
 class QmakeBuilder(Builder):
@@ -48,13 +49,19 @@ class QmakeBuilder(Builder):
         options = super().get_options()
 
         # Add our new options.
+        options.append(Option('qmake_variables', option_type=list))
+
+        options.append(
+                Option('make', option_type=bool, inverted=True,
+                        help="do not run make or nmake", tools='build'))
+
         options.append(
                 Option('qmake', help="the pathname of qmake is FILE",
                         metavar="FILE", tools='build install wheel'))
 
         options.append(
-                Option('make', option_type=bool, inverted=True,
-                        help="do not run make or nmake", tools='build'))
+                Option('spec', help="pass -spec SPEC to qmake",
+                        metavar="SPEC", tools='build install wheel'))
 
         return options
 
@@ -83,8 +90,33 @@ class QmakeBuilder(Builder):
 
         self.qmake = os.path.abspath(self.qmake)
 
-    def setup(self):
-        """ Setup the builder. """
+        # Use qmake to get the Qt configuration.
+        self._get_qt_configuration()
+
+        # Now apply defaults for any options that depend on the Qt
+        # configuration.
+        if self.spec is None:
+            self.spec = self._qt_configuration['QMAKE_SPEC']
+
+            # The binary OS/X Qt installer used to default to XCode.  If so
+            # then use macx-clang.
+            if self.spec == 'macx-xcode':
+                # This will exist (and we can't check anyway).
+                self.spec = 'macx-clang'
+
+    def verify_configuration(self):
+        """ Verify the configuration. """
+
+        # Qt (when built with MinGW) assumes that stack frames are 16 byte
+        # aligned because it uses SSE.  However the Python Windows installers
+        # are built with 4 byte aligned stack frames.  We therefore need to
+        # tweak the g++ flags to deal with it.
+        if self.spec == 'win32-g++':
+            self.qmake_variables.append('QMAKE_CFLAGS += -mstackrealign')
+            self.qmake_variables.append('QMAKE_CXXFLAGS += -mstackrealign')
+
+    def _get_qt_configuration(self):
+        """ Run qmake to get the details of the Qt configuration. """
 
         self.project.progress("Querying qmake about your Qt installation")
 
@@ -111,6 +143,21 @@ class QmakeBuilder(Builder):
             self._qt_configuration[name] = value
 
         pipe.close()
+
+        # Get the Qt version.
+        self.qt_version = 0
+        try:
+            qt_version_str = self._qt_configuration['QT_VERSION']
+            for v in qt_version_str.split('.'):
+                self.qt_version <<= 8
+                self.qt_version += int(v)
+        except AttributeError:
+            qt_version_str = "3"
+
+        if self.qt_version < 0x050000:
+            raise UserException(
+                    "Qt v5.0 or later is required and you seem to be using "
+                            "v{0}".format(qt_version_str))
 
     @classmethod
     def _find_exe(cls, exe):

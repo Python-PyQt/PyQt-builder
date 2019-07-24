@@ -25,6 +25,7 @@
 
 
 import os
+import subprocess
 import sys
 
 from sip5.builder import (Builder, Option, Project, PyProjectOptionException,
@@ -33,6 +34,39 @@ from sip5.builder import (Builder, Option, Project, PyProjectOptionException,
 
 class QmakeBuilder(Builder):
     """ A project builder that uses qmake as the underlying build system. """
+
+    def apply_defaults(self, tool):
+        """ Set default values for options that haven't been set yet. """
+
+        if tool != 'sdist':
+            # Check we have a qmake.
+            if self.qmake is None:
+                self.qmake = self._find_exe('qmake')
+                if self.qmake is None:
+                    raise PyProjectOptionException('qmake',
+                            "specify a working qmake or add it to PATH")
+            elif not self._is_exe(self.qmake):
+                raise PyProjectOptionException('qmake',
+                        "'{0}' is not a working qmake".format(self.qmake))
+
+            self.qmake = self.quote(os.path.abspath(self.qmake))
+
+            # Use qmake to get the Qt configuration.  We do this now before
+            # Project.update() is called.
+            self._get_qt_configuration()
+
+            # Now apply defaults for any options that depend on the Qt
+            # configuration.
+            if self.spec is None:
+                self.spec = self._qt_configuration['QMAKE_SPEC']
+
+                # The binary OS/X Qt installer used to default to XCode.  If so
+                # then use macx-clang.
+                if self.spec == 'macx-xcode':
+                    # This will exist (and we can't check anyway).
+                    self.spec = 'macx-clang'
+
+        super().apply_defaults(tool)
 
     def compile(self):
         """ Compile the project.  The returned opaque object is always None.
@@ -70,42 +104,126 @@ class QmakeBuilder(Builder):
 
         # TODO
 
-    def apply_defaults(self):
-        """ Set default values for options that haven't been set yet. """
+    @staticmethod
+    def qmake_quote(path):
+        """ Return a path quoted for qmake if it contains spaces. """
 
-        super().apply_defaults()
+        if ' ' in path:
+            path = '$$quote({})'.format(path)
 
-        # Check we have a qmake.  Note that we don't do this in
-        # verify_configuration() because it is needed by setup() which is
-        # called first.
-        if self.qmake:
-            if not self._is_exe(self.qmake):
-                raise PyProjectOptionException('qmake',
-                        "'{0}' is not a working qmake".format(self.qmake))
+        return path
+
+    @staticmethod
+    def quote(path):
+        """ Return a path with quotes added if it contains spaces. """
+
+        if ' ' in path:
+            path = '"{}"'.format(path)
+
+        return path
+
+    def run_make(self, exe, makefile_name):
+        """ Run make against a Makefile to create an executable.  Returns the
+        platform specific name of the executable, or None if an executable
+        wasn't created.
+        """
+
+        project = self.project
+
+        # Guess the name of make and set the default target and platform
+        # specific name of the executable.
+        if project.py_platform == 'win32':
+            if self.spec == 'win32-g++':
+                make = 'mingw32-make'
+            else:
+                make = 'nmake'
+
+            if self.debug:
+                makefile_target = 'debug'
+                platform_exe = os.path.join('debug', exe + '.exe')
+            else:
+                makefile_target = 'release'
+                platform_exe = os.path.join('release', exe + '.exe')
         else:
-            self.qmake = self._find_exe('qmake')
-            if self.qmake is None:
-                raise PyProjectOptionException('qmake',
-                        "specify a working qmake or add it to PATH")
+            make = 'make'
+            makefile_target = None
 
-        self.qmake = os.path.abspath(self.qmake)
+            if project.py_platform == 'darwin':
+                platform_exe = os.path.join(exe + '.app', 'Contents', 'MacOS',
+                        exe)
+            else:
+                platform_exe = os.path.join('.', exe)
 
-        # Use qmake to get the Qt configuration.
-        self._get_qt_configuration()
+        # Make sure the executable doesn't exist.
+        self._remove_file(platform_exe)
 
-        # Now apply defaults for any options that depend on the Qt
-        # configuration.
-        if self.spec is None:
-            self.spec = self._qt_configuration['QMAKE_SPEC']
+        args = [make, '-f', makefile_name]
 
-            # The binary OS/X Qt installer used to default to XCode.  If so
-            # then use macx-clang.
-            if self.spec == 'macx-xcode':
-                # This will exist (and we can't check anyway).
-                self.spec = 'macx-clang'
+        if makefile_target is not None:
+            args.append(makefile_target)
 
-    def verify_configuration(self):
+        self._run_command(args)
+
+        return platform_exe if os.path.isfile(platform_exe) else None
+
+    def run_qmake(self, pro_name, makefile_name=None, fatal=True,
+            recursive=False):
+        """ Run qmake against a .pro file.  fatal is set if a qmake failure is
+        considered a fatal error, otherwise False is returned if qmake fails.
+        """
+
+        # qmake doesn't behave consistently if it is not run from the directory
+        # containing the .pro file - so make sure it is.
+        pro_dir, pro_file = os.path.split(pro_name)
+        if pro_dir != '':
+            cwd = os.getcwd()
+            os.chdir(pro_dir)
+        else:
+            cwd = None
+
+        # Make sure the Makefile doesn't exist.
+        mf_name = 'Makefile' if makefile_name is None else makefile_name
+        self._remove_file(mf_name)
+
+        # Build the command line.
+        args = [self.qmake]
+
+        # If the spec is the same as the default then we don't need to specify
+        # it.
+        if self.spec != self._qt_configuration['QMAKE_SPEC']:
+            args.append('-spec')
+            args.append(self.spec)
+
+        if makefile_name is not None:
+            args.append('-o')
+            args.append(makefile_name)
+
+        if recursive:
+            args.append('-recursive')
+
+        args.append(pro_file)
+
+        self._run_command(args)
+
+        # Check that the Makefile was created.
+        if not os.path.isfile(mf_name):
+            if fatal:
+                raise UserException(
+                        "{0} failed to create a makefile from {1}".format(
+                                self.qmake, pro_name))
+
+            return False
+
+        # Restore the current directory.
+        if cwd is not None:
+            os.chdir(cwd)
+
+        return True
+
+    def verify_configuration(self, tool):
         """ Verify the configuration. """
+
+        super().verify_configuration(tool)
 
         # Qt (when built with MinGW) assumes that stack frames are 16 byte
         # aligned because it uses SSE.  However the Python Windows installers
@@ -115,6 +233,32 @@ class QmakeBuilder(Builder):
             self.qmake_variables.append('QMAKE_CFLAGS += -mstackrealign')
             self.qmake_variables.append('QMAKE_CXXFLAGS += -mstackrealign')
 
+    @staticmethod
+    def _close_command_pipe(pipe):
+        """ Close the pipe returned by _open_command_pipe(). """
+
+        pipe.close()
+
+        try:
+            os.wait()
+        except:
+            pass
+
+    @classmethod
+    def _find_exe(cls, exe):
+        """ Find an executable, ie. the first on the path. """
+
+        if sys.platform == 'win32':
+            exe += '.exe'
+
+        for d in os.environ.get('PATH', '').split(os.pathsep):
+            exe_path = os.path.join(d, exe)
+
+            if cls._is_exe(exe_path):
+                return exe_path
+
+        return None
+
     def _get_qt_configuration(self):
         """ Run qmake to get the details of the Qt configuration. """
 
@@ -122,9 +266,10 @@ class QmakeBuilder(Builder):
 
         self._qt_configuration = {}
 
-        pipe = os.popen(self.qmake + ' -query')
+        pipe = self._open_command_pipe(self.qmake + ' -query')
 
         for line in pipe:
+            line = str(line, encoding=sys.stdout.encoding)
             line = line.strip()
 
             tokens = line.split(':', maxsplit=1)
@@ -142,7 +287,7 @@ class QmakeBuilder(Builder):
 
             self._qt_configuration[name] = value
 
-        pipe.close()
+        self._close_command_pipe(pipe)
 
         # Get the Qt version.
         self.qt_version = 0
@@ -159,23 +304,45 @@ class QmakeBuilder(Builder):
                     "Qt v5.0 or later is required and you seem to be using "
                             "v{0}".format(qt_version_str))
 
-    @classmethod
-    def _find_exe(cls, exe):
-        """ Find an executable, ie. the first on the path. """
-
-        if sys.platform == 'win32':
-            exe += '.exe'
-
-        for d in os.environ.get('PATH', '').split(os.pathsep):
-            exe_path = os.path.join(d, exe)
-
-            if cls._is_exe(exe_path):
-                return exe_path
-
-        return None
-
     @staticmethod
     def _is_exe(exe_path):
         """ Return True if an executable exists. """
 
         return os.access(exe_path, os.X_OK)
+
+    @staticmethod
+    def _open_command_pipe(cmd, and_stderr=False):
+        """ Return a pipe from which a command's output can be read. """
+
+        stderr = subprocess.STDOUT if and_stderr else subprocess.PIPE
+
+        pipe = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE, stderr=stderr)
+
+        return pipe.stdout
+
+    @staticmethod
+    def _remove_file(fname):
+        """ Remove a file which may or may not exist. """
+
+        try:
+            os.remove(fname)
+        except OSError:
+            pass
+
+    def _run_command(self, args):
+        """ Run a command and display the output if requested. """
+
+        cmd = ' '.join(args)
+
+        if self.project.verbose:
+            print(cmd)
+
+        pipe = self._open_command_pipe(cmd, and_stderr=True)
+
+        # Read stdout and stderr until there is no more output.
+        for line in pipe:
+            if self.project.verbose:
+                sys.stdout.write(str(line, encoding=sys.stdout.encoding))
+
+        self._close_command_pipe(pipe)

@@ -25,6 +25,6 @@
 
 
 # Publish the API.
-from .bindings import PyQt5Bindings
+from .bindings import PyQt5Bindings, PyQt5BindingsMetadata
 from .project import PyQt5Project
 from .qmake_builder import QmakeBuilder

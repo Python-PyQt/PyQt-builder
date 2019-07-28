@@ -72,7 +72,48 @@ class QmakeBuilder(Builder):
         """ Compile the project.  The returned opaque object is always None.
         """
 
-        # TODO
+        project = self.project
+
+        # The sub-directories that will contain .pro files.
+        subdirs = []
+
+        # Create the .pro file for each set of bindings.
+        for bindings in project.bindings:
+            project.progress(
+                    "Generating the .pro file for the '{0}' bindings".format(
+                            bindings.name))
+
+            pro_lines = ['TEMPLATE = lib']
+
+            # Write the .pro file.
+            pro_name = os.path.join(project.build_dir, bindings.name,
+                    bindings.name + '.pro')
+            pro = project.open_for_writing(pro_name)
+            pro.write('\n'.join(pro_lines))
+            pro.write('\n')
+            pro.close()
+
+            subdirs.append(bindings.name)
+
+        # Create the top-level .pro file.
+        project.progress("Generating the top-level .pro file")
+
+        pro_name = os.path.join(project.build_dir, project.name + '.pro')
+        pro = project.open_for_writing(pro_name)
+
+        pro.write('''TEMPLATE = subdirs
+CONFIG += ordered nostrip
+SUBDIRS = {}
+'''.format(' '.join(subdirs)))
+
+        pro.close()
+
+        # Run qmake to generate the Makefiles.
+
+        # Run make, if requested, to generate the bindings.
+        if self.make:
+            # TODO
+            raise NotImplementedError
 
         return None
 
@@ -102,7 +143,10 @@ class QmakeBuilder(Builder):
     def install_into(self, opaque, target_dir, wheel_tag=None):
         """ Install the project into a target directory. """
 
+        # Run make install to install the bindings.
+
         # TODO
+        raise NotImplementedError
 
     @staticmethod
     def qmake_quote(path):
@@ -121,6 +165,23 @@ class QmakeBuilder(Builder):
             path = '"{}"'.format(path)
 
         return path
+
+    def run_command(self, args):
+        """ Run a command and display the output if requested. """
+
+        cmd = ' '.join(args)
+
+        if self.project.verbose:
+            print(cmd)
+
+        pipe = self._open_command_pipe(cmd, and_stderr=True)
+
+        # Read stdout and stderr until there is no more output.
+        for line in pipe:
+            if self.project.verbose:
+                sys.stdout.write(str(line, encoding=sys.stdout.encoding))
+
+        self._close_command_pipe(pipe)
 
     def run_make(self, exe, makefile_name):
         """ Run make against a Makefile to create an executable.  Returns the
@@ -162,7 +223,7 @@ class QmakeBuilder(Builder):
         if makefile_target is not None:
             args.append(makefile_target)
 
-        self._run_command(args)
+        self.run_command(args)
 
         return platform_exe if os.path.isfile(platform_exe) else None
 
@@ -203,7 +264,7 @@ class QmakeBuilder(Builder):
 
         args.append(pro_file)
 
-        self._run_command(args)
+        self.run_command(args)
 
         # Check that the Makefile was created.
         if not os.path.isfile(mf_name):
@@ -329,20 +390,3 @@ class QmakeBuilder(Builder):
             os.remove(fname)
         except OSError:
             pass
-
-    def _run_command(self, args):
-        """ Run a command and display the output if requested. """
-
-        cmd = ' '.join(args)
-
-        if self.project.verbose:
-            print(cmd)
-
-        pipe = self._open_command_pipe(cmd, and_stderr=True)
-
-        # Read stdout and stderr until there is no more output.
-        for line in pipe:
-            if self.project.verbose:
-                sys.stdout.write(str(line, encoding=sys.stdout.encoding))
-
-        self._close_command_pipe(pipe)

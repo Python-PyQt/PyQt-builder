@@ -68,32 +68,15 @@ class QmakeBuilder(Builder):
 
         super().apply_defaults(tool)
 
-    def compile(self):
+    def compile(self, target_dir):
         """ Compile the project.  The returned opaque object is always None.
         """
 
         project = self.project
 
-        # The sub-directories that will contain .pro files.
-        subdirs = []
-
         # Create the .pro file for each set of bindings.
-        for bindings in project.bindings:
-            project.progress(
-                    "Generating the .pro file for the '{0}' bindings".format(
-                            bindings.name))
-
-            pro_lines = ['TEMPLATE = lib']
-
-            # Write the .pro file.
-            pro_name = os.path.join(project.build_dir, bindings.name,
-                    bindings.name + '.pro')
-            pro = project.open_for_writing(pro_name)
-            pro.write('\n'.join(pro_lines))
-            pro.write('\n')
-            pro.close()
-
-            subdirs.append(bindings.name)
+        subdirs = [self._generate_bindings_pro_file(b, target_dir)
+                for b in project.bindings]
 
         # Create the top-level .pro file.
         project.progress("Generating the top-level .pro file")
@@ -109,6 +92,7 @@ SUBDIRS = {}
         pro.close()
 
         # Run qmake to generate the Makefiles.
+        # TODO
 
         # Run make, if requested, to generate the bindings.
         if self.make:
@@ -320,6 +304,141 @@ SUBDIRS = {}
 
         return None
 
+    def _generate_bindings_pro_file(self, bindings, target_dir):
+        """ Generate the .pro file for a set fo bindings. """
+
+        project = self.project
+
+        project.progress(
+                "Generating the .pro file for the '{0}' bindings".format(
+                            bindings.name))
+
+        target_name = bindings.name
+        if bindings.metadata.qmake_TARGET:
+            target_name = bindings.metadata.qmake_TARGET
+
+        pro_lines = ['TEMPLATE = lib']
+
+        pro_lines.append('CONFIG += warn_on exceptions_off')
+
+        if bindings.static:
+            pro_lines.append('CONFIG += staticlib hide_symbols')
+        else:
+            # Note some version of Qt5 (probably incorrectly) implements
+            # 'plugin_bundle' instead of 'plugin' so we specify both.
+            pro_lines.append('CONFIG += plugin plugin_bundle')
+
+        bindings.update_pro_file(pro_lines)
+
+        if project.qml_debug:
+            pro_lines.append('CONFIG += qml_debug')
+
+        # Work around QTBUG-39300.
+        pro_lines.append('CONFIG -= android_install')
+
+        pro_lines.append('TARGET = {}'.format(target_name))
+
+        if not bindings.static:
+            debug_suffix = '_d' if project.py_debug else ''
+
+            # Without the 'no_check_exist' magic the target.files must exist
+            # when qmake is run otherwise the install and uninstall targets are
+            # not generated.
+            shared = '''
+win32 {
+    PY_MODULE = %s%s.pyd
+    PY_MODULE_SRC = $(DESTDIR_TARGET)
+} else {
+    PY_MODULE = %s.so
+
+    macx {
+        PY_MODULE_SRC = $(TARGET).plugin/Contents/MacOS/$(TARGET)
+        QMAKE_LFLAGS += "-undefined dynamic_lookup"
+    } else {
+        PY_MODULE_SRC = $(TARGET)
+    }
+}
+
+QMAKE_POST_LINK = $(COPY_FILE) $$PY_MODULE_SRC $$PY_MODULE
+
+target.CONFIG = no_check_exist
+target.files = $$PY_MODULE
+''' % (target_name, debug_suffix, target_name)
+
+            pro_lines.extend(shared.split('\n'))
+
+        install_path = target_dir.replace('\\', '/') + '/' + project.name
+
+        pro_lines.append('target.path = {}'.format(install_path))
+        pro_lines.append('INSTALLS += target')
+
+        # This optimisation could apply to other platforms.
+        if 'linux' in self.spec and not bindings.static:
+            exp = project.open_for_writing(
+                    os.path.join(bindings.name, target_name + '.exp'))
+            exp.write('{ global: PyInit_%s; local: *; };' % target_name)
+            exp.close()
+
+            pro_lines.append(
+                    'QMAKE_LFLAGS += -Wl,--version-script={}.exp'.format(
+                            target_name))
+
+        # Handle any #define macros.
+        if bindings.generated.define_macros:
+            pro_lines.append('DEFINES += {}'.format(
+                    ' '.join(bindings.generated.define_macros)))
+
+        # Handle the include directories.
+        for include_dir in bindings.generated.include_dirs:
+            pro_lines.append(
+                    'INCLUDEPATH += {}'.format(self.qmake_quote(include_dir)))
+
+        pro_lines.append(
+                'INCLUDEPATH += {}'.format(
+                        self.qmake_quote(project.py_include_dir)))
+
+        # Python.h on Windows seems to embed the need for pythonXY.lib, so tell
+        # it where it is.
+        # TODO: is this still necessary for Python v3.8?
+        if not bindings.static:
+            pro_lines.extend(['win32 {',
+                    '    LIBS += -L{}'.format(project.py_pylib_dir),
+                    '}'])
+
+        # Handle any additional libraries.
+        libs = []
+
+        for l_dir in bindings.library_dirs:
+            libs.append('-L' + self.qmake_quote(l_dir))
+
+        for l in bindings.libraries:
+            libs.append('-l' + l)
+
+        if libs:
+            pro_lines.append('LIBS += {}'.format(' '.join(libs)))
+
+        #if src_dir != mname:
+            #pro_lines.append('INCLUDEPATH += %s' % qmake_quote(src_dir))
+            #pro_lines.append('VPATH = %s' % qmake_quote(src_dir))
+
+        pro_lines.append('HEADERS = {}'.format(
+                ' '.join(bindings.generated.headers)))
+        pro_lines.append('SOURCES = {}'.format(
+                ' '.join(bindings.generated.sources)))
+
+        # Write the .pro file.
+        pro_name = os.path.join(bindings.generated.sources_dir,
+                bindings.name + '.pro')
+        pro = project.open_for_writing(pro_name)
+        pro.write('\n'.join(pro_lines))
+        pro.write('\n')
+        pro.close()
+
+        # Return the directory containing the .pro file relative to the build
+        # directory.
+        return os.path.relpath(bindings.generated.sources_dir,
+                project.build_dir)
+
     def _get_qt_configuration(self):
         """ Run qmake to get the details of the Qt configuration. """
 
@@ -360,9 +479,10 @@ SUBDIRS = {}
         except AttributeError:
             qt_version_str = "3"
 
-        if self.qt_version < 0x050000:
+        # Requiring Qt v5.6 allows us to drop some old workarounds.
+        if self.qt_version < 0x050600:
             raise UserException(
-                    "Qt v5.0 or later is required and you seem to be using "
+                    "Qt v5.6 or later is required and you seem to be using "
                             "v{0}".format(qt_version_str))
 
     @staticmethod

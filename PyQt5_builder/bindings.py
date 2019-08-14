@@ -24,9 +24,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
+import glob
 import os
 
-from sip5.builder import Bindings, UserException
+from sip5.builder import Bindings, Option, UserException
 
 
 class PyQt5BindingsMetadata:
@@ -67,8 +68,30 @@ class PyQt5Bindings(Bindings):
         # Make sure any unknown Qt version gets treated as the latest Qt v5.
         backstops = ['Qt_6_0_0']
 
+        # Get the sources of any support code.
+        if self.metadata.qpy_lib:
+            qpy_dir = os.path.join(project.root_dir, 'qpy', name)
+
+            include_dirs = [qpy_dir]
+            headers = self._matching_files(os.path.join(qpy_dir, '*.h'))
+            c_sources = self._matching_files(os.path.join(qpy_dir, '*.c'))
+            cpp_sources = self._matching_files(os.path.join(qpy_dir, '*.cpp'))
+
+            sources = c_sources + cpp_sources
+        else:
+            headers = include_dirs = sources = []
+
         super().__init__(project, name=name, sip_file=sip_file,
-                backstops=backstops)
+                backstops=backstops, headers=headers,
+                include_dirs=include_dirs, sources=sources)
+
+    def get_options(self):
+        """ Return the list of configurable options. """
+
+        options = super().get_options()
+        options.append(Option('static', option_type=bool))
+
+        return options
 
     def get_test_source_code(self):
         """ Return the test source code.  If None is returned then there must
@@ -102,6 +125,31 @@ class PyQt5Bindings(Bindings):
 
         return self.handle_test_output(test_output)
 
+    def update_pro_file(self, pro_lines):
+        """ Add the Qt dependencies of the bindings to a .pro file. """
+
+        add = []
+        remove = []
+        for qt in self.metadata.qmake_QT:
+            if qt.startswith('-'):
+                remove.append(qt[1:])
+            else:
+                add.append(qt)
+
+        if len(remove) != 0:
+            pro_lines.append('QT -= {}'.format(' '.join(remove)))
+
+        if len(add) != 0:
+            pro_lines.append('QT += {}'.format(' '.join(add)))
+
+        pro_lines.append(
+                'CONFIG += {}'.format('debug' if self.debug else 'release'))
+
+        if self.metadata.cpp11:
+            pro_lines.append('CONFIG += c++11')
+
+        pro_lines.extend(self.project.builder.qmake_variables)
+
     def _compile_test_program(self):
         """ Compile the bindings's test program and return the name of the
         resulting executable or None if the compilation failed.
@@ -130,7 +178,7 @@ class PyQt5Bindings(Bindings):
 
         # Create the .pro file.
         pro_lines = []
-        self._pro_add_qt_dependencies(pro_lines)
+        self.update_pro_file(pro_lines)
         pro_lines.append('TARGET = {}'.format(test))
         pro_lines.append('SOURCES = {}'.format(
                 builder.qmake_quote(test_source_path)))
@@ -144,30 +192,11 @@ class PyQt5Bindings(Bindings):
 
         return builder.run_make(test, test_makefile)
 
-    def _pro_add_qt_dependencies(self, pro_lines):
-        """ Add the Qt dependencies of the bindings to a .pro file. """
+    @staticmethod
+    def _matching_files(pattern):
+        """ Return a reproducable list of files that match a pattern. """
 
-        add = []
-        remove = []
-        for qt in self.metadata.qmake_QT:
-            if qt.startswith('-'):
-                remove.append(qt[1:])
-            else:
-                add.append(qt)
-
-        if len(remove) != 0:
-            pro_lines.append('QT -= {}'.format(' '.join(remove)))
-
-        if len(add) != 0:
-            pro_lines.append('QT += {}'.format(' '.join(add)))
-
-        pro_lines.append(
-                'CONFIG += {}'.format('debug' if self.debug else 'release'))
-
-        if self.metadata.cpp11:
-            pro_lines.append('CONFIG += c++11')
-
-        pro_lines.extend(self.project.builder.qmake_variables)
+        return sorted(glob.glob(pattern))
 
     def _run_test_program(self, test_exe):
         """ Run a test program and return the output as a list of lines. """

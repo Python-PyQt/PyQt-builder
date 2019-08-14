@@ -24,7 +24,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from sip5.builder import Project
+import os
+import sys
+
+from sip5.builder import Option, Project
 
 
 class PyQt5Project(Project):
@@ -39,9 +42,99 @@ class PyQt5Project(Project):
         # command line.
         self.sip_module = 'PyQt5.sip'
 
+    def apply_defaults(self, tool):
+        """ Set default values for options that haven't been set yet. """
+
+        # We need some super-class options to be set first.
+        super().apply_defaults(tool)
+
+        # Get the details of the default Python interpreter library.
+        if self.py_platform == 'win32':
+            pylib_dir = os.path.join(sys.base_prefix, 'libs')
+
+            debug_suffix = '_d' if self.py_debug else ''
+
+            # See if we are using the limited API.
+            if self.py_debug or self.link_full_dll:
+                pylib_lib = 'python{}{}{}'.format(self.py_major_version,
+                        self.py_minor_version, debug_suffix)
+            else:
+                pylib_lib = 'python{}{}'.format(self.py_major_version,
+                        debug_suffix)
+
+            # Assume Python is a DLL on Windows.
+            pylib_shlib = pylib_lib
+        else:
+            abi = getattr(sys, 'abiflags', '')
+            pylib_lib = 'python{}.{}{}'.format(self.py_major_version,
+                    self.py_minor_version, abi)
+            pylib_dir = pylib_shlib = ''
+
+            # Use distutils to get the additional configuration.
+            from distutils import sysconfig
+            from glob import glob
+
+            ducfg = sysconfig.get_config_vars()
+
+            config_args = ducfg.get('CONFIG_ARGS', '')
+
+            dynamic_pylib = '--enable-shared' in config_args
+            if not dynamic_pylib:
+                dynamic_pylib = '--enable-framework' in config_args
+
+            if dynamic_pylib:
+                pylib_shlib = ducfg.get('LDLIBRARY', '')
+
+                exec_prefix = ducfg['exec_prefix']
+                multiarch = ducfg.get('MULTIARCH', '')
+                libdir = ducfg['LIBDIR']
+
+                if glob('{}/lib/libpython{}.{}*'.format(exec_prefix, self.py_major_version, self.py_minor_version)):
+                    pylib_dir = exec_prefix + '/lib'
+                elif multiarch != '' and glob('{}/lib/{}/libpython{}.{}*'.format(exec_prefix, multiarch, self.py_major_version, self.py_minor_version)):
+                    pylib_dir = exec_prefix + '/lib/' + multiarch
+                elif glob('{}/libpython{}.{}*'.format(libdir, self.py_major_version, self.py_minor_version)):
+                    pylib_dir = libdir
+
+        # Apply the defaults if necessary.
+        if self.py_pylib_dir == '':
+            self.py_pylib_dir = pylib_dir
+
+        if self.py_pylib_lib == '':
+            self.py_pylib_lib = pylib_lib
+
+        if self.py_pylib_shlib == '':
+            self.py_pylib_shlib = pylib_shlib
+
     def get_builder(self):
         """ Get the project builder. """
 
         from .qmake_builder import QmakeBuilder
 
         return QmakeBuilder(self)
+
+    def get_options(self):
+        """ Return the list of configurable options. """
+
+        options = super().get_options()
+
+        # The directory containing the target Python interpreter library.
+        options.append(Option('py_pylib_dir'))
+
+        # The name of the target Python interpreter library.
+        options.append(Option('py_pylib_lib'))
+
+        # The name of the target Python interpreter library if it is a shared
+        # library.
+        options.append(Option('py_pylib_shlib'))
+
+        options.append(
+                Option('link_full_dll', option_type=bool,
+                        help="on Windows link against the full Python DLL "
+                                "rather than the limited API DLL"))
+
+        options.append(
+                Option('qml_debug', option_type=bool,
+                        help="enable the QML debugging infrastructure"))
+
+        return options

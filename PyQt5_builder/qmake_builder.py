@@ -99,10 +99,16 @@ SUBDIRS = {}
         if self.make:
             project.progress("Compiling the project")
 
+            make = self._find_make()
+
             saved_cwd = os.getcwd()
             os.chdir(project.build_dir)
-            self.run_command([self._find_make()])
+            rc = self.run_command([make])
             os.chdir(saved_cwd)
+
+            if rc != 0:
+                raise UserException(
+                        "Project compilation failed with '{0}' returning {1}".format(make, rc))
 
         return None
 
@@ -170,11 +176,11 @@ SUBDIRS = {}
         pipe = self._open_command_pipe(cmd, and_stderr=True)
 
         # Read stdout and stderr until there is no more output.
-        for line in pipe:
+        for line in pipe.stdout:
             if self.project.verbose:
                 sys.stdout.write(str(line, encoding=sys.stdout.encoding))
 
-        self._close_command_pipe(pipe)
+        return self._close_command_pipe(pipe)
 
     def run_make(self, exe, makefile_name, debug):
         """ Run make against a Makefile to create an executable.  Returns the
@@ -272,12 +278,7 @@ SUBDIRS = {}
     def _close_command_pipe(pipe):
         """ Close the pipe returned by _open_command_pipe(). """
 
-        pipe.close()
-
-        try:
-            os.wait()
-        except:
-            pass
+        return pipe.wait()
 
     @classmethod
     def _find_exe(cls, exe):
@@ -459,7 +460,7 @@ target.files = $$PY_MODULE
 
         pipe = self._open_command_pipe(self.qmake + ' -query')
 
-        for line in pipe:
+        for line in pipe.stdout:
             line = str(line, encoding=sys.stdout.encoding)
             line = line.strip()
 
@@ -508,10 +509,8 @@ target.files = $$PY_MODULE
 
         stderr = subprocess.STDOUT if and_stderr else subprocess.PIPE
 
-        pipe = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE,
+        return subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE, stderr=stderr)
-
-        return pipe.stdout
 
     @staticmethod
     def _remove_file(fname):

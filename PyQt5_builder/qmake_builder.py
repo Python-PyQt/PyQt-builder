@@ -304,10 +304,6 @@ SUBDIRS = {}
                 "Generating the .pro file for the '{0}' bindings".format(
                             bindings.name))
 
-        target_name = bindings.name
-        if bindings.metadata.qmake_TARGET:
-            target_name = bindings.metadata.qmake_TARGET
-
         pro_lines = ['TEMPLATE = lib']
 
         pro_lines.append('CONFIG += warn_on exceptions_off')
@@ -335,7 +331,7 @@ SUBDIRS = {}
         # Add any user-supplied settings.
         pro_lines.extend(self.qmake_settings)
 
-        pro_lines.append('TARGET = {}'.format(target_name))
+        pro_lines.append('TARGET = {}'.format(bindings.name))
 
         # Qt (when built with MinGW) assumes that stack frames are 16 byte
         # aligned because it uses SSE.  However the Python Windows installers
@@ -370,7 +366,7 @@ QMAKE_POST_LINK = $(COPY_FILE) $$PY_MODULE_SRC $$PY_MODULE
 
 target.CONFIG = no_check_exist
 target.files = $$PY_MODULE
-''' % (target_name, debug_suffix, target_name)
+''' % (bindings.name, debug_suffix, bindings.name)
 
             pro_lines.extend(shared.split('\n'))
 
@@ -382,13 +378,13 @@ target.files = $$PY_MODULE
         # This optimisation could apply to other platforms.
         if 'linux' in self.spec and not bindings.static:
             exp = project.open_for_writing(
-                    os.path.join(bindings.name, target_name + '.exp'))
-            exp.write('{ global: PyInit_%s; local: *; };' % target_name)
+                    os.path.join(bindings.name, bindings.name + '.exp'))
+            exp.write('{ global: PyInit_%s; local: *; };' % bindings.name)
             exp.close()
 
             pro_lines.append(
                     'QMAKE_LFLAGS += -Wl,--version-script={}.exp'.format(
-                            target_name))
+                            bindings.name))
 
         # Handle any #define macros.
         if bindings.generated.define_macros:
@@ -423,10 +419,6 @@ target.files = $$PY_MODULE
 
         if libs:
             pro_lines.append('LIBS += {}'.format(' '.join(libs)))
-
-        #if src_dir != mname:
-            #pro_lines.append('INCLUDEPATH += %s' % qmake_quote(src_dir))
-            #pro_lines.append('VPATH = %s' % qmake_quote(src_dir))
 
         pro_lines.append('HEADERS = {}'.format(
                 ' '.join(bindings.generated.headers)))

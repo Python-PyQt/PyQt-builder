@@ -33,15 +33,11 @@ from sip5.builder import Bindings, Option, UserException
 class PyQt5BindingsMetadata:
     """ This class encapsulates the meta-data about a PyQt5 module. """
 
-    def __init__(self, qmake_QT=None, qmake_TARGET='', qpy_lib=False, cpp11=False, public=True):
+    def __init__(self, qmake_QT=None, qpy_lib=False, cpp11=False, public=True):
         """ Initialise the meta-data. """
 
         # The values to update qmake's QT variable.
         self.qmake_QT = [] if qmake_QT is None else qmake_QT
-
-        # The value to set qmake's TARGET variable to.  It defaults to the name
-        # of the module.
-        self.qmake_TARGET = qmake_TARGET
 
         # Set if there is a qpy support library.
         self.qpy_lib = qpy_lib

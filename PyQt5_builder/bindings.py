@@ -27,7 +27,7 @@
 import glob
 import os
 
-from sip5.builder import Bindings, Option, UserException
+from sip5.builder import Bindings, UserException
 
 
 class PyQt5BindingsMetadata:
@@ -101,14 +101,6 @@ class PyQt5Bindings(Bindings):
         super().__init__(project, name=name, sip_file=sip_file,
                 backstops=backstops, builder_settings=builder_settings,
                 headers=headers, include_dirs=include_dirs, sources=sources)
-
-    def get_options(self):
-        """ Return the list of configurable options. """
-
-        options = super().get_options()
-        options.append(Option('static', option_type=bool))
-
-        return options
 
     def get_test_source_code(self):
         """ Return the test source code.  If None is returned then there must

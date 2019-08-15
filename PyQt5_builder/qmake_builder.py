@@ -68,15 +68,15 @@ class QmakeBuilder(Builder):
 
         super().apply_defaults(tool)
 
-    def compile(self, target_dir):
+    def compile(self, buildables, target_dir):
         """ Compile the project.  The returned opaque object is always None.
         """
 
         project = self.project
 
         # Create the .pro file for each set of bindings.
-        subdirs = [self._generate_bindings_pro_file(b, target_dir)
-                for b in project.bindings]
+        subdirs = [self._generate_module_pro_file(b, target_dir)
+                for b in buildables]
 
         # Create the top-level .pro file.
         project.progress("Generating the top-level .pro file")
@@ -187,6 +187,7 @@ SUBDIRS = {}
             else:
                 make = 'nmake'
 
+            # TODO: where is the debug flag?
             if self.debug:
                 makefile_target = 'debug'
                 platform_exe = os.path.join('debug', exe + '.exe')
@@ -295,20 +296,20 @@ SUBDIRS = {}
 
         return None
 
-    def _generate_bindings_pro_file(self, bindings, target_dir):
-        """ Generate the .pro file for a set of bindings. """
+    def _generate_module_pro_file(self, buildable, target_dir):
+        """ Generate the .pro file for an extension module. """
 
         project = self.project
 
         project.progress(
-                "Generating the .pro file for the '{0}' bindings".format(
-                            bindings.name))
+                "Generating the .pro file for the '{0}' module".format(
+                            buildable.name))
 
         pro_lines = ['TEMPLATE = lib']
 
         pro_lines.append('CONFIG += warn_on exceptions_off')
 
-        if bindings.static:
+        if buildable.static:
             pro_lines.append('CONFIG += staticlib hide_symbols')
         else:
             # Note some version of Qt5 (probably incorrectly) implements
@@ -317,7 +318,7 @@ SUBDIRS = {}
 
         pro_lines.append(
                 'CONFIG += {}'.format(
-                        'debug' if bindings.debug else 'release'))
+                        'debug' if buildable.debug else 'release'))
 
         if project.qml_debug:
             pro_lines.append('CONFIG += qml_debug')
@@ -326,12 +327,12 @@ SUBDIRS = {}
         pro_lines.append('CONFIG -= android_install')
 
         # Add any bindings-specific settings.
-        pro_lines.extend(bindings.builder_settings)
+        pro_lines.extend(buildable.builder_settings)
 
         # Add any user-supplied settings.
         pro_lines.extend(self.qmake_settings)
 
-        pro_lines.append('TARGET = {}'.format(bindings.name))
+        pro_lines.append('TARGET = {}'.format(buildable.name))
 
         # Qt (when built with MinGW) assumes that stack frames are 16 byte
         # aligned because it uses SSE.  However the Python Windows installers
@@ -341,7 +342,7 @@ SUBDIRS = {}
             pro_lines.append('QMAKE_CFLAGS += -mstackrealign')
             pro_lines.append('QMAKE_CXXFLAGS += -mstackrealign')
 
-        if not bindings.static:
+        if not buildable.static:
             debug_suffix = '_d' if project.py_debug else ''
 
             # Without the 'no_check_exist' magic the target.files must exist
@@ -366,7 +367,7 @@ QMAKE_POST_LINK = $(COPY_FILE) $$PY_MODULE_SRC $$PY_MODULE
 
 target.CONFIG = no_check_exist
 target.files = $$PY_MODULE
-''' % (bindings.name, debug_suffix, bindings.name)
+''' % (buildable.name, debug_suffix, buildable.name)
 
             pro_lines.extend(shared.split('\n'))
 
@@ -376,23 +377,23 @@ target.files = $$PY_MODULE
         pro_lines.append('INSTALLS += target')
 
         # This optimisation could apply to other platforms.
-        if 'linux' in self.spec and not bindings.static:
+        if 'linux' in self.spec and not buildable.static:
             exp = project.open_for_writing(
-                    os.path.join(bindings.name, bindings.name + '.exp'))
-            exp.write('{ global: PyInit_%s; local: *; };' % bindings.name)
+                    os.path.join(buildable.name, buildable.name + '.exp'))
+            exp.write('{ global: PyInit_%s; local: *; };' % buildable.name)
             exp.close()
 
             pro_lines.append(
                     'QMAKE_LFLAGS += -Wl,--version-script={}.exp'.format(
-                            bindings.name))
+                            buildable.name))
 
         # Handle any #define macros.
-        if bindings.generated.define_macros:
+        if buildable.define_macros:
             pro_lines.append('DEFINES += {}'.format(
-                    ' '.join(bindings.generated.define_macros)))
+                    ' '.join(buildable.define_macros)))
 
         # Handle the include directories.
-        for include_dir in bindings.generated.include_dirs:
+        for include_dir in buildable.include_dirs:
             pro_lines.append(
                     'INCLUDEPATH += {}'.format(self.qmake_quote(include_dir)))
 
@@ -403,7 +404,7 @@ target.files = $$PY_MODULE
         # Python.h on Windows seems to embed the need for pythonXY.lib, so tell
         # it where it is.
         # TODO: is this still necessary for Python v3.8?
-        if not bindings.static:
+        if not buildable.static:
             pro_lines.extend(['win32 {',
                     '    LIBS += -L{}'.format(project.py_pylib_dir),
                     '}'])
@@ -411,23 +412,20 @@ target.files = $$PY_MODULE
         # Handle any additional libraries.
         libs = []
 
-        for l_dir in bindings.library_dirs:
+        for l_dir in buildable.library_dirs:
             libs.append('-L' + self.qmake_quote(l_dir))
 
-        for l in bindings.libraries:
+        for l in buildable.libraries:
             libs.append('-l' + l)
 
         if libs:
             pro_lines.append('LIBS += {}'.format(' '.join(libs)))
 
-        pro_lines.append('HEADERS = {}'.format(
-                ' '.join(bindings.generated.headers)))
-        pro_lines.append('SOURCES = {}'.format(
-                ' '.join(bindings.generated.sources)))
+        pro_lines.append('HEADERS = {}'.format(' '.join(buildable.headers)))
+        pro_lines.append('SOURCES = {}'.format(' '.join(buildable.sources)))
 
         # Write the .pro file.
-        pro_name = os.path.join(bindings.generated.sources_dir,
-                bindings.name + '.pro')
+        pro_name = os.path.join(buildable.sources_dir, buildable.name + '.pro')
         pro = project.open_for_writing(pro_name)
         pro.write('\n'.join(pro_lines))
         pro.write('\n')
@@ -435,8 +433,7 @@ target.files = $$PY_MODULE
 
         # Return the directory containing the .pro file relative to the build
         # directory.
-        return os.path.relpath(bindings.generated.sources_dir,
-                project.build_dir)
+        return os.path.relpath(buildable.sources_dir, project.build_dir)
 
     def _get_qt_configuration(self):
         """ Run qmake to get the details of the Qt configuration. """

@@ -92,12 +92,17 @@ SUBDIRS = {}
         pro.close()
 
         # Run qmake to generate the Makefiles.
-        # TODO
+        project.progress("Generating the Makefiles")
+        self.run_qmake(pro_name, recursive=True)
 
         # Run make, if requested, to generate the bindings.
         if self.make:
-            # TODO
-            raise NotImplementedError
+            project.progress("Compiling the project")
+
+            saved_cwd = os.getcwd()
+            os.chdir(project.build_dir)
+            self.run_command([self._find_make()])
+            os.chdir(saved_cwd)
 
         return None
 
@@ -171,7 +176,7 @@ SUBDIRS = {}
 
         self._close_command_pipe(pipe)
 
-    def run_make(self, exe, makefile_name):
+    def run_make(self, exe, makefile_name, debug):
         """ Run make against a Makefile to create an executable.  Returns the
         platform specific name of the executable, or None if an executable
         wasn't created.
@@ -182,20 +187,13 @@ SUBDIRS = {}
         # Guess the name of make and set the default target and platform
         # specific name of the executable.
         if project.py_platform == 'win32':
-            if self.spec == 'win32-g++':
-                make = 'mingw32-make'
-            else:
-                make = 'nmake'
-
-            # TODO: where is the debug flag?
-            if self.debug:
+            if debug:
                 makefile_target = 'debug'
                 platform_exe = os.path.join('debug', exe + '.exe')
             else:
                 makefile_target = 'release'
                 platform_exe = os.path.join('release', exe + '.exe')
         else:
-            make = 'make'
             makefile_target = None
 
             if project.py_platform == 'darwin':
@@ -207,7 +205,7 @@ SUBDIRS = {}
         # Make sure the executable doesn't exist.
         self._remove_file(platform_exe)
 
-        args = [make, '-f', makefile_name]
+        args = [self._find_make(), '-f', makefile_name]
 
         if makefile_target is not None:
             args.append(makefile_target)
@@ -295,6 +293,23 @@ SUBDIRS = {}
                 return exe_path
 
         return None
+
+    def _find_make(self):
+        """ Return the name of a valid make program. """
+
+        if self.project.py_platform == 'win32':
+            if self.spec == 'win32-g++':
+                make = 'mingw32-make'
+            else:
+                make = 'nmake'
+        else:
+            make = 'make'
+
+        if self._find_exe(make) is None:
+            raise UserException(
+                    "'{0}' could not be found on PATH".format(make))
+
+        return make
 
     def _generate_module_pro_file(self, buildable, target_dir):
         """ Generate the .pro file for an extension module. """

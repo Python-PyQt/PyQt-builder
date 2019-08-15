@@ -162,6 +162,10 @@ class PyQt5Bindings(Bindings):
 
         # Create the .pro file.
         pro_lines = []
+
+        pro_lines.append(
+                'CONFIG += {}'.format('debug' if self.debug else 'release'))
+
         pro_lines.extend(self.builder_settings)
         pro_lines.extend(builder.qmake_settings)
         pro_lines.append('TARGET = {}'.format(test))
@@ -175,7 +179,7 @@ class PyQt5Bindings(Bindings):
         if not builder.run_qmake(test_pro, makefile_name=test_makefile, fatal=False):
             return None
 
-        return builder.run_make(test, test_makefile)
+        return builder.run_make(test, test_makefile, self.debug)
 
     @staticmethod
     def _matching_files(pattern):

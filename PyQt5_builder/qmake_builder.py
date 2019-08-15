@@ -108,8 +108,6 @@ SUBDIRS = {}
         options = super().get_options()
 
         # Add our new options.
-        options.append(Option('qmake_variables', option_type=list))
-
         options.append(
                 Option('make', option_type=bool, inverted=True,
                         help="do not run make or nmake", tools='build'))
@@ -117,6 +115,12 @@ SUBDIRS = {}
         options.append(
                 Option('qmake', help="the pathname of qmake is FILE",
                         metavar="FILE", tools='build install wheel'))
+
+        options.append(
+                Option('qmake_settings', option_type=list,
+                        help="add the 'NAME += VALUE' setting to any .pro file",
+                        metavar="'NAME += VALUE'",
+                        tools='build install wheel'))
 
         options.append(
                 Option('spec', help="pass -spec SPEC to qmake",
@@ -265,19 +269,6 @@ SUBDIRS = {}
 
         return True
 
-    def verify_configuration(self, tool):
-        """ Verify the configuration. """
-
-        super().verify_configuration(tool)
-
-        # Qt (when built with MinGW) assumes that stack frames are 16 byte
-        # aligned because it uses SSE.  However the Python Windows installers
-        # are built with 4 byte aligned stack frames.  We therefore need to
-        # tweak the g++ flags to deal with it.
-        if self.spec == 'win32-g++':
-            self.qmake_variables.append('QMAKE_CFLAGS += -mstackrealign')
-            self.qmake_variables.append('QMAKE_CXXFLAGS += -mstackrealign')
-
     @staticmethod
     def _close_command_pipe(pipe):
         """ Close the pipe returned by _open_command_pipe(). """
@@ -305,7 +296,7 @@ SUBDIRS = {}
         return None
 
     def _generate_bindings_pro_file(self, bindings, target_dir):
-        """ Generate the .pro file for a set fo bindings. """
+        """ Generate the .pro file for a set of bindings. """
 
         project = self.project
 
@@ -328,7 +319,9 @@ SUBDIRS = {}
             # 'plugin_bundle' instead of 'plugin' so we specify both.
             pro_lines.append('CONFIG += plugin plugin_bundle')
 
-        bindings.update_pro_file(pro_lines)
+        pro_lines.append(
+                'CONFIG += {}'.format(
+                        'debug' if bindings.debug else 'release'))
 
         if project.qml_debug:
             pro_lines.append('CONFIG += qml_debug')
@@ -336,7 +329,21 @@ SUBDIRS = {}
         # Work around QTBUG-39300.
         pro_lines.append('CONFIG -= android_install')
 
+        # Add any bindings-specific settings.
+        pro_lines.extend(bindings.builder_settings)
+
+        # Add any user-supplied settings.
+        pro_lines.extend(self.qmake_settings)
+
         pro_lines.append('TARGET = {}'.format(target_name))
+
+        # Qt (when built with MinGW) assumes that stack frames are 16 byte
+        # aligned because it uses SSE.  However the Python Windows installers
+        # are built with 4 byte aligned stack frames.  We therefore need to
+        # tweak the g++ flags to deal with it.
+        if self.spec == 'win32-g++':
+            pro_lines.append('QMAKE_CFLAGS += -mstackrealign')
+            pro_lines.append('QMAKE_CXXFLAGS += -mstackrealign')
 
         if not bindings.static:
             debug_suffix = '_d' if project.py_debug else ''

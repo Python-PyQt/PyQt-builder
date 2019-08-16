@@ -59,7 +59,7 @@ class PyQt5Bindings(Bindings):
         """ Initialise the bindings. """
 
         # The (not very good) naming convention used by MetaSIP.
-        sip_file = os.path.join('sip', name, name + 'mod.sip')
+        sip_file = os.path.join(name, name + 'mod.sip')
 
         # Make sure any unknown Qt version gets treated as the latest Qt v5.
         backstops = ['Qt_6_0_0']

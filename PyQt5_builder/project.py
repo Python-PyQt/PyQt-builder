@@ -40,6 +40,7 @@ class PyQt5Project(Project):
 
         # These can be overridden in pyproject.toml but not by the user on the
         # command line.
+        self.sip_files_dir = os.path.abspath('sip')
         self.sip_module = 'PyQt5.sip'
 
     def apply_defaults(self, tool):

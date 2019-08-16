@@ -308,6 +308,8 @@ SUBDIRS = {}
                 "Generating the .pro file for the '{0}' module".format(
                             buildable.name))
 
+        installed = []
+
         pro_lines = ['TEMPLATE = lib']
 
         pro_lines.append('CONFIG += warn_on exceptions_off')
@@ -427,6 +429,14 @@ target.files = $$PY_MODULE
         pro_lines.append('HEADERS = {}'.format(' '.join(buildable.headers)))
         pro_lines.append('SOURCES = {}'.format(' '.join(buildable.sources)))
 
+        # Install the .sip files.
+        bindings_dir = os.path.join(self.get_bindings_dir(target_dir),
+                buildable.name)
+
+        installed.extend(
+                self._install(pro_lines, 'sip',
+                        buildable.bindings.get_sip_files(), bindings_dir))
+
         # Write the .pro file.
         pro_name = os.path.join(buildable.sources_dir, buildable.name + '.pro')
         pro = project.open_for_writing(pro_name)
@@ -483,6 +493,26 @@ target.files = $$PY_MODULE
             raise UserException(
                     "Qt v5.6 or later is required and you seem to be using "
                             "v{0}".format(qt_version_str))
+
+    def _install(self, pro_lines, target_name, installable, path):
+        """ Add the lines to install files to a .pro file and return the names
+        of the files installed.
+        """
+
+        installed = []
+        files = []
+
+        for fn in installable.files:
+            files.append(
+                    os.path.join(installable.installed_from, fn).replace('\\', '/'))
+
+            installed.append(os.path.join(path, fn))
+
+        pro_lines.append('{}.path = {}'.format(target_name, path.replace('\\', '/')))
+        pro_lines.append('{}.files = {}'.format(target_name, ' '.join(files)))
+        pro_lines.append('INSTALLS += {}'.format(target_name))
+
+        return installed
 
     @staticmethod
     def _is_exe(exe_path):

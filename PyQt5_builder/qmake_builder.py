@@ -97,18 +97,7 @@ SUBDIRS = {}
 
         # Run make, if requested, to generate the bindings.
         if self.make:
-            project.progress("Compiling the project")
-
-            make = self._find_make()
-
-            saved_cwd = os.getcwd()
-            os.chdir(project.build_dir)
-            rc = self.run_command([make])
-            os.chdir(saved_cwd)
-
-            if rc != 0:
-                raise UserException(
-                        "Project compilation failed with '{0}' returning {1}".format(make, rc))
+            self._run_project_make()
 
         return None
 
@@ -143,9 +132,7 @@ SUBDIRS = {}
         """ Install the project into a target directory. """
 
         # Run make install to install the bindings.
-
-        # TODO
-        raise NotImplementedError
+        self._run_project_make(install=True)
 
     @staticmethod
     def qmake_quote(path):
@@ -520,3 +507,29 @@ target.files = $$PY_MODULE
             os.remove(fname)
         except OSError:
             pass
+
+    def _run_project_make(self, install=False):
+        """ Run make on the project. """
+
+        project = self.project
+
+        project.progress(
+                "{0} the project".format(
+                        "Installing" if install else "Compiling"))
+
+        make = self._find_make()
+
+        args = [make]
+        if install:
+            args.append('install')
+
+        saved_cwd = os.getcwd()
+        os.chdir(project.build_dir)
+        rc = self.run_command(args)
+        os.chdir(saved_cwd)
+
+        if rc != 0:
+            raise UserException(
+                    "Project {0} failed with '{1}' returning {2}".format(
+                            "installation" if installed else "compilation",
+                            make, rc))

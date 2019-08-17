@@ -75,8 +75,13 @@ class QmakeBuilder(Builder):
         project = self.project
 
         # Create the .pro file for each set of bindings.
-        subdirs = [self._generate_module_pro_file(b, target_dir)
-                for b in buildables]
+        subdirs = []
+        installed = []
+
+        for buildable in buildables:
+            self._generate_module_pro_file(buildable, target_dir, installed)
+            subdirs.append(
+                    os.path.relpath(buildable.sources_dir, project.build_dir))
 
         # Create the top-level .pro file.
         project.progress("Generating the top-level .pro file")
@@ -299,16 +304,16 @@ SUBDIRS = {}
 
         return make
 
-    def _generate_module_pro_file(self, buildable, target_dir):
-        """ Generate the .pro file for an extension module. """
+    def _generate_module_pro_file(self, buildable, target_dir, installed):
+        """ Generate the .pro file for an extension module is the buildable's
+        sources directory.  The list of installed files is updated.
+        """
 
         project = self.project
 
         project.progress(
                 "Generating the .pro file for the '{0}' module".format(
                             buildable.name))
-
-        installed = []
 
         pro_lines = ['TEMPLATE = lib']
 
@@ -337,6 +342,7 @@ SUBDIRS = {}
         # Add any user-supplied settings.
         pro_lines.extend(self.qmake_settings)
 
+        # TODO: add the target to the installs.
         pro_lines.append('TARGET = {}'.format(buildable.name))
 
         # Qt (when built with MinGW) assumes that stack frames are 16 byte
@@ -429,13 +435,17 @@ target.files = $$PY_MODULE
         pro_lines.append('HEADERS = {}'.format(' '.join(buildable.headers)))
         pro_lines.append('SOURCES = {}'.format(' '.join(buildable.sources)))
 
-        # Install the .sip files.
-        bindings_dir = os.path.join(self.get_bindings_dir(target_dir),
-                buildable.name)
+        # Install the configuration file and the .sip files.
+        if project.sip_module:
+            bindings_dir = buildable.get_bindings_dir(target_dir)
 
-        installed.extend(
-                self._install(pro_lines, 'sip',
-                        buildable.bindings.get_sip_files(), bindings_dir))
+            self._install(pro_lines, installed, 'config',
+                    buildable.configuration, bindings_dir)
+
+            self._install(pro_lines, installed, 'sip',
+                    buildable.bindings.get_sip_files(), bindings_dir)
+
+        # TODO: add any .pyi file.
 
         # Write the .pro file.
         pro_name = os.path.join(buildable.sources_dir, buildable.name + '.pro')
@@ -443,10 +453,6 @@ target.files = $$PY_MODULE
         pro.write('\n'.join(pro_lines))
         pro.write('\n')
         pro.close()
-
-        # Return the directory containing the .pro file relative to the build
-        # directory.
-        return os.path.relpath(buildable.sources_dir, project.build_dir)
 
     def _get_qt_configuration(self):
         """ Run qmake to get the details of the Qt configuration. """
@@ -494,12 +500,11 @@ target.files = $$PY_MODULE
                     "Qt v5.6 or later is required and you seem to be using "
                             "v{0}".format(qt_version_str))
 
-    def _install(self, pro_lines, target_name, installable, path):
-        """ Add the lines to install files to a .pro file and return the names
-        of the files installed.
+    def _install(self, pro_lines, installed, target_name, installable, path):
+        """ Add the lines to install files to a .pro file and a list of all
+        installed files.
         """
 
-        installed = []
         files = []
 
         for fn in installable.files:
@@ -511,8 +516,6 @@ target.files = $$PY_MODULE
         pro_lines.append('{}.path = {}'.format(target_name, path.replace('\\', '/')))
         pro_lines.append('{}.files = {}'.format(target_name, ' '.join(files)))
         pro_lines.append('INSTALLS += {}'.format(target_name))
-
-        return installed
 
     @staticmethod
     def _is_exe(exe_path):

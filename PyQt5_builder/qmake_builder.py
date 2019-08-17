@@ -94,7 +94,21 @@ CONFIG += ordered nostrip
 SUBDIRS = {}
 '''.format(' '.join(subdirs)))
 
-        print(installed)
+        # TODO: handle any .api file.
+
+        # Make the .dist-info directory.
+        inventory_fn = os.path.join(project.build_dir, 'inventory.txt')
+        inventory = project.open_for_writing(inventory_fn)
+
+        for fn in installed:
+            print(fn, file=inventory)
+
+        inventory.close()
+
+        pro.write('''distinfo.extra = sip5-distinfo --prefix \\"$(INSTALL_ROOT)\\" --inventory {} {}
+distinfo.path = {}/{}
+INSTALLS += distinfo
+'''.format(inventory_fn, project.get_distinfo_name(target_dir).replace('\\', '/'), target_dir.replace('\\', '/'), project.name))
 
         pro.close()
 
@@ -574,5 +588,5 @@ target.files = %s
         if rc != 0:
             raise UserException(
                     "Project {0} failed with '{1}' returning {2}".format(
-                            "installation" if installed else "compilation",
-                            make, rc))
+                            "installation" if install else "compilation", make,
+                            rc))

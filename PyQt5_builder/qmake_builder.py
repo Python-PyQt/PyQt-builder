@@ -105,10 +105,10 @@ SUBDIRS = {}
 
         inventory.close()
 
-        pro.write('''distinfo.extra = sip5-distinfo --generator {} --prefix \\"$(INSTALL_ROOT)\\" --inventory {} {}
+        pro.write('''distinfo.extra = sip5-distinfo --project-root {} --generator {} --prefix \\"$(INSTALL_ROOT)\\" --inventory {} {}
 distinfo.path = {}/{}
 INSTALLS += distinfo
-'''.format(os.path.basename(sys.argv[0]), inventory_fn, project.get_distinfo_name(target_dir).replace('\\', '/'), target_dir.replace('\\', '/'), project.name))
+'''.format(project.root_dir, os.path.basename(sys.argv[0]), inventory_fn, project.get_distinfo_name(target_dir).replace('\\', '/'), target_dir.replace('\\', '/'), project.name))
 
         pro.close()
 

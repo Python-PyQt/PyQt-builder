@@ -94,6 +94,8 @@ CONFIG += ordered nostrip
 SUBDIRS = {}
 '''.format(' '.join(subdirs)))
 
+        print(installed)
+
         pro.close()
 
         # Run qmake to generate the Makefiles.
@@ -353,19 +355,22 @@ SUBDIRS = {}
             pro_lines.append('QMAKE_CFLAGS += -mstackrealign')
             pro_lines.append('QMAKE_CXXFLAGS += -mstackrealign')
 
-        if not buildable.static:
-            debug_suffix = '_d' if project.py_debug else ''
+        # Get the name of the extension module file.
+        module = buildable.name
 
+        if project.py_platform == 'win32' and project.py_debug:
+            module += '_d'
+
+        module += buildable.get_module_extension()
+
+        if not buildable.static:
             # Without the 'no_check_exist' magic the target.files must exist
             # when qmake is run otherwise the install and uninstall targets are
             # not generated.
             shared = '''
 win32 {
-    PY_MODULE = %s%s.pyd
     PY_MODULE_SRC = $(DESTDIR_TARGET)
 } else {
-    PY_MODULE = %s.so
-
     macx {
         PY_MODULE_SRC = $(TARGET).plugin/Contents/MacOS/$(TARGET)
         QMAKE_LFLAGS += "-undefined dynamic_lookup"
@@ -374,18 +379,22 @@ win32 {
     }
 }
 
-QMAKE_POST_LINK = $(COPY_FILE) $$PY_MODULE_SRC $$PY_MODULE
+QMAKE_POST_LINK = $(COPY_FILE) $$PY_MODULE_SRC %s
 
 target.CONFIG = no_check_exist
-target.files = $$PY_MODULE
-''' % (buildable.name, debug_suffix, buildable.name)
+target.files = %s
+''' % (module, module)
 
             pro_lines.extend(shared.split('\n'))
 
-        install_path = target_dir.replace('\\', '/') + '/' + project.name
+        install_path = os.path.join(target_dir,
+                os.sep.join(buildable.fq_name.split('.')[:-1]))
 
-        pro_lines.append('target.path = {}'.format(install_path))
+        pro_lines.append(
+                'target.path = {}'.format(install_path.replace('\\', '/')))
         pro_lines.append('INSTALLS += target')
+
+        installed.append(os.path.join(install_path, module))
 
         # This optimisation could apply to other platforms.
         if 'linux' in self.spec and not buildable.static:

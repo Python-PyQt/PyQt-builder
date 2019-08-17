@@ -317,6 +317,8 @@ SUBDIRS = {}
                 "Generating the .pro file for the '{0}' module".format(
                             buildable.name))
 
+        install_dir = buildable.get_install_dir(target_dir)
+
         pro_lines = ['TEMPLATE = lib']
 
         pro_lines.append('CONFIG += warn_on exceptions_off')
@@ -344,7 +346,6 @@ SUBDIRS = {}
         # Add any user-supplied settings.
         pro_lines.extend(self.qmake_settings)
 
-        # TODO: add the target to the installs.
         pro_lines.append('TARGET = {}'.format(buildable.name))
 
         # Qt (when built with MinGW) assumes that stack frames are 16 byte
@@ -387,14 +388,11 @@ target.files = %s
 
             pro_lines.extend(shared.split('\n'))
 
-        install_path = os.path.join(target_dir,
-                os.sep.join(buildable.fq_name.split('.')[:-1]))
-
         pro_lines.append(
-                'target.path = {}'.format(install_path.replace('\\', '/')))
+                'target.path = {}'.format(install_dir.replace('\\', '/')))
         pro_lines.append('INSTALLS += target')
 
-        installed.append(os.path.join(install_path, module))
+        installed.append(os.path.join(install_dir, module))
 
         # This optimisation could apply to other platforms.
         if 'linux' in self.spec and not buildable.static:
@@ -454,7 +452,10 @@ target.files = %s
             self._install(pro_lines, installed, 'sip',
                     buildable.bindings.get_sip_files(), bindings_dir)
 
-        # TODO: add any .pyi file.
+        # Add any .pyi file.
+        if buildable.pyi_file is not None:
+            self._install(pro_lines, installed, 'pyi', buildable.pyi_file,
+                    install_dir)
 
         # Write the .pro file.
         pro_name = os.path.join(buildable.sources_dir, buildable.name + '.pro')

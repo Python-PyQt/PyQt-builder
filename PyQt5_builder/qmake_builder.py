@@ -68,17 +68,16 @@ class QmakeBuilder(Builder):
 
         super().apply_defaults(tool)
 
-    def compile(self, buildables, target_dir):
-        """ Compile the project.  The returned opaque object is always None.
-        """
+    def compile(self, target_dir):
+        """ Compile the project. """
 
         project = self.project
 
         # Create the .pro file for each set of bindings.
-        subdirs = []
         installed = []
+        subdirs = []
 
-        for buildable in buildables:
+        for buildable in project.buildables:
             self._generate_module_pro_file(buildable, target_dir, installed)
             subdirs.append(
                     os.path.relpath(buildable.sources_dir, project.build_dir))
@@ -86,15 +85,15 @@ class QmakeBuilder(Builder):
         # Create the top-level .pro file.
         project.progress("Generating the top-level .pro file")
 
-        pro_name = os.path.join(project.build_dir, project.name + '.pro')
-        pro = project.open_for_writing(pro_name)
+        pro_lines = []
 
-        pro.write('''TEMPLATE = subdirs
-CONFIG += ordered nostrip
-SUBDIRS = {}
-'''.format(' '.join(subdirs)))
+        pro_lines.append('TEMPLATE = subdirs')
+        pro_lines.append('CONFIG += ordered nostrip')
+        pro_lines.append('SUBDIRS = {}'.format(' '.join(subdirs)))
 
-        # TODO: handle any .api file.
+        # Add any project-level installables.
+        for installable in project.installables:
+            self._install(pro_lines, installed, installable, target_dir)
 
         # Make the .dist-info directory.
         inventory_fn = os.path.join(project.build_dir, 'inventory.txt')
@@ -105,12 +104,20 @@ SUBDIRS = {}
 
         inventory.close()
 
-        pro.write('''distinfo.extra = sip5-distinfo --project-root {} --generator {} --prefix \\"$(INSTALL_ROOT)\\" --inventory {} {}
-distinfo.path = {}/{}
-INSTALLS += distinfo
-'''.format(project.root_dir, os.path.basename(sys.argv[0]), inventory_fn, project.get_distinfo_name(target_dir).replace('\\', '/'), target_dir.replace('\\', '/'), project.name))
+        pro_lines.append(
+                'distinfo.extra = sip5-distinfo --project-root {} --generator {} --prefix \\"$(INSTALL_ROOT)\\" --inventory {} {}'.format(
+                        project.root_dir, os.path.basename(sys.argv[0]),
+                        inventory_fn,
+                        project.get_distinfo_name(target_dir).replace('\\',
+                                '/')))
+        pro_lines.append(
+                'distinfo.path = {}/{}'.format(target_dir.replace('\\', '/'),
+                        project.name))
+        pro_lines.append('INSTALLS += distinfo')
 
-        pro.close()
+        self._write_pro_file(
+                os.path.join(project.build_dir, project.name + '.pro'),
+                pro_lines)
 
         # Run qmake to generate the Makefiles.
         project.progress("Generating the Makefiles")
@@ -149,7 +156,7 @@ INSTALLS += distinfo
 
         return options
 
-    def install_into(self, opaque, target_dir, wheel_tag=None):
+    def install_into(self, target_dir, wheel_tag=None):
         """ Install the project into a target directory. """
 
         # Run make install to install the bindings.
@@ -331,8 +338,6 @@ INSTALLS += distinfo
                 "Generating the .pro file for the '{0}' module".format(
                             buildable.name))
 
-        install_dir = buildable.get_install_dir(target_dir)
-
         pro_lines = ['TEMPLATE = lib']
 
         pro_lines.append('CONFIG += warn_on exceptions_off')
@@ -402,6 +407,8 @@ target.files = %s
 
             pro_lines.extend(shared.split('\n'))
 
+        install_dir = buildable.get_install_dir(target_dir)
+
         pro_lines.append(
                 'target.path = {}'.format(install_dir.replace('\\', '/')))
         pro_lines.append('INSTALLS += target')
@@ -456,27 +463,14 @@ target.files = %s
         pro_lines.append('HEADERS = {}'.format(' '.join(buildable.headers)))
         pro_lines.append('SOURCES = {}'.format(' '.join(buildable.sources)))
 
-        # Install the configuration file and the .sip files.
-        if project.sip_module:
-            bindings_dir = buildable.get_bindings_dir(target_dir)
-
-            self._install(pro_lines, installed, 'config',
-                    buildable.configuration, bindings_dir)
-
-            self._install(pro_lines, installed, 'sip',
-                    buildable.bindings.get_sip_files(), bindings_dir)
-
-        # Add any .pyi file.
-        if buildable.pyi_file is not None:
-            self._install(pro_lines, installed, 'pyi', buildable.pyi_file,
-                    install_dir)
+        # Add any installables from the buildable.
+        for installable in buildable.installables:
+            self._install(pro_lines, installed, installable, target_dir)
 
         # Write the .pro file.
-        pro_name = os.path.join(buildable.sources_dir, buildable.name + '.pro')
-        pro = project.open_for_writing(pro_name)
-        pro.write('\n'.join(pro_lines))
-        pro.write('\n')
-        pro.close()
+        self._write_pro_file(
+                os.path.join(buildable.sources_dir, buildable.name + '.pro'),
+                pro_lines)
 
     def _get_qt_configuration(self):
         """ Run qmake to get the details of the Qt configuration. """
@@ -524,22 +518,23 @@ target.files = %s
                     "Qt v5.6 or later is required and you seem to be using "
                             "v{0}".format(qt_version_str))
 
-    def _install(self, pro_lines, installed, target_name, installable, path):
+    def _install(self, pro_lines, installed, installable, target_dir):
         """ Add the lines to install files to a .pro file and a list of all
         installed files.
         """
 
-        files = []
+        pro_lines.append(
+                '{}.path = {}'.format(installable.name,
+                        installable.get_full_target_dir(target_dir).replace(
+                                '\\', '/')))
 
-        for fn in installable.files:
-            files.append(
-                    os.path.join(installable.installed_from, fn).replace('\\', '/'))
+        files = [fn.replace('\\', '/') for fn in installable.files]
+        pro_lines.append(
+                '{}.files = {}'.format(installable.name, ' '.join(files)))
 
-            installed.append(os.path.join(path, fn))
+        pro_lines.append('INSTALLS += {}'.format(installable.name))
 
-        pro_lines.append('{}.path = {}'.format(target_name, path.replace('\\', '/')))
-        pro_lines.append('{}.files = {}'.format(target_name, ' '.join(files)))
-        pro_lines.append('INSTALLS += {}'.format(target_name))
+        installable.install(target_dir, installed, do_install=False)
 
     @staticmethod
     def _is_exe(exe_path):
@@ -590,3 +585,11 @@ target.files = %s
                     "Project {0} failed with '{1}' returning {2}".format(
                             "installation" if install else "compilation", make,
                             rc))
+
+    def _write_pro_file(self, pro_fn, pro_lines):
+        """ Write a .pro file. """
+
+        pro = self.project.open_for_writing(pro_fn)
+        pro.write('\n'.join(pro_lines))
+        pro.write('\n')
+        pro.close()

@@ -68,8 +68,8 @@ class QmakeBuilder(Builder):
 
         super().apply_defaults(tool)
 
-    def compile(self, target_dir):
-        """ Compile the project. """
+    def build_project(self, target_dir):
+        """ Build the project. """
 
         project = self.project
 
@@ -115,9 +115,8 @@ class QmakeBuilder(Builder):
                         project.name))
         pro_lines.append('INSTALLS += distinfo')
 
-        self._write_pro_file(
-                os.path.join(project.build_dir, project.name + '.pro'),
-                pro_lines)
+        pro_name = os.path.join(project.build_dir, project.name + '.pro')
+        self._write_pro_file(pro_name, pro_lines)
 
         # Run qmake to generate the Makefiles.
         project.progress("Generating the Makefiles")
@@ -156,7 +155,7 @@ class QmakeBuilder(Builder):
 
         return options
 
-    def install_into(self, target_dir, wheel_tag=None):
+    def install_project(self, target_dir, wheel_tag=None):
         """ Install the project into a target directory. """
 
         # Run make install to install the bindings.
@@ -407,7 +406,7 @@ target.files = %s
 
             pro_lines.extend(shared.split('\n'))
 
-        install_dir = buildable.get_install_dir(target_dir)
+        install_dir = os.path.join(target_dir, buildable.get_install_dir())
 
         pro_lines.append(
                 'target.path = {}'.format(install_dir.replace('\\', '/')))

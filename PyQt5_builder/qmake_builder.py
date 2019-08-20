@@ -155,7 +155,7 @@ class QmakeBuilder(Builder):
 
         return options
 
-    def install_project(self, target_dir, wheel_tag=None):
+    def install_project(self, target_dir):
         """ Install the project into a target directory. """
 
         # Run make install to install the bindings.

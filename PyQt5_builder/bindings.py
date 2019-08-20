@@ -33,7 +33,7 @@ from sip5.builder import Bindings, UserException
 class PyQt5BindingsMetadata:
     """ This class encapsulates the meta-data about a PyQt5 module. """
 
-    def __init__(self, qmake_QT=None, qpy_lib=False, cpp11=False, public=True):
+    def __init__(self, qmake_QT=None, qpy_lib=False, cpp11=False, internal=False):
         """ Initialise the meta-data. """
 
         # The values to update qmake's QT variable.
@@ -45,8 +45,8 @@ class PyQt5BindingsMetadata:
         # Set if C++11 support is required.
         self.cpp11 = cpp11
 
-        # Set if the module is public.
-        self.public = public
+        # Set if the module is internal.
+        self.internal = internal
 
 
 class PyQt5Bindings(Bindings):
@@ -99,8 +99,9 @@ class PyQt5Bindings(Bindings):
             headers = include_dirs = sources = []
 
         super().__init__(project, name=name, sip_file=sip_file,
-                backstops=backstops, builder_settings=builder_settings,
-                headers=headers, include_dirs=include_dirs, sources=sources)
+                internal=self.metadata.internal, backstops=backstops,
+                builder_settings=builder_settings, headers=headers,
+                include_dirs=include_dirs, sources=sources)
 
     def get_test_source_code(self):
         """ Return the test source code.  If None is returned then there must

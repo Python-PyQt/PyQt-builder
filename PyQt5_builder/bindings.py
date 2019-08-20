@@ -31,10 +31,14 @@ from sip5.builder import Bindings, UserException
 
 
 class PyQt5BindingsMetadata:
-    """ This class encapsulates the meta-data about a PyQt5 module. """
+    """ This class encapsulates the meta-data about a set of PyQt5 bindings.
+    """
 
-    def __init__(self, qmake_QT=None, qpy_lib=False, cpp11=False, internal=False):
+    def __init__(self, name, *, qmake_QT=None, qpy_lib=False, cpp11=False, internal=False):
         """ Initialise the meta-data. """
+
+        # The name of the bindings.
+        self.name = name
 
         # The values to update qmake's QT variable.
         self.qmake_QT = [] if qmake_QT is None else qmake_QT
@@ -53,10 +57,12 @@ class PyQt5Bindings(Bindings):
     """ A base class for all PyQt5-based bindings. """
 
     # The bindings meta-data.
-    metadata = PyQt5BindingsMetadata()
+    metadata = None
 
-    def __init__(self, name, project):
+    def __init__(self, project):
         """ Initialise the bindings. """
+
+        name = self.metadata.name
 
         # The (not very good) naming convention used by MetaSIP.
         sip_file = os.path.join(name, name + 'mod.sip')

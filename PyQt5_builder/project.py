@@ -38,6 +38,9 @@ class PyQt5Project(Project):
 
         super().__init__(**kwargs)
 
+        # __init__.py should be installed by the PyQt5 package.
+        self.dunder_init = False
+
         # These can be overridden in pyproject.toml but not by the user on the
         # command line.
         self.sip_files_dir = os.path.abspath('sip')

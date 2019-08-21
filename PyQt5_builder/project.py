@@ -113,7 +113,7 @@ class PyQt5Project(Project):
     def get_builder(self):
         """ Get the project builder. """
 
-        from .qmake_builder import QmakeBuilder
+        from .builder import QmakeBuilder
 
         return QmakeBuilder(self)
 

@@ -121,8 +121,17 @@ class PyQt5Bindings(Bindings):
         the bindings are buildable.
         """
 
-        # We can't use an ABC because this is optional.
-        raise NotImplementedError
+        # This default implementation assumes that the output is a list of
+        # disabled features.
+
+        if test_output:
+            self.project.progress(
+                    "Disabled {} bindings features: {}.".format(self.name,
+                            ', '.join(test_output)))
+
+            self.disabled_features.extend(test_output)
+
+        return True
 
     def is_buildable(self):
         """ Return True of the bindings are buildable. """
@@ -219,6 +228,6 @@ class PyQt5Bindings(Bindings):
 
         # Read the details.
         with open(out_file) as f:
-            test_output = f.read().split('\n')
+            test_output = f.read().strip()
 
-        return test_output
+        return test_output.split('\n') if test_output else []

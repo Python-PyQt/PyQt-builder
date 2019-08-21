@@ -24,8 +24,15 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-# Publish the API.
-from .bindings import PyQt5Bindings, PyQt5BindingsMetadata
-from .buildable import QmakeBuildable
-from .builder import QmakeBuilder
-from .project import PyQt5Project
+from sip5.builder import Buildable
+
+
+class QmakeBuildable(Buildable):
+    """ A buildable encapsulating a directory containing a qmake .pro file. """
+
+    def __init__(self, name, pro_dir):
+        """ Initialise the buildable. """
+
+        super().__init__(name)
+
+        self.pro_dir = pro_dir

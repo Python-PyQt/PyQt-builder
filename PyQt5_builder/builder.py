@@ -28,9 +28,10 @@ import os
 import subprocess
 import sys
 
-from sip5.builder import (Builder, Option, Project, PyProjectOptionException,
-        UserException)
+from sip5.builder import (BuildableModule, Builder, Option, Project,
+        PyProjectOptionException, UserException)
 
+from .buildable import QmakeBuildable
 
 class QmakeBuilder(Builder):
     """ A project builder that uses qmake as the underlying build system. """
@@ -78,9 +79,19 @@ class QmakeBuilder(Builder):
         subdirs = []
 
         for buildable in project.buildables:
-            self._generate_module_pro_file(buildable, target_dir, installed)
-            subdirs.append(
-                    os.path.relpath(buildable.sources_dir, project.build_dir))
+            if isinstance(buildable, QmakeBuildable):
+                subdirs.append(
+                        os.path.relpath(buildable.pro_dir, project.build_dir))
+            elif isinstance(buildable, BuildableModule):
+                self._generate_module_pro_file(buildable, target_dir,
+                        installed)
+                subdirs.append(
+                        os.path.relpath(buildable.sources_dir,
+                                project.build_dir))
+            else:
+                raise UserException(
+                        "QmakeBuilder cannot build '{0}' buildables".format(
+                                type(buildable).__name__))
 
         # Create the top-level .pro file.
         project.progress("Generating the top-level .pro file")
@@ -334,7 +345,7 @@ class QmakeBuilder(Builder):
         project = self.project
 
         project.progress(
-                "Generating the .pro file for the '{0}' module".format(
+                "Generating the .pro file for the {0} module".format(
                             buildable.name))
 
         pro_lines = ['TEMPLATE = lib']

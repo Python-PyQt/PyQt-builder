@@ -127,6 +127,10 @@ class PyQt5Bindings(Bindings):
     def is_buildable(self):
         """ Return True of the bindings are buildable. """
 
+        self.project.progress(
+                "Checking to see if the {0} bindings can be built".format(
+                        self.name))
+
         test_exe = self._compile_test_program()
         if test_exe is None:
             return False

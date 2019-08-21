@@ -34,7 +34,8 @@ class PyQt5BindingsMetadata:
     """ This class encapsulates the meta-data about a set of PyQt5 bindings.
     """
 
-    def __init__(self, name, *, qmake_QT=None, qpy_lib=False, cpp11=False, internal=False):
+    def __init__(self, name, *, qmake_QT=None, qpy_lib=False, cpp11=False,
+            test_headers=None, test_call=None, internal=False):
         """ Initialise the meta-data. """
 
         # The name of the bindings.
@@ -48,6 +49,12 @@ class PyQt5BindingsMetadata:
 
         # Set if C++11 support is required.
         self.cpp11 = cpp11
+
+        # The header files to #include in a standard configuration test.
+        self.test_headers = [test_headers] if isinstance(test_headers, str) else test_headers
+
+        # The callable to call in a standard configuration test.
+        self.test_call = test_call
 
         # Set if the module is internal.
         self.internal = internal
@@ -114,7 +121,22 @@ class PyQt5Bindings(Bindings):
         be a file containing the test source code which must also be executed.
         """
 
-        return None
+        # This default implementation uses the information in the meta-data.
+
+        metadata = self.metadata
+
+        if metadata.test_headers is None or metadata.test_call is None:
+            return None
+
+        includes = ['#include<{}>'.format(h) for h in metadata.test_headers]
+
+        return '''%s
+
+int main(int, char **)
+{
+    %s;
+}
+''' % ('\n'.join(includes), metadata.test_call)
 
     def handle_test_output(self, test_output):
         """ Handle the output of any external test program and return True if

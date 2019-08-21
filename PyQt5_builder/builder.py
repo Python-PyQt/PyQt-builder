@@ -59,7 +59,7 @@ class QmakeBuilder(Builder):
             # Now apply defaults for any options that depend on the Qt
             # configuration.
             if self.spec is None:
-                self.spec = self._qt_configuration['QMAKE_SPEC']
+                self.spec = self.qt_configuration['QMAKE_SPEC']
 
                 # The binary OS/X Qt installer used to default to XCode.  If so
                 # then use macx-clang.
@@ -269,7 +269,7 @@ class QmakeBuilder(Builder):
 
         # If the spec is the same as the default then we don't need to specify
         # it.
-        if self.spec != self._qt_configuration['QMAKE_SPEC']:
+        if self.spec != self.qt_configuration['QMAKE_SPEC']:
             args.append('-spec')
             args.append(self.spec)
 
@@ -487,7 +487,7 @@ target.files = %s
 
         self.project.progress("Querying qmake about your Qt installation")
 
-        self._qt_configuration = {}
+        self.qt_configuration = {}
 
         pipe = self._open_command_pipe(self.qmake + ' -query')
 
@@ -508,14 +508,14 @@ target.files = %s
 
             name = name.replace('/', '_')
 
-            self._qt_configuration[name] = value
+            self.qt_configuration[name] = value
 
         self._close_command_pipe(pipe)
 
         # Get the Qt version.
         self.qt_version = 0
         try:
-            qt_version_str = self._qt_configuration['QT_VERSION']
+            qt_version_str = self.qt_configuration['QT_VERSION']
             for v in qt_version_str.split('.'):
                 self.qt_version <<= 8
                 self.qt_version += int(v)

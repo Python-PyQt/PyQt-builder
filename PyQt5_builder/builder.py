@@ -32,6 +32,8 @@ from sip5.builder import (BuildableModule, Builder, Option, Project,
         PyProjectOptionException, UserException)
 
 from .buildable import QmakeBuildable
+from .installable import QmakeTargetInstallable
+
 
 class QmakeBuilder(Builder):
     """ A project builder that uses qmake as the underlying build system. """
@@ -417,13 +419,8 @@ target.files = %s
 
             pro_lines.extend(shared.split('\n'))
 
-        install_dir = os.path.join(target_dir, buildable.get_install_dir())
-
-        pro_lines.append(
-                'target.path = {}'.format(install_dir.replace('\\', '/')))
-        pro_lines.append('INSTALLS += target')
-
-        installed.append(os.path.join(install_dir, module))
+        buildable.installables.append(
+                QmakeTargetInstallable(module, buildable.get_install_dir()))
 
         # This optimisation could apply to other platforms.
         if 'linux' in self.spec and not buildable.static:
@@ -533,18 +530,19 @@ target.files = %s
         installed files.
         """
 
+        installable.install(target_dir, installed, do_install=False)
+
         pro_lines.append(
                 '{}.path = {}'.format(installable.name,
                         installable.get_full_target_dir(target_dir).replace(
                                 '\\', '/')))
 
-        files = [fn.replace('\\', '/') for fn in installable.files]
-        pro_lines.append(
-                '{}.files = {}'.format(installable.name, ' '.join(files)))
+        if not isinstance(installable, QmakeTargetInstallable):
+            files = [fn.replace('\\', '/') for fn in installable.files]
+            pro_lines.append(
+                    '{}.files = {}'.format(installable.name, ' '.join(files)))
 
         pro_lines.append('INSTALLS += {}'.format(installable.name))
-
-        installable.install(target_dir, installed, do_install=False)
 
     @staticmethod
     def _is_exe(exe_path):

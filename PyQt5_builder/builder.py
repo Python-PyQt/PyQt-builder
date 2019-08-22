@@ -82,6 +82,10 @@ class QmakeBuilder(Builder):
 
         for buildable in project.buildables:
             if isinstance(buildable, QmakeBuildable):
+                for installable in buildable.installables:
+                    installable.install(target_dir, installed,
+                            do_install=False)
+
                 subdirs.append(
                         os.path.relpath(buildable.pro_dir, project.build_dir))
             elif isinstance(buildable, BuildableModule):

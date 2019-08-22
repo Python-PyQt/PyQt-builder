@@ -200,16 +200,10 @@ class QmakeBuilder(Builder):
 
         project = self.project
 
-        cmd = ' '.join(args)
-
-        pipe = project.open_command_pipe(cmd, and_stderr=True)
-
         # Read stdout and stderr until there is no more output.
-        for line in pipe.stdout:
-            if self.project.verbose:
-                sys.stdout.write(str(line, encoding=sys.stdout.encoding))
-
-        return project.close_command_pipe(pipe)
+        for line in project.read_command_pipe(' '.join(args), and_stderr=True):
+            if project.verbose:
+                sys.stdout.write(line)
 
     def run_make(self, exe, makefile_name, debug):
         """ Run make against a Makefile to create an executable.  Returns the
@@ -367,7 +361,7 @@ class QmakeBuilder(Builder):
         # Work around QTBUG-39300.
         pro_lines.append('CONFIG -= android_install')
 
-        # Add any bindings-specific settings.
+        # Add any buildable-specific settings.
         pro_lines.extend(buildable.builder_settings)
 
         # Add any user-supplied settings.
@@ -485,10 +479,7 @@ target.files = %s
 
         self.qt_configuration = {}
 
-        pipe = project.open_command_pipe(self.qmake + ' -query')
-
-        for line in pipe.stdout:
-            line = str(line, encoding=sys.stdout.encoding)
+        for line in project.read_command_pipe(self.qmake + ' -query'):
             line = line.strip()
 
             tokens = line.split(':', maxsplit=1)
@@ -505,8 +496,6 @@ target.files = %s
             name = name.replace('/', '_')
 
             self.qt_configuration[name] = value
-
-        project.close_command_pipe(pipe)
 
         # Get the Qt version.
         self.qt_version = 0
@@ -575,14 +564,8 @@ target.files = %s
 
         saved_cwd = os.getcwd()
         os.chdir(project.build_dir)
-        rc = self.run_command(args)
+        self.run_command(args)
         os.chdir(saved_cwd)
-
-        if rc != 0:
-            raise UserException(
-                    "Project {0} failed with '{1}' returning {2}".format(
-                            "installation" if install else "compilation", make,
-                            rc))
 
     def _write_pro_file(self, pro_fn, pro_lines):
         """ Write a .pro file. """

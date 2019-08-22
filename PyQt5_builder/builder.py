@@ -25,7 +25,6 @@
 
 
 import os
-import subprocess
 import sys
 
 from sip5.builder import (BuildableModule, Builder, Option, Project,
@@ -199,19 +198,18 @@ class QmakeBuilder(Builder):
     def run_command(self, args):
         """ Run a command and display the output if requested. """
 
+        project = self.project
+
         cmd = ' '.join(args)
 
-        if self.project.verbose:
-            print(cmd)
-
-        pipe = self._open_command_pipe(cmd, and_stderr=True)
+        pipe = project.open_command_pipe(cmd, and_stderr=True)
 
         # Read stdout and stderr until there is no more output.
         for line in pipe.stdout:
             if self.project.verbose:
                 sys.stdout.write(str(line, encoding=sys.stdout.encoding))
 
-        return self._close_command_pipe(pipe)
+        return project.close_command_pipe(pipe)
 
     def run_make(self, exe, makefile_name, debug):
         """ Run make against a Makefile to create an executable.  Returns the
@@ -304,12 +302,6 @@ class QmakeBuilder(Builder):
             os.chdir(cwd)
 
         return True
-
-    @staticmethod
-    def _close_command_pipe(pipe):
-        """ Close the pipe returned by _open_command_pipe(). """
-
-        return pipe.wait()
 
     @classmethod
     def _find_exe(cls, exe):
@@ -487,11 +479,13 @@ target.files = %s
     def _get_qt_configuration(self):
         """ Run qmake to get the details of the Qt configuration. """
 
-        self.project.progress("Querying qmake about your Qt installation")
+        project = self.project
+
+        project.progress("Querying qmake about your Qt installation")
 
         self.qt_configuration = {}
 
-        pipe = self._open_command_pipe(self.qmake + ' -query')
+        pipe = project.open_command_pipe(self.qmake + ' -query')
 
         for line in pipe.stdout:
             line = str(line, encoding=sys.stdout.encoding)
@@ -512,7 +506,7 @@ target.files = %s
 
             self.qt_configuration[name] = value
 
-        self._close_command_pipe(pipe)
+        project.close_command_pipe(pipe)
 
         # Get the Qt version.
         self.qt_version = 0
@@ -554,15 +548,6 @@ target.files = %s
         """ Return True if an executable exists. """
 
         return os.access(exe_path, os.X_OK)
-
-    @staticmethod
-    def _open_command_pipe(cmd, and_stderr=False):
-        """ Return a pipe from which a command's output can be read. """
-
-        stderr = subprocess.STDOUT if and_stderr else subprocess.PIPE
-
-        return subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE, stderr=stderr)
 
     @staticmethod
     def _remove_file(fname):

@@ -429,7 +429,8 @@ target.files = %s
         # This optimisation could apply to other platforms.
         if 'linux' in self.spec and not buildable.static:
             exp = project.open_for_writing(
-                    os.path.join(buildable.name, buildable.name + '.exp'))
+                    os.path.join(buildable.sources_dir,
+                    buildable.name + '.exp'))
             exp.write('{ global: PyInit_%s; local: *; };' % buildable.name)
             exp.close()
 

@@ -333,7 +333,7 @@ class QmakeBuilder(Builder):
 
         project.progress(
                 "Generating the .pro file for the {0} module".format(
-                            buildable.name))
+                            buildable.target))
 
         buildable.make_names_relative()
 
@@ -364,7 +364,7 @@ class QmakeBuilder(Builder):
         # Add any user-supplied settings.
         pro_lines.extend(self.qmake_settings)
 
-        pro_lines.append('TARGET = {}'.format(buildable.name))
+        pro_lines.append('TARGET = {}'.format(buildable.target))
 
         # Qt (when built with MinGW) assumes that stack frames are 16 byte
         # aligned because it uses SSE.  However the Python Windows installers
@@ -375,7 +375,7 @@ class QmakeBuilder(Builder):
             pro_lines.append('QMAKE_CXXFLAGS += -mstackrealign')
 
         # Get the name of the extension module file.
-        module = buildable.name
+        module = buildable.target
 
         if project.py_platform == 'win32' and project.py_debug:
             module += '_d'

@@ -176,6 +176,9 @@ class QmakeBuilder(Builder):
     def qmake_quote(path):
         """ Return a path quoted for qmake if it contains spaces. """
 
+        # Also convert to Unix path separators.
+        path = path.replace('\\', '/')
+
         if ' ' in path:
             path = '$$quote({})'.format(path)
 
@@ -454,8 +457,11 @@ target.files = %s
         if libs:
             pro_lines.append('LIBS += {}'.format(' '.join(libs)))
 
-        pro_lines.append('HEADERS = {}'.format(' '.join(buildable.headers)))
-        pro_lines.append('SOURCES = {}'.format(' '.join(buildable.sources)))
+        headers = [self.qmake_quote(f) for f in buildable.headers]
+        pro_lines.append('HEADERS = {}'.format(' '.join(headers)))
+
+        sources = [self.qmake_quote(f) for f in buildable.sources]
+        pro_lines.append('SOURCES = {}'.format(' '.join(sources)))
 
         # Add any installables from the buildable.
         for installable in buildable.installables:

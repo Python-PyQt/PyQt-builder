@@ -115,14 +115,33 @@ class QmakeBuilder(Builder):
 
         inventory.close()
 
+        args = ['sip5-distinfo']
+
+        args.append('--project-root')
+        args.append(project.root_dir)
+
+        args.append('--generator')
+        args.append(os.path.basename(sys.argv[0]))
+
+        args.append('--prefix')
+        args.append('\\"$(INSTALL_ROOT)\\"')
+
+        args.append('--inventory')
+        args.append(inventory_fn)
+
+        if project.wheel is not None:
+            args.append('--wheel-tag')
+            args.append(project.wheel.tag)
+
+            for ep in project.wheel.console_scripts:
+                args.append('--console-script')
+                args.append(ep.replace(' ', ''))
+
+        args.append(self.qmake_quote(project.get_distinfo_name(target_dir)))
+
+        pro_lines.append('distinfo.extra = {}'.format(' '.join(args)))
         pro_lines.append(
-                'distinfo.extra = sip5-distinfo --project-root {} --generator {} --prefix \\"$(INSTALL_ROOT)\\" --inventory {} {}'.format(
-                        project.root_dir, os.path.basename(sys.argv[0]),
-                        inventory_fn,
-                        project.get_distinfo_name(target_dir).replace('\\',
-                                '/')))
-        pro_lines.append(
-                'distinfo.path = {}/{}'.format(target_dir.replace('\\', '/'),
+                'distinfo.path = {}/{}'.format(self.qmake_quote(target_dir),
                         project.name))
         pro_lines.append('INSTALLS += distinfo')
 

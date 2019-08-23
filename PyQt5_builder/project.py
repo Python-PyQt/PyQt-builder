@@ -135,10 +135,12 @@ class PyQt5Project(Project):
         options.append(
                 Option('link_full_dll', option_type=bool,
                         help="on Windows link against the full Python DLL "
-                                "rather than the limited API DLL"))
+                                "rather than the limited API DLL",
+                        tools='build install wheel'))
 
         options.append(
                 Option('qml_debug', option_type=bool,
-                        help="enable the QML debugging infrastructure"))
+                        help="enable the QML debugging infrastructure",
+                        tools='build install wheel'))
 
         return options

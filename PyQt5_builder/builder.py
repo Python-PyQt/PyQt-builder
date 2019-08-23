@@ -27,10 +27,9 @@
 import os
 import sys
 
-from sip5.builder import (BuildableModule, Builder, Option, Project,
+from sip5.builder import (Buildable, BuildableModule, Builder, Option, Project,
         PyProjectOptionException, UserException)
 
-from .buildable import QmakeBuildable
 from .installable import QmakeTargetInstallable
 
 
@@ -80,23 +79,19 @@ class QmakeBuilder(Builder):
         subdirs = []
 
         for buildable in project.buildables:
-            if isinstance(buildable, QmakeBuildable):
+            if isinstance(buildable, BuildableModule):
+                self._generate_module_pro_file(buildable, target_dir,
+                        installed)
+            elif type(buildable) is Buildable:
                 for installable in buildable.installables:
                     installable.install(target_dir, installed,
                             do_install=False)
-
-                subdirs.append(
-                        os.path.relpath(buildable.pro_dir, project.build_dir))
-            elif isinstance(buildable, BuildableModule):
-                self._generate_module_pro_file(buildable, target_dir,
-                        installed)
-                subdirs.append(
-                        os.path.relpath(buildable.sources_dir,
-                                project.build_dir))
             else:
                 raise UserException(
                         "QmakeBuilder cannot build '{0}' buildables".format(
                                 type(buildable).__name__))
+
+            subdirs.append(buildable.name)
 
         # Create the top-level .pro file.
         project.progress("Generating the top-level .pro file")
@@ -330,8 +325,8 @@ class QmakeBuilder(Builder):
         return make
 
     def _generate_module_pro_file(self, buildable, target_dir, installed):
-        """ Generate the .pro file for an extension module is the buildable's
-        sources directory.  The list of installed files is updated.
+        """ Generate the .pro file for an extension module.  The list of
+        installed files is updated.
         """
 
         project = self.project
@@ -339,6 +334,8 @@ class QmakeBuilder(Builder):
         project.progress(
                 "Generating the .pro file for the {0} module".format(
                             buildable.name))
+
+        buildable.make_names_relative()
 
         pro_lines = ['TEMPLATE = lib']
 
@@ -410,13 +407,12 @@ target.files = %s
             pro_lines.extend(shared.split('\n'))
 
         buildable.installables.append(
-                QmakeTargetInstallable(module, buildable.get_install_dir()))
+                QmakeTargetInstallable(module, buildable.get_install_subdir()))
 
         # This optimisation could apply to other platforms.
         if 'linux' in self.spec and not buildable.static:
             exp = project.open_for_writing(
-                    os.path.join(buildable.sources_dir,
-                    buildable.name + '.exp'))
+                    os.path.join(buildable.build_dir, buildable.name + '.exp'))
             exp.write('{ global: PyInit_%s; local: *; };' % buildable.name)
             exp.close()
 
@@ -467,7 +463,7 @@ target.files = %s
 
         # Write the .pro file.
         self._write_pro_file(
-                os.path.join(buildable.sources_dir, buildable.name + '.pro'),
+                os.path.join(buildable.build_dir, buildable.name + '.pro'),
                 pro_lines)
 
     def _get_qt_configuration(self):

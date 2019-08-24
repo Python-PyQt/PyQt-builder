@@ -69,7 +69,7 @@ class QmakeBuilder(Builder):
 
         super().apply_defaults(tool)
 
-    def build_project(self, target_dir):
+    def build_project(self, target_dir, wheel=None):
         """ Build the project. """
 
         project = self.project
@@ -129,13 +129,13 @@ class QmakeBuilder(Builder):
         args.append('--inventory')
         args.append(inventory_fn)
 
-        if project.wheel is not None:
+        if wheel is not None:
             args.append('--wheel-tag')
-            args.append(project.wheel.tag)
+            args.append(wheel.tag)
 
-            for ep in project.wheel.console_scripts:
-                args.append('--console-script')
-                args.append(ep.replace(' ', ''))
+        for ep in project.console_scripts:
+            args.append('--console-script')
+            args.append(ep.replace(' ', ''))
 
         args.append(self.qmake_quote(project.get_distinfo_name(target_dir)))
 
@@ -185,7 +185,7 @@ class QmakeBuilder(Builder):
 
         return options
 
-    def install_project(self, target_dir):
+    def install_project(self, target_dir, wheel=None):
         """ Install the project into a target directory. """
 
         # Run make install to install the bindings.

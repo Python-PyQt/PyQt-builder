@@ -212,17 +212,7 @@ class QmakeBuilder(Builder):
 
         return path
 
-    def run_command(self, args):
-        """ Run a command and display the output if requested. """
-
-        project = self.project
-
-        # Read stdout and stderr until there is no more output.
-        for line in project.read_command_pipe(' '.join(args), and_stderr=True):
-            if project.verbose:
-                sys.stdout.write(line)
-
-    def run_make(self, exe, makefile_name, debug):
+    def run_make(self, exe, makefile_name, debug, fatal=True):
         """ Run make against a Makefile to create an executable.  Returns the
         platform specific name of the executable, or None if an executable
         wasn't created.
@@ -256,7 +246,7 @@ class QmakeBuilder(Builder):
         if makefile_target is not None:
             args.append(makefile_target)
 
-        self.run_command(args)
+        project.run_command(args, fatal=fatal)
 
         return platform_exe if os.path.isfile(platform_exe) else None
 
@@ -297,7 +287,7 @@ class QmakeBuilder(Builder):
 
         args.append(pro_file)
 
-        self.run_command(args)
+        self.project.run_command(args, fatal=fatal)
 
         # Check that the Makefile was created.
         if not os.path.isfile(mf_name):
@@ -585,7 +575,7 @@ target.files = %s
 
         saved_cwd = os.getcwd()
         os.chdir(project.build_dir)
-        self.run_command(args)
+        project.run_command(args)
         os.chdir(saved_cwd)
 
     def _write_pro_file(self, pro_fn, pro_lines):

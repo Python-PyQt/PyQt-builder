@@ -221,7 +221,7 @@ int main(int, char **)
         if not builder.run_qmake(test_pro, makefile_name=test_makefile, fatal=False):
             return None
 
-        return builder.run_make(test, test_makefile, self.debug)
+        return builder.run_make(test, test_makefile, self.debug, fatal=False)
 
     @staticmethod
     def _matching_files(pattern):
@@ -242,7 +242,7 @@ int main(int, char **)
         except OSError:
             pass
 
-        self.project.builder.run_command([test_exe, out_file])
+        self.project.run_command([test_exe, out_file], fatal=False)
 
         if not os.path.isfile(out_file):
             raise UserException(

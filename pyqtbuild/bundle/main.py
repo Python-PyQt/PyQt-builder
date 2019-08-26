@@ -22,9 +22,9 @@
 
 
 from argparse import ArgumentParser
-from sip5.builder import handle_exception
+from sipbuild import handle_exception
 
-from ..version import PYQT5_BUILDER_VERSION_STR
+from ..version import PYQTBUILD_VERSION_STR
 
 from .bundle import bundle
 
@@ -37,7 +37,7 @@ def main():
             description="Bundle a Qt installation with a wheel.")
 
     parser.add_argument('-V', '--version', action='version',
-            version=PYQT5_BUILDER_VERSION_STR)
+            version=PYQTBUILD_VERSION_STR)
 
     parser.add_argument('--qt-dir', metavar='DIR', required=True,
             help="the Qt installation in DIR to be bundled with the wheel")

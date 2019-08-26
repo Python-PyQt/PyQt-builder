@@ -24,18 +24,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from sip5.builder import Installable
-
-
-class QmakeTargetInstallable(Installable):
-    """ An installable for the TARGET of a .pro file.  A TARGET is installed
-    automatically but this captures the information needed for the .dist-info
-    directory.
-    """
-
-    def __init__(self, target, target_subdir):
-        """ Initialise the installable. """
-
-        super().__init__('target', target_subdir=target_subdir)
-
-        self.files.append(target)
+# Publish the API.
+from .bindings import PyQtBindings, PyQtBindingsMetadata
+from .builder import QmakeBuilder
+from .installable import QmakeTargetInstallable
+from .project import PyQtProject

@@ -27,24 +27,23 @@
 import os
 import sys
 
-from sip5.builder import Option, Project
+from sipbuild import Option, Project
 
 
-class PyQt5Project(Project):
-    """ Encapsulate a PyQt5 based project. """
+class PyQtProject(Project):
+    """ Encapsulate a PyQt based project. """
 
     def __init__(self, **kwargs):
         """ Initialise the project. """
 
         super().__init__(**kwargs)
 
-        # __init__.py should be installed by the PyQt5 package.
+        # __init__.py should be installed by the main PyQt package.
         self.dunder_init = False
 
         # These can be overridden in pyproject.toml but not by the user on the
         # command line.
         self.sip_files_dir = os.path.abspath('sip')
-        self.sip_module = 'PyQt5.sip'
 
     def apply_defaults(self, tool):
         """ Set default values for options that haven't been set yet. """

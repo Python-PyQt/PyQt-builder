@@ -27,7 +27,7 @@
 import os
 import sys
 
-from sip5.builder import (Buildable, BuildableModule, Builder, Option, Project,
+from sipbuild import (Buildable, BuildableModule, Builder, Option, Project,
         PyProjectOptionException, UserException)
 
 from .installable import QmakeTargetInstallable
@@ -115,7 +115,7 @@ class QmakeBuilder(Builder):
 
         inventory.close()
 
-        args = ['sip5-distinfo']
+        args = ['sip-distinfo']
 
         args.append('--project-root')
         args.append(project.root_dir)

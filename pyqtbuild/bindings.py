@@ -27,11 +27,11 @@
 import glob
 import os
 
-from sip5.builder import Bindings, UserException
+from sipbuild import Bindings, UserException
 
 
-class PyQt5BindingsMetadata:
-    """ This class encapsulates the meta-data about a set of PyQt5 bindings.
+class PyQtBindingsMetadata:
+    """ This class encapsulates the meta-data about a set of PyQt bindings.
     """
 
     def __init__(self, name, *, qmake_QT=None, qpy_lib=False, cpp11=False,
@@ -60,8 +60,8 @@ class PyQt5BindingsMetadata:
         self.internal = internal
 
 
-class PyQt5Bindings(Bindings):
-    """ A base class for all PyQt5-based bindings. """
+class PyQtBindings(Bindings):
+    """ A base class for all PyQt-based bindings. """
 
     # The bindings meta-data.
     metadata = None

@@ -31,7 +31,7 @@ from setuptools import find_packages, setup
 
 
 # Get the version number.
-version_file_name = os.path.join('PyQt5_builder', 'version.py')
+version_file_name = os.path.join('pyqtbuild', 'version.py')
 try:
     version_file = open(version_file_name)
     version = version_file.read().strip().split('\n')[1].split()[-1][1:-1]
@@ -41,21 +41,21 @@ except FileNotFoundError:
     version = '0.1.0.dev0'
     version_file = open(version_file_name, 'w')
     version_file.write(
-            'PYQT5_BUILDER_VERSION = 0\nPYQT5_BUILDER_VERSION_STR = \'%s\'\n' %
+            'PYQTBUILD_VERSION = 0\nPYQTBUILD_VERSION_STR = \'%s\'\n' %
                     version)
     version_file.close()
 
 # Do the setup.
 setup(
-        name='PyQt5-builder',
+        name='PyQt-builder',
         version=version,
         license='BSD',
         python_requires='>=3.5',
-        # Comment when sip v5 is released.
-        #install_requires=['sip >=5.0, <5.1'],
+        # Update when sip v5 is released.
+        #install_requires=['sip >=5, <6'],
         packages=find_packages(),
-        entry_points={
-            'console_scripts': [
-                    'pyqt5-bundle = PyQt5_builder.bundle.main:main']
-        }
+        #entry_points={
+        #    'console_scripts': [
+        #            'pyqt-bundle = pyqtbuild.bundle.main:main']
+        #}
      )

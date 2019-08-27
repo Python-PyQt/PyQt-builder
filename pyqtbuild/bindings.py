@@ -116,28 +116,6 @@ class PyQtBindings(Bindings):
                 builder_settings=builder_settings, headers=headers,
                 include_dirs=include_dirs, sources=sources)
 
-    def get_test_source_code(self):
-        """ Return the test source code.  If None is returned then there must
-        be a file containing the test source code which must also be executed.
-        """
-
-        # This default implementation uses the information in the meta-data.
-
-        metadata = self.metadata
-
-        if metadata.test_headers is None or metadata.test_call is None:
-            return None
-
-        includes = ['#include<{}>'.format(h) for h in metadata.test_headers]
-
-        return '''%s
-
-int main(int, char **)
-{
-    %s;
-}
-''' % ('\n'.join(includes), metadata.test_call)
-
     def handle_test_output(self, test_output):
         """ Handle the output of any external test program and return True if
         the bindings are buildable.
@@ -158,17 +136,22 @@ int main(int, char **)
     def is_buildable(self):
         """ Return True of the bindings are buildable. """
 
+        # See if there is a test program to run.  If no tthen defer to the
+        # super-class.
+        test_source_path, run_test = self._get_test_cpp_file()
+        if test_source_path is None:
+            return super().is_buildable()
+
         self.project.progress(
                 "Checking to see if the {0} bindings can be built".format(
                         self.name))
 
-        test_exe = self._compile_test_program()
+        test_exe = self._compile_test_program(test_source_path)
         if test_exe is None:
             return False
 
-        # If there was no external test program then the bindings are
-        # buildable.
-        if self.get_test_source_code() is not None:
+        # If the test doesn't need to be run then the bindings are buildable.
+        if not run_test:
             return True
 
         # Run the external test program.
@@ -176,9 +159,9 @@ int main(int, char **)
 
         return self.handle_test_output(test_output)
 
-    def _compile_test_program(self):
-        """ Compile the bindings's test program and return the name of the
-        resulting executable or None if the compilation failed.
+    def _compile_test_program(self, test_source_path):
+        """ Compile a test program and return the name of the resulting
+        executable or None if the compilation failed.
         """
 
         project = self.project
@@ -188,19 +171,6 @@ int main(int, char **)
         test = 'cfgtest_' + self.name
         test_pro = test + '.pro'
         test_makefile = test + '.mk'
-        test_source = test + '.cpp'
-
-        # See if there is an external test program.
-        test_source_code = self.get_test_source_code()
-        if test_source_code is None:
-            test_source_path = os.path.join(project.root_dir, 'config-tests',
-                    test_source)
-        else:
-            test_source_path = os.path.join(project.build_dir, test_source)
-
-            tf = project.open_for_writing(test_source_path)
-            tf.write(test_source_code)
-            tf.close()
 
         # Create the .pro file.
         pro_lines = []
@@ -222,6 +192,49 @@ int main(int, char **)
             return None
 
         return builder.run_make(test, test_makefile, self.debug, fatal=False)
+
+    def _get_test_cpp_file(self):
+        """ Return 2-tuple of the name of a C++ source file that implements
+        module-specific tests and a flag saying if the compiled test program
+        should be run and its output processed.  If the source filename is None
+        then there is no test to compile.
+        """
+
+        test = 'cfgtest_' + self.name
+        test_source = test + '.cpp'
+
+        # See if there is an external test program.
+        test_source_path = os.path.join(project.root_dir, 'config-tests',
+                test_source)
+        if os.path.isfile(test_source_path):
+            # External test progarms are always run.
+            return test_source_path, True
+
+        # See if there is an internal test program.
+        metadata = self.metadata
+
+        if metadata.test_headers is None or metadata.test_call is None:
+            return None, False
+
+        # Save the test to a file.
+        includes = ['#include<{}>'.format(h) for h in metadata.test_headers]
+
+        source_text = '''%s
+
+int main(int, char **)
+{
+    %s;
+}
+''' % ('\n'.join(includes), metadata.test_call)
+
+        test_source_path = os.path.join(project.build_dir, test_source)
+
+        tf = project.open_for_writing(test_source_path)
+        tf.write(source_text)
+        tf.close()
+
+        # Internal test programs are never run.
+        return test_source_path, False
 
     @staticmethod
     def _matching_files(pattern):

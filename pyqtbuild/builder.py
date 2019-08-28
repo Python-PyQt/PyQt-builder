@@ -39,7 +39,12 @@ class QmakeBuilder(Builder):
     def apply_defaults(self, tool):
         """ Set default values for options that haven't been set yet. """
 
-        if tool != 'sdist':
+        if tool == 'sdist':
+            # Make sure all documented attributes have a value even if they are
+            # not applicalbe in this context.
+            self.qt_version = 0
+            self.qt_version_tag = ''
+        else:
             # Check we have a qmake.
             if self.qmake is None:
                 self.qmake = self._find_exe('qmake')
@@ -141,8 +146,7 @@ class QmakeBuilder(Builder):
 
         pro_lines.append('distinfo.extra = {}'.format(' '.join(args)))
         pro_lines.append(
-                'distinfo.path = {}/{}'.format(self.qmake_quote(target_dir),
-                        project.name))
+                'distinfo.path = {}'.format(self.qmake_quote(target_dir)))
         pro_lines.append('INSTALLS += distinfo')
 
         pro_name = os.path.join(project.build_dir, project.name + '.pro')
@@ -523,6 +527,20 @@ target.files = %s
             raise UserException(
                     "Qt v5.6 or later is required and you seem to be using "
                             "v{0}".format(qt_version_str))
+
+        # Convert the version number to what would be used in a tag.
+        major = (self.qt_version >> 16) & 0xff
+        minor = (self.qt_version >> 8) & 0xff
+        patch = self.qt_version & 0xff
+
+        # Qt v5.12.4 was the last release where we updated for a patch version.
+        if (major, minor) >= (5, 13):
+            patch = 0
+        elif (major, minor) == (5, 12):
+            if patch > 4:
+                patch = 4
+
+        self.qt_version_tag = '{}_{}_{}'.format(major, minor, patch)
 
     def _install(self, pro_lines, installed, installable, target_dir):
         """ Add the lines to install files to a .pro file and a list of all

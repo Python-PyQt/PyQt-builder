@@ -27,94 +27,73 @@
 import glob
 import os
 
-from sipbuild import Bindings, UserException
-
-
-class PyQtBindingsMetadata:
-    """ This class encapsulates the meta-data about a set of PyQt bindings.
-    """
-
-    def __init__(self, name, *, qmake_QT=None, qpy_lib=False, cpp11=False,
-            test_headers=None, test_call=None, internal=False):
-        """ Initialise the meta-data. """
-
-        # The name of the bindings.
-        self.name = name
-
-        # The values to update qmake's QT variable.
-        self.qmake_QT = [] if qmake_QT is None else qmake_QT
-
-        # Set if there is a qpy support library.
-        self.qpy_lib = qpy_lib
-
-        # Set if C++11 support is required.
-        self.cpp11 = cpp11
-
-        # The header files to #include in a standard configuration test.
-        self.test_headers = [test_headers] if isinstance(test_headers, str) else test_headers
-
-        # The callable to call in a standard configuration test.
-        self.test_call = test_call
-
-        # Set if the module is internal.
-        self.internal = internal
+from sipbuild import Bindings, UserException, Option
 
 
 class PyQtBindings(Bindings):
     """ A base class for all PyQt-based bindings. """
 
-    # The bindings meta-data.
-    metadata = None
+    def apply_defaults(self, tool):
+        """ Set default values for options that haven't been set yet. """
 
-    def __init__(self, project):
-        """ Initialise the bindings. """
+        if self.backstops is None:
+            # Make sure any unknown Qt version gets treated as the latest Qt
+            # v5.
+            # TODO: this should not be hard-coded.  Is it even needed anymore?
+            self.backstops = ['Qt_6_0_0']
 
-        name = self.metadata.name
+        if self.sip_file is None:
+            # The (not very good) naming convention used by MetaSIP.
+            self.sip_file = os.path.join(self.name, self.name + 'mod.sip')
 
-        # The (not very good) naming convention used by MetaSIP.
-        sip_file = os.path.join(name, name + 'mod.sip')
+        if self.tags is None:
+            project = self.project
 
-        # Make sure any unknown Qt version gets treated as the latest Qt v5.
-        backstops = ['Qt_6_0_0']
+            self.tags = ['{}_{}'.format(project.tag_prefix,
+                    project.builder.qt_version_tag)]
 
-        # Set the builder-specific settings.
-        builder_settings = []
+        super().apply_defaults(tool)
 
-        if self.metadata.cpp11:
-            builder_settings.append('CONFIG += c++11')
+        self._update_builder_settings('CONFIG', self.qmake_CONFIG)
+        self._update_builder_settings('QT', self.qmake_QT)
 
-        add = []
-        remove = []
-
-        for qt in self.metadata.qmake_QT:
-            if qt.startswith('-'):
-                remove.append(qt[1:])
-            else:
-                add.append(qt)
-
-        if add:
-            builder_settings.append('QT += {}'.format(' '.join(add)))
-
-        if remove:
-            builder_settings.append('QT -= {}'.format(' '.join(remove)))
-
-        # Get the sources of any support code.
-        if self.metadata.qpy_lib:
-            qpy_dir = os.path.join(project.root_dir, 'qpy', name)
-
-            include_dirs = [qpy_dir]
+        # Add the sources of any support code.
+        qpy_dir = os.path.join(project.root_dir, 'qpy', self.name)
+        if os.path.isdir(qpy_dir):
             headers = self._matching_files(os.path.join(qpy_dir, '*.h'))
             c_sources = self._matching_files(os.path.join(qpy_dir, '*.c'))
             cpp_sources = self._matching_files(os.path.join(qpy_dir, '*.cpp'))
 
             sources = c_sources + cpp_sources
-        else:
-            headers = include_dirs = sources = []
 
-        super().__init__(project, name=name, sip_file=sip_file,
-                internal=self.metadata.internal, backstops=backstops,
-                builder_settings=builder_settings, headers=headers,
-                include_dirs=include_dirs, sources=sources)
+            self.headers.extend(headers)
+            self.sources.extend(sources)
+
+            if headers or sources:
+                self.include_dirs.append(qpy_dir)
+
+    def get_options(self):
+        """ Return the list of configurable options. """
+
+        options = super().get_options()
+
+        # The list of modifications to make to the CONFIG value in a .pro file.
+        # An element may start with '-' to specify that the value should be
+        # removed.
+        options.append(Option('qmake_CONFIG', option_type=list))
+
+        # The list of modifications to make to the QT value in a .pro file.  An
+        # element may start with '-' to specify that the value should be
+        # removed.
+        options.append(Option('qmake_QT', option_type=list))
+
+        # The list of header files to #include in any test program.
+        options.append(Option('test_headers', option_type=list))
+
+        # The statement to execute in any test program.
+        options.append(Option('test_statement'))
+
+        return options
 
     def handle_test_output(self, test_output):
         """ Handle the output of any external test program and return True if
@@ -200,6 +179,8 @@ class PyQtBindings(Bindings):
         then there is no test to compile.
         """
 
+        project = self.project
+
         test = 'cfgtest_' + self.name
         test_source = test + '.cpp'
 
@@ -211,13 +192,11 @@ class PyQtBindings(Bindings):
             return test_source_path, True
 
         # See if there is an internal test program.
-        metadata = self.metadata
-
-        if metadata.test_headers is None or metadata.test_call is None:
+        if not self.test_statement:
             return None, False
 
         # Save the test to a file.
-        includes = ['#include<{}>'.format(h) for h in metadata.test_headers]
+        includes = ['#include<{}>'.format(h) for h in self.test_headers]
 
         source_text = '''%s
 
@@ -225,7 +204,7 @@ int main(int, char **)
 {
     %s;
 }
-''' % ('\n'.join(includes), metadata.test_call)
+''' % ('\n'.join(includes), self.test_statement)
 
         test_source_path = os.path.join(project.build_dir, test_source)
 
@@ -266,3 +245,25 @@ int main(int, char **)
             test_output = f.read().strip()
 
         return test_output.split('\n') if test_output else []
+
+    def _update_builder_settings(self, name, modifications):
+        """ Update the builder settings with a list of modifications to a
+        value.
+        """
+
+        add = []
+        remove = []
+
+        for mod in modifications:
+            if mod.startswith('-'):
+                remove.append(mod[1:])
+            else:
+                add.append(mod)
+
+        if add:
+            self.builder_settings.append(
+                    '{} += {}'.format(name, ' '.join(add)))
+
+        if remove:
+            self.builder_settings.append(
+                    '{} -= {}'.format(name, ' '.join(remove)))

@@ -33,22 +33,25 @@ from sipbuild import Option, Project
 class PyQtProject(Project):
     """ Encapsulate a PyQt based project. """
 
-    def __init__(self, **kwargs):
-        """ Initialise the project. """
-
-        super().__init__(**kwargs)
-
-        # __init__.py should be installed by the main PyQt package.
-        self.dunder_init = False
-
-        # These can be overridden in pyproject.toml but not by the user on the
-        # command line.
-        self.sip_files_dir = os.path.abspath('sip')
-
     def apply_defaults(self, tool):
         """ Set default values for options that haven't been set yet. """
 
-        # We need some super-class options to be set first.
+        if self.dunder_init is None:
+            # __init__.py should be installed by the main PyQt package.
+            self.dunder_init = False
+
+        if self.sip_files_dir is None:
+            self.sip_files_dir = os.path.abspath('sip')
+
+        # The tag prefix defaults to the meta-data name without any 'Py'
+        # prefix.
+        if self.tag_prefix is None:
+            self.tag_prefix = self.metadata['name']
+
+            if self.tag_prefix.startswith('Py'):
+                self.tag_prefix = self.tag_prefix[2:]
+
+        # We need some super-class options to be set before doing the rest.
         super().apply_defaults(tool)
 
         # Get the details of the default Python interpreter library.
@@ -130,6 +133,11 @@ class PyQtProject(Project):
         # The name of the target Python interpreter library if it is a shared
         # library.
         options.append(Option('py_pylib_shlib'))
+
+        # The prefix of the version tag to use (with the Qt version
+        # automatically appended).  By default the meta-data name is used with
+        # any leading 'Py' removed.
+        options.append(Option('tag_prefix'))
 
         options.append(
                 Option('link_full_dll', option_type=bool,

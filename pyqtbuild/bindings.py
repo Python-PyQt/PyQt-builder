@@ -37,15 +37,6 @@ class PyQtBindings(Bindings):
         """ Set default values for non-user options that haven't been set yet.
         """
 
-        if self.backstops is None:
-            # Make sure any unknown Qt version gets treated as the latest Qt
-            # v5.
-            # TODO: this should not be hard-coded.  Is it even needed anymore?
-            # Calculate it as the Qt version + 1.0.0?  If so then it must be
-            # set in apply_user_defaults() as the Qt version isn't available
-            # until then.
-            self.backstops = ['Qt_6_0_0']
-
         if self.sip_file is None:
             # The (not very good) naming convention used by MetaSIP.
             self.sip_file = os.path.join(self.name, self.name + 'mod.sip')

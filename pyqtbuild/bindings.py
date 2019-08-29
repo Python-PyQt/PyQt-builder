@@ -33,13 +33,17 @@ from sipbuild import Bindings, UserException, Option
 class PyQtBindings(Bindings):
     """ A base class for all PyQt-based bindings. """
 
-    def apply_defaults(self, tool):
-        """ Set default values for options that haven't been set yet. """
+    def apply_nonuser_defaults(self, tool):
+        """ Set default values for non-user options that haven't been set yet.
+        """
 
         if self.backstops is None:
             # Make sure any unknown Qt version gets treated as the latest Qt
             # v5.
             # TODO: this should not be hard-coded.  Is it even needed anymore?
+            # Calculate it as the Qt version + 1.0.0?  If so then it must be
+            # set in apply_user_defaults() as the Qt version isn't available
+            # until then.
             self.backstops = ['Qt_6_0_0']
 
         if self.sip_file is None:
@@ -52,7 +56,7 @@ class PyQtBindings(Bindings):
             self.tags = ['{}_{}'.format(project.tag_prefix,
                     project.builder.qt_version_tag)]
 
-        super().apply_defaults(tool)
+        super().apply_nonuser_defaults(tool)
 
         self._update_builder_settings('CONFIG', self.qmake_CONFIG)
         self._update_builder_settings('QT', self.qmake_QT)

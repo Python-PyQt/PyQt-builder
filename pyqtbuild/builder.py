@@ -36,15 +36,18 @@ from .installable import QmakeTargetInstallable
 class QmakeBuilder(Builder):
     """ A project builder that uses qmake as the underlying build system. """
 
-    def apply_defaults(self, tool):
-        """ Set default values for options that haven't been set yet. """
+    def __init__(self, project, **kwargs):
+        """ Initialise the builder. """
 
-        if tool == 'sdist':
-            # Make sure all documented attributes have a value even if they are
-            # not applicalbe in this context.
-            self.qt_version = 0
-            self.qt_version_tag = ''
-        else:
+        super().__init__(project, **kwargs)
+
+        self.qt_version = 0
+        self.qt_version_tag = ''
+
+    def apply_user_defaults(self, tool):
+        """ Set default values for user options that haven't been set yet. """
+
+        if tool != 'sdist':
             # Check we have a qmake.
             if self.qmake is None:
                 self.qmake = self._find_exe('qmake')
@@ -57,8 +60,7 @@ class QmakeBuilder(Builder):
 
             self.qmake = self.quote(os.path.abspath(self.qmake))
 
-            # Use qmake to get the Qt configuration.  We do this now before
-            # Project.update() is called.
+            # Use qmake to get the Qt configuration.
             self._get_qt_configuration()
 
             # Now apply defaults for any options that depend on the Qt
@@ -72,7 +74,7 @@ class QmakeBuilder(Builder):
                     # This will exist (and we can't check anyway).
                     self.spec = 'macx-clang'
 
-        super().apply_defaults(tool)
+        super().apply_user_defaults(tool)
 
     def build_project(self, target_dir, wheel=None):
         """ Build the project. """

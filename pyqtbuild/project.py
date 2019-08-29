@@ -33,8 +33,17 @@ from sipbuild import Option, Project
 class PyQtProject(Project):
     """ Encapsulate a PyQt based project. """
 
-    def apply_defaults(self, tool):
-        """ Set default values for options that haven't been set yet. """
+    def apply_nonuser_defaults(self, tool):
+        """ Set default values for non-user options that haven't been set yet.
+        """
+
+        if self.bindings_factory is None:
+            from .bindings import PyQtBindings
+            self.bindings_factory = PyQtBindings
+
+        if self.builder_factory is None:
+            from .builder import QmakeBuilder
+            self.builder_factory = QmakeBuilder
 
         if self.dunder_init is None:
             # __init__.py should be installed by the main PyQt package.
@@ -42,6 +51,9 @@ class PyQtProject(Project):
 
         if self.sip_files_dir is None:
             self.sip_files_dir = os.path.abspath('sip')
+
+        if self.sip_module is None:
+            self.sip_module = 'PyQt{}.sip'.format(self.version.split('.')[0])
 
         # The tag prefix defaults to the meta-data name without any 'Py'
         # prefix.
@@ -51,10 +63,16 @@ class PyQtProject(Project):
             if self.tag_prefix.startswith('Py'):
                 self.tag_prefix = self.tag_prefix[2:]
 
-        # We need some super-class options to be set before doing the rest.
-        super().apply_defaults(tool)
+        super().apply_nonuser_defaults(tool)
 
-        # Get the details of the default Python interpreter library.
+    def apply_user_defaults(self, tool):
+        """ Set default values for user options that haven't been set yet. """
+
+        super().apply_user_defaults(tool)
+
+        # Get the details of the default Python interpreter library.  Note that
+        # these are actually non-user options but we need the 'link_full_dll'
+        # user option in order to set them.
         if self.py_platform == 'win32':
             pylib_dir = os.path.join(sys.base_prefix, 'libs')
 
@@ -111,13 +129,6 @@ class PyQtProject(Project):
 
         if self.py_pylib_shlib == '':
             self.py_pylib_shlib = pylib_shlib
-
-    def get_builder(self):
-        """ Get the project builder. """
-
-        from .builder import QmakeBuilder
-
-        return QmakeBuilder(self)
 
     def get_options(self):
         """ Return the list of configurable options. """

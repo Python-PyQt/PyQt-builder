@@ -53,7 +53,8 @@ class PyQtProject(Project):
             self.sip_files_dir = os.path.abspath('sip')
 
         if self.sip_module is None:
-            self.sip_module = 'PyQt{}.sip'.format(self.version.split('.')[0])
+            self.sip_module = 'PyQt{}.sip'.format(
+                    self.version_str.split('.')[0])
 
         # The tag prefix defaults to the meta-data name without any 'Py'
         # prefix.

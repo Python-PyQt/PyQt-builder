@@ -27,9 +27,10 @@
 import os
 import sys
 
-from sipbuild import (Buildable, BuildableModule, Builder, Option, Project,
-        PyProjectOptionException, UserException)
+from sipbuild import (Buildable, BuildableBindings, BuildableModule, Builder,
+        Option, Project, PyProjectOptionException, UserException)
 
+from .bindings import PyQtBindings
 from .installable import QmakeTargetInstallable
 
 
@@ -42,6 +43,7 @@ class QmakeBuilder(Builder):
         super().__init__(project, **kwargs)
 
         self.qt_version = 0
+        self.qt_version_str = ''
         self.qt_version_tag = ''
 
     def apply_user_defaults(self, tool):
@@ -424,6 +426,10 @@ target.files = %s
 
             pro_lines.extend(shared.split('\n'))
 
+            if isinstance(buildable, BuildableBindings):
+                if isinstance(buildable.bindings, PyQtBindings):
+                    buildable.bindings.handle_wrapped_library(pro_lines)
+
         buildable.installables.append(
                 QmakeTargetInstallable(module, buildable.get_install_subdir()))
 
@@ -517,18 +523,18 @@ target.files = %s
         # Get the Qt version.
         self.qt_version = 0
         try:
-            qt_version_str = self.qt_configuration['QT_VERSION']
-            for v in qt_version_str.split('.'):
+            self.qt_version_str = self.qt_configuration['QT_VERSION']
+            for v in self.qt_version_str.split('.'):
                 self.qt_version <<= 8
                 self.qt_version += int(v)
         except AttributeError:
-            qt_version_str = "3"
+            self.qt_version_str = "3"
 
         # Requiring Qt v5.6 allows us to drop some old workarounds.
         if self.qt_version < 0x050600:
             raise UserException(
                     "Qt v5.6 or later is required and you seem to be using "
-                            "v{0}".format(qt_version_str))
+                            "v{0}".format(self.qt_version_str))
 
         # Convert the version number to what would be used in a tag.
         major = (self.qt_version >> 16) & 0xff

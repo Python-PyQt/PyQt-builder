@@ -41,7 +41,12 @@ class PyQtBindings(Bindings):
             # The (not very good) naming convention used by MetaSIP.
             self.sip_file = os.path.join(self.name, self.name + 'mod.sip')
 
+        # We don't want to default handling to be applied here.
+        run_test = self.run_test
+
         super().apply_nonuser_defaults(tool)
+
+        self.run_test = run_test
 
         self._update_builder_settings('CONFIG', self.qmake_CONFIG)
         self._update_builder_settings('QT', self.qmake_QT)
@@ -88,10 +93,14 @@ class PyQtBindings(Bindings):
         # removed.
         options.append(Option('qmake_QT', option_type=list))
 
-        # The list of header files to #include in any test program.
+        # Set if any test program should be executed.  If it is not explicitly
+        # set then only external test programs will be run.
+        options.append(Option('run_test', option_type=bool))
+
+        # The list of header files to #include in any internal test program.
         options.append(Option('test_headers', option_type=list))
 
-        # The statement to execute in any test program.
+        # The statement to execute in any internal test program.
         options.append(Option('test_statement'))
 
         return options
@@ -189,8 +198,9 @@ class PyQtBindings(Bindings):
         test_source_path = os.path.join(project.root_dir, 'config-tests',
                 test_source)
         if os.path.isfile(test_source_path):
-            # External test progarms are always run.
-            return test_source_path, True
+            # External test programs are usually run.
+            return (test_source_path,
+                    (True if self.run_test is None else self.run_test))
 
         # See if there is an internal test program.
         if not self.test_statement:
@@ -213,8 +223,9 @@ int main(int, char **)
         tf.write(source_text)
         tf.close()
 
-        # Internal test programs are never run.
-        return test_source_path, False
+        # Internal test programs are not usually run.
+        return (test_source_path,
+                (False if self.run_test is None else self.run_test))
 
     @staticmethod
     def _matching_files(pattern):

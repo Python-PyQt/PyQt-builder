@@ -96,11 +96,6 @@ class PyQtBindings(Bindings):
         # The statement to execute in any internal test program.
         options.append(Option('test_statement'))
 
-        # The full path of the library that the bindings wrap.  QmakeBuilder
-        # uses this on macOS to update the bindings with the full path so that
-        # DYLD_LIBRARY_PATH is not needed.
-        options.append(Option('wrapped_library'))
-
         return options
 
     def handle_test_output(self, test_output):
@@ -119,20 +114,6 @@ class PyQtBindings(Bindings):
             self.disabled_features.extend(test_output)
 
         return True
-
-    def handle_wrapped_library(self, pro_lines, target):
-        """ Add the necessary lines to a .pro file to handle the wrapped
-        library.
-        """
-
-        if self.wrapped_library:
-            post_link = '''
-macx {
-    QMAKE_POST_LINK = $$quote(install_name_tool -change %s %s %s)$$escape_expand(\\\\n\\\\t)$$QMAKE_POST_LINK
-}
-''' % (os.path.basename(self.wrapped_library), self.wrapped_library, target)
-
-            pro_lines.extend(post_link.split('\n'))
 
     def is_buildable(self):
         """ Return True of the bindings are buildable. """
@@ -184,8 +165,6 @@ macx {
         pro_lines.append('TARGET = {}'.format(test))
         pro_lines.append('SOURCES = {}'.format(
                 builder.qmake_quote(test_source_path)))
-
-        self.handle_wrapped_library(pro_lines, '$(TARGET)')
 
         pf = project.open_for_writing(test_pro)
         pf.write('\n'.join(pro_lines))

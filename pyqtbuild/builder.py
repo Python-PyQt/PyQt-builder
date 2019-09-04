@@ -27,10 +27,9 @@
 import os
 import sys
 
-from sipbuild import (Buildable, BuildableBindings, BuildableModule, Builder,
-        Option, Project, PyProjectOptionException, UserException)
+from sipbuild import (Buildable, BuildableModule, Builder, Option, Project,
+        PyProjectOptionException, UserException)
 
-from .bindings import PyQtBindings
 from .installable import QmakeTargetInstallable
 
 
@@ -425,11 +424,6 @@ target.files = %s
 ''' % (module, module)
 
             pro_lines.extend(shared.split('\n'))
-
-            if isinstance(buildable, BuildableBindings):
-                if isinstance(buildable.bindings, PyQtBindings):
-                    buildable.bindings.handle_wrapped_library(pro_lines,
-                            '$$PY_MODULE_SRC')
 
         buildable.installables.append(
                 QmakeTargetInstallable(module, buildable.get_install_subdir()))

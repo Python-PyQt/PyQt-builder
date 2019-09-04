@@ -50,11 +50,12 @@ class PyQtProject(Project):
             self.dunder_init = False
 
         if self.sip_files_dir is None:
-            self.sip_files_dir = os.path.abspath('sip')
+            self.sip_files_dir = 'sip'
 
         if self.sip_module is None:
-            self.sip_module = 'PyQt{}.sip'.format(
-                    self.version_str.split('.')[0])
+            # TODO: don't hardcode PyQt5 (maybe something based on
+            # requires-dist)
+            self.sip_module = 'PyQt5.sip'
 
         # The tag prefix defaults to the meta-data name without any 'Py'
         # prefix.
@@ -63,6 +64,14 @@ class PyQtProject(Project):
 
             if self.tag_prefix.startswith('Py'):
                 self.tag_prefix = self.tag_prefix[2:]
+
+        if self.tests_dir is None:
+            self.tests_dir = 'config-tests'
+
+        # Make sure relevent paths are absolute and use native separators.
+        self.tests_dir = self.tests_dir.replace('/', os.sep)
+        if not os.path.isabs(self.tests_dir):
+            self.tests_dir = os.path.join(self.root_dir, self.tests_dir)
 
         super().apply_nonuser_defaults(tool)
 
@@ -150,6 +159,10 @@ class PyQtProject(Project):
         # automatically appended).  By default the meta-data name is used with
         # any leading 'Py' removed.
         options.append(Option('tag_prefix'))
+
+        # The name of the directory, relative to the project directory,
+        # containing any external test programs.
+        options.append(Option('tests_dir', default='config-tests'))
 
         options.append(
                 Option('link_full_dll', option_type=bool,

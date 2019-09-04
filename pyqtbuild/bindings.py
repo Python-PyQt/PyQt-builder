@@ -37,22 +37,19 @@ class PyQtBindings(Bindings):
         """ Set default values for non-user options that haven't been set yet.
         """
 
+        project = self.project
+
         if self.sip_file is None:
             # The (not very good) naming convention used by MetaSIP.
             self.sip_file = os.path.join(self.name, self.name + 'mod.sip')
 
-        # We don't want to default handling to be applied here.
-        run_test = self.run_test
-
         super().apply_nonuser_defaults(tool)
-
-        self.run_test = run_test
 
         self._update_builder_settings('CONFIG', self.qmake_CONFIG)
         self._update_builder_settings('QT', self.qmake_QT)
 
         # Add the sources of any support code.
-        qpy_dir = os.path.join(self.project.root_dir, 'qpy', self.name)
+        qpy_dir = os.path.join(project.root_dir, 'qpy', self.name)
         if os.path.isdir(qpy_dir):
             headers = self._matching_files(os.path.join(qpy_dir, '*.h'))
             c_sources = self._matching_files(os.path.join(qpy_dir, '*.c'))
@@ -93,10 +90,6 @@ class PyQtBindings(Bindings):
         # removed.
         options.append(Option('qmake_QT', option_type=list))
 
-        # Set if any test program should be executed.  If it is not explicitly
-        # set then only external test programs will be run.
-        options.append(Option('run_test', option_type=bool))
-
         # The list of header files to #include in any internal test program.
         options.append(Option('test_headers', option_type=list))
 
@@ -127,7 +120,7 @@ class PyQtBindings(Bindings):
 
         return True
 
-    def handle_wrapped_library(self, pro_lines):
+    def handle_wrapped_library(self, pro_lines, target):
         """ Add the necessary lines to a .pro file to handle the wrapped
         library.
         """
@@ -135,9 +128,9 @@ class PyQtBindings(Bindings):
         if self.wrapped_library:
             post_link = '''
 macx {
-    QMAKE_POST_LINK = $$quote(install_name_tool -change %s %s $(TARGET))$$escape_expand(\\\\n\\\\t)$$QMAKE_POST_LINK
+    QMAKE_POST_LINK = $$quote(install_name_tool -change %s %s %s)$$escape_expand(\\\\n\\\\t)$$QMAKE_POST_LINK
 }
-''' % (os.path.basename(self.wrapped_library), self.wrapped_library)
+''' % (os.path.basename(self.wrapped_library), self.wrapped_library, target)
 
             pro_lines.extend(post_link.split('\n'))
 
@@ -192,7 +185,7 @@ macx {
         pro_lines.append('SOURCES = {}'.format(
                 builder.qmake_quote(test_source_path)))
 
-        self.handle_wrapped_library(pro_lines)
+        self.handle_wrapped_library(pro_lines, '$(TARGET)')
 
         pf = project.open_for_writing(test_pro)
         pf.write('\n'.join(pro_lines))
@@ -216,12 +209,10 @@ macx {
         test_source = test + '.cpp'
 
         # See if there is an external test program.
-        test_source_path = os.path.join(project.root_dir, 'config-tests',
-                test_source)
+        test_source_path = os.path.join(project.tests_dir, test_source)
         if os.path.isfile(test_source_path):
-            # External test programs are usually run.
-            return (test_source_path,
-                    (True if self.run_test is None else self.run_test))
+            # External test programs are always run.
+            return test_source_path, True
 
         # See if there is an internal test program.
         if not self.test_statement:
@@ -244,9 +235,8 @@ int main(int, char **)
         tf.write(source_text)
         tf.close()
 
-        # Internal test programs are not usually run.
-        return (test_source_path,
-                (False if self.run_test is None else self.run_test))
+        # Internal test programs are never run.
+        return test_source_path, False
 
     @staticmethod
     def _matching_files(pattern):

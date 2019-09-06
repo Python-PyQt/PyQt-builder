@@ -27,7 +27,7 @@
 import glob
 import os
 
-from sipbuild import Bindings, UserException, Option
+from sipbuild import Bindings, BuildableExecutable, UserException, Option
 
 
 class PyQtBindings(Bindings):
@@ -147,33 +147,23 @@ class PyQtBindings(Bindings):
         """
 
         project = self.project
-        builder = project.builder
 
-        # The derived file names.
-        test = 'cfgtest_' + self.name
-        test_pro = test + '.pro'
-        test_makefile = test + '.mk'
+        buildable = BuildableExecutable(project, 'cfgtest_' + self.name,
+                self.name)
+        buildable.sources.append(test_source_path)
+        buildable.builder_settings.extend(self.builder_settings)
+        buildable.debug = self.debug
+        buildable.define_macros.extend(self.define_macros)
+        buildable.headers.extend(self.headers)
+        buildable.include_dirs.extend(self.include_dirs)
+        buildable.libraries.extend(self.libraries)
+        buildable.library_dirs.extend(self.library_dirs)
 
-        # Create the .pro file.
-        pro_lines = []
+        exe = project.builder.build_executable(buildable, fatal=False)
+        if exe is not None:
+            exe = os.path.join(buildable.build_dir, exe)
 
-        pro_lines.append(
-                'CONFIG += {}'.format('debug' if self.debug else 'release'))
-
-        pro_lines.extend(self.builder_settings)
-        pro_lines.extend(builder.qmake_settings)
-        pro_lines.append('TARGET = {}'.format(test))
-        pro_lines.append('SOURCES = {}'.format(
-                builder.qmake_quote(test_source_path)))
-
-        pf = project.open_for_writing(test_pro)
-        pf.write('\n'.join(pro_lines))
-        pf.close()
-
-        if not builder.run_qmake(test_pro, makefile_name=test_makefile, fatal=False):
-            return None
-
-        return builder.run_make(test, test_makefile, self.debug, fatal=False)
+        return exe
 
     def _get_test_cpp_file(self):
         """ Return 2-tuple of the name of a C++ source file that implements

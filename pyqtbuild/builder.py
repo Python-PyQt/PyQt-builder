@@ -59,7 +59,7 @@ class QmakeBuilder(Builder):
                 raise PyProjectOptionException('qmake',
                         "'{0}' is not a working qmake".format(self.qmake))
 
-            self.qmake = self.quote(os.path.abspath(self.qmake))
+            self.qmake = self._quote(os.path.abspath(self.qmake))
 
             # Use qmake to get the Qt configuration.
             self._get_qt_configuration()
@@ -76,6 +76,36 @@ class QmakeBuilder(Builder):
                     self.spec = 'macx-clang'
 
         super().apply_user_defaults(tool)
+
+    def build_executable(self, buildable, fatal=True):
+        """ Build an executable from a BuildableExecutable object and return
+        the relative pathname of the executable.
+        """
+
+        # The name of the .pro file.
+        pro_path = os.path.join(buildable.build_dir, buildable.target + '.pro')
+
+        # Create the .pro file.
+        pro_lines = []
+
+        self._update_pro_file(pro_lines, buildable)
+
+        pf = self.project.open_for_writing(pro_path)
+        pf.write('\n'.join(pro_lines))
+        pf.close()
+
+        saved_cwd = os.getcwd()
+        os.chdir(buildable.build_dir)
+
+        if self._run_qmake(pro_path, fatal=fatal):
+            exe = self._run_make(buildable.target, buildable.debug,
+                    fatal=fatal)
+        else:
+            exe = None
+
+        os.chdir(saved_cwd)
+
+        return exe
 
     def build_project(self, target_dir, wheel=None):
         """ Build the project. """
@@ -145,11 +175,11 @@ class QmakeBuilder(Builder):
             args.append('--console-script')
             args.append(ep.replace(' ', ''))
 
-        args.append(self.qmake_quote(project.get_distinfo_name(target_dir)))
+        args.append(self._qmake_quote(project.get_distinfo_name(target_dir)))
 
         pro_lines.append('distinfo.extra = {}'.format(' '.join(args)))
         pro_lines.append(
-                'distinfo.path = {}'.format(self.qmake_quote(target_dir)))
+                'distinfo.path = {}'.format(self._qmake_quote(target_dir)))
         pro_lines.append('INSTALLS += distinfo')
 
         pro_name = os.path.join(project.build_dir, project.name + '.pro')
@@ -157,11 +187,18 @@ class QmakeBuilder(Builder):
 
         # Run qmake to generate the Makefiles.
         project.progress("Generating the Makefiles")
-        self.run_qmake(pro_name, recursive=True)
+
+        saved_cwd = os.getcwd()
+        os.chdir(project.build_dir)
+
+        self._run_qmake(pro_name, recursive=True)
 
         # Run make, if requested, to generate the bindings.
         if self.make:
+            project.progress("Compiling the project")
             self._run_project_make()
+
+        os.chdir(saved_cwd)
 
         return None
 
@@ -195,121 +232,14 @@ class QmakeBuilder(Builder):
     def install_project(self, target_dir, wheel=None):
         """ Install the project into a target directory. """
 
-        # Run make install to install the bindings.
-        self._run_project_make(install=True)
-
-    @staticmethod
-    def qmake_quote(path):
-        """ Return a path quoted for qmake if it contains spaces. """
-
-        # Also convert to Unix path separators.
-        path = path.replace('\\', '/')
-
-        if ' ' in path:
-            path = '$$quote({})'.format(path)
-
-        return path
-
-    @staticmethod
-    def quote(path):
-        """ Return a path with quotes added if it contains spaces. """
-
-        if ' ' in path:
-            path = '"{}"'.format(path)
-
-        return path
-
-    def run_make(self, exe, makefile_name, debug, fatal=True):
-        """ Run make against a Makefile to create an executable.  Returns the
-        platform specific name of the executable, or None if an executable
-        wasn't created.
-        """
-
         project = self.project
 
-        # Guess the name of make and set the default target and platform
-        # specific name of the executable.
-        if project.py_platform == 'win32':
-            if debug:
-                makefile_target = 'debug'
-                platform_exe = os.path.join('debug', exe + '.exe')
-            else:
-                makefile_target = 'release'
-                platform_exe = os.path.join('release', exe + '.exe')
-        else:
-            makefile_target = None
+        project.progress("Installing the project")
 
-            if project.py_platform == 'darwin':
-                platform_exe = os.path.join(exe + '.app', 'Contents', 'MacOS',
-                        exe)
-            else:
-                platform_exe = os.path.join('.', exe)
-
-        # Make sure the executable doesn't exist.
-        self._remove_file(platform_exe)
-
-        args = [self._find_make(), '-f', makefile_name]
-
-        if makefile_target is not None:
-            args.append(makefile_target)
-
-        project.run_command(args, fatal=fatal)
-
-        return platform_exe if os.path.isfile(platform_exe) else None
-
-    def run_qmake(self, pro_name, makefile_name=None, fatal=True,
-            recursive=False):
-        """ Run qmake against a .pro file.  fatal is set if a qmake failure is
-        considered a fatal error, otherwise False is returned if qmake fails.
-        """
-
-        # qmake doesn't behave consistently if it is not run from the directory
-        # containing the .pro file - so make sure it is.
-        pro_dir, pro_file = os.path.split(pro_name)
-        if pro_dir != '':
-            cwd = os.getcwd()
-            os.chdir(pro_dir)
-        else:
-            cwd = None
-
-        # Make sure the Makefile doesn't exist.
-        mf_name = 'Makefile' if makefile_name is None else makefile_name
-        self._remove_file(mf_name)
-
-        # Build the command line.
-        args = [self.qmake]
-
-        # If the spec is the same as the default then we don't need to specify
-        # it.
-        if self.spec != self.qt_configuration['QMAKE_SPEC']:
-            args.append('-spec')
-            args.append(self.spec)
-
-        if makefile_name is not None:
-            args.append('-o')
-            args.append(makefile_name)
-
-        if recursive:
-            args.append('-recursive')
-
-        args.append(pro_file)
-
-        self.project.run_command(args, fatal=fatal)
-
-        # Check that the Makefile was created.
-        if not os.path.isfile(mf_name):
-            if fatal:
-                raise UserException(
-                        "{0} failed to create a makefile from {1}".format(
-                                self.qmake, pro_name))
-
-            return False
-
-        # Restore the current directory.
-        if cwd is not None:
-            os.chdir(cwd)
-
-        return True
+        saved_cwd = os.getcwd()
+        os.chdir(project.build_dir)
+        self._run_project_make(install=True)
+        os.chdir(saved_cwd)
 
     @classmethod
     def _find_exe(cls, exe):
@@ -354,8 +284,6 @@ class QmakeBuilder(Builder):
                 "Generating the .pro file for the {0} module".format(
                             buildable.target))
 
-        buildable.make_names_relative()
-
         pro_lines = ['TEMPLATE = lib']
 
         pro_lines.append('CONFIG += warn_on exceptions_off')
@@ -367,23 +295,13 @@ class QmakeBuilder(Builder):
             # 'plugin_bundle' instead of 'plugin' so we specify both.
             pro_lines.append('CONFIG += plugin plugin_bundle')
 
-        pro_lines.append(
-                'CONFIG += {}'.format(
-                        'debug' if buildable.debug else 'release'))
-
         if project.qml_debug:
             pro_lines.append('CONFIG += qml_debug')
 
         # Work around QTBUG-39300.
         pro_lines.append('CONFIG -= android_install')
 
-        # Add any buildable-specific settings.
-        pro_lines.extend(buildable.builder_settings)
-
-        # Add any user-supplied settings.
-        pro_lines.extend(self.qmake_settings)
-
-        pro_lines.append('TARGET = {}'.format(buildable.target))
+        self._update_pro_file(pro_lines, buildable)
 
         # Qt (when built with MinGW) assumes that stack frames are 16 byte
         # aligned because it uses SSE.  However the Python Windows installers
@@ -439,19 +357,9 @@ target.files = %s
                     'QMAKE_LFLAGS += -Wl,--version-script={}.exp'.format(
                             buildable.name))
 
-        # Handle any #define macros.
-        if buildable.define_macros:
-            pro_lines.append('DEFINES += {}'.format(
-                    ' '.join(buildable.define_macros)))
-
-        # Handle the include directories.
-        for include_dir in buildable.include_dirs:
-            pro_lines.append(
-                    'INCLUDEPATH += {}'.format(self.qmake_quote(include_dir)))
-
         pro_lines.append(
                 'INCLUDEPATH += {}'.format(
-                        self.qmake_quote(project.py_include_dir)))
+                        self._qmake_quote(project.py_include_dir)))
 
         # Python.h on Windows seems to embed the need for pythonXY.lib, so tell
         # it where it is.
@@ -460,24 +368,6 @@ target.files = %s
             pro_lines.extend(['win32 {',
                     '    LIBS += -L{}'.format(project.py_pylib_dir),
                     '}'])
-
-        # Handle any additional libraries.
-        libs = []
-
-        for l_dir in buildable.library_dirs:
-            libs.append('-L' + self.qmake_quote(l_dir))
-
-        for l in buildable.libraries:
-            libs.append('-l' + l)
-
-        if libs:
-            pro_lines.append('LIBS += {}'.format(' '.join(libs)))
-
-        headers = [self.qmake_quote(f) for f in buildable.headers]
-        pro_lines.append('HEADERS = {}'.format(' '.join(headers)))
-
-        sources = [self.qmake_quote(f) for f in buildable.sources]
-        pro_lines.append('SOURCES = {}'.format(' '.join(sources)))
 
         # Add any installables from the buildable.
         for installable in buildable.installables:
@@ -571,6 +461,27 @@ target.files = %s
         return os.access(exe_path, os.X_OK)
 
     @staticmethod
+    def _qmake_quote(path):
+        """ Return a path quoted for qmake if it contains spaces. """
+
+        # Also convert to Unix path separators.
+        path = path.replace('\\', '/')
+
+        if ' ' in path:
+            path = '$$quote({})'.format(path)
+
+        return path
+
+    @staticmethod
+    def _quote(path):
+        """ Return a path with quotes added if it contains spaces. """
+
+        if ' ' in path:
+            path = '"{}"'.format(path)
+
+        return path
+
+    @staticmethod
     def _remove_file(fname):
         """ Remove a file which may or may not exist. """
 
@@ -579,25 +490,139 @@ target.files = %s
         except OSError:
             pass
 
-    def _run_project_make(self, install=False):
-        """ Run make on the project. """
+    def _run_make(self, exe, debug, fatal=True):
+        """ Run make against a Makefile to create an executable.  Returns the
+        platform specific name of the executable, or None if an executable
+        wasn't created.
+        """
 
         project = self.project
 
-        project.progress(
-                "{0} the project".format(
-                        "Installing" if install else "Compiling"))
+        # Guess the name of make and set the default target and platform
+        # specific name of the executable.
+        if project.py_platform == 'win32':
+            if debug:
+                makefile_target = 'debug'
+                platform_exe = os.path.join('debug', exe + '.exe')
+            else:
+                makefile_target = 'release'
+                platform_exe = os.path.join('release', exe + '.exe')
+        else:
+            makefile_target = None
 
-        make = self._find_make()
+            if project.py_platform == 'darwin':
+                platform_exe = os.path.join(exe + '.app', 'Contents', 'MacOS',
+                        exe)
+            else:
+                platform_exe = os.path.join('.', exe)
 
-        args = [make]
+        # Make sure the executable doesn't exist.
+        self._remove_file(platform_exe)
+
+        args = [self._find_make()]
+
+        if makefile_target is not None:
+            args.append(makefile_target)
+
+        project.run_command(args, fatal=fatal)
+
+        return platform_exe if os.path.isfile(platform_exe) else None
+
+    def _run_project_make(self, install=False):
+        """ Run make on the project.  The Makefile must be in the current
+        directory.
+        """
+
+        args = [self._find_make()]
+
         if install:
             args.append('install')
 
-        saved_cwd = os.getcwd()
-        os.chdir(project.build_dir)
-        project.run_command(args)
-        os.chdir(saved_cwd)
+        self.project.run_command(args)
+
+    def _run_qmake(self, pro_name, fatal=True, recursive=False):
+        """ Run qmake against a .pro file.  fatal is set if a qmake failure is
+        considered a fatal error, otherwise False is returned if qmake fails.
+        The current directory must contain the .pro file.
+        """
+
+        # Make sure the Makefile doesn't exist.
+        mf_name = 'Makefile'
+        self._remove_file(mf_name)
+
+        # Build the command line.
+        args = [self.qmake]
+
+        # If the spec is the same as the default then we don't need to specify
+        # it.
+        if self.spec != self.qt_configuration['QMAKE_SPEC']:
+            args.append('-spec')
+            args.append(self.spec)
+
+        if recursive:
+            args.append('-recursive')
+
+        args.append(os.path.basename(pro_name))
+
+        self.project.run_command(args, fatal=fatal)
+
+        # Check that the Makefile was created.
+        if os.path.isfile(mf_name):
+            return True
+
+        if fatal:
+            raise UserException(
+                    "{0} failed to create a makefile from {1}".format(
+                            self.qmake, pro_name))
+
+        return False
+
+    def _update_pro_file(self, pro_lines, buildable):
+        """ Update a .pro file from a buildable. """
+
+        buildable.make_names_relative()
+
+        # Handle debugging.
+        pro_lines.append(
+                'CONFIG += {}'.format(
+                        'debug' if buildable.debug else 'release'))
+
+        # Add any buildable-specific settings.
+        pro_lines.extend(buildable.builder_settings)
+
+        # Add any user-supplied settings.
+        pro_lines.extend(self.qmake_settings)
+
+        # Add the target.
+        pro_lines.append('TARGET = {}'.format(buildable.target))
+
+        # Handle any #define macros.
+        if buildable.define_macros:
+            pro_lines.append('DEFINES += {}'.format(
+                    ' '.join(buildable.define_macros)))
+
+        # Handle the include directories.
+        for include_dir in buildable.include_dirs:
+            pro_lines.append(
+                    'INCLUDEPATH += {}'.format(self._qmake_quote(include_dir)))
+
+        # Handle any additional libraries.
+        libs = []
+
+        for l_dir in buildable.library_dirs:
+            libs.append('-L' + self._qmake_quote(l_dir))
+
+        for l in buildable.libraries:
+            libs.append('-l' + l)
+
+        if libs:
+            pro_lines.append('LIBS += {}'.format(' '.join(libs)))
+
+        headers = [self._qmake_quote(f) for f in buildable.headers]
+        pro_lines.append('HEADERS = {}'.format(' '.join(headers)))
+
+        sources = [self._qmake_quote(f) for f in buildable.sources]
+        pro_lines.append('SOURCES = {}'.format(' '.join(sources)))
 
     def _write_pro_file(self, pro_fn, pro_lines):
         """ Write a .pro file. """

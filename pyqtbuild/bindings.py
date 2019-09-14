@@ -118,79 +118,41 @@ class PyQtBindings(Bindings):
     def is_buildable(self):
         """ Return True of the bindings are buildable. """
 
-        # See if there is a test program to run.  If no tthen defer to the
-        # super-class.
-        test_source_path, run_test = self._get_test_cpp_file()
-        if test_source_path is None:
+        project = self.project
+
+        test = 'cfgtest_' + self.name
+        test_source = test + '.cpp'
+
+        test_source_path = os.path.join(project.tests_dir, test_source)
+        if os.path.isfile(test_source_path):
+            # There is an external test program that should be run.
+            run_test = True
+        elif self.test_statement:
+            # There is an internal test program that doesn't need to be run.
+            test_source_path = None
+            run_test = False
+        else:
+            # There is no test program so defer to the super-class.
             return super().is_buildable()
 
         self.project.progress(
                 "Checking to see if the {0} bindings can be built".format(
                         self.name))
 
-        test_exe = self._compile_test_program(test_source_path)
-        if test_exe is None:
-            return False
-
-        # If the test doesn't need to be run then the bindings are buildable.
-        if not run_test:
-            return True
-
-        # Run the external test program.
-        test_output = self._run_test_program(test_exe)
-
-        return self.handle_test_output(test_output)
-
-    def _compile_test_program(self, test_source_path):
-        """ Compile a test program and return the name of the resulting
-        executable or None if the compilation failed.
-        """
-
-        project = self.project
-
-        buildable = BuildableExecutable(project, 'cfgtest_' + self.name,
-                self.name)
-        buildable.sources.append(test_source_path)
+        # Create a buildable for the test prgram.
+        buildable = BuildableExecutable(project, test, self.name)
         buildable.builder_settings.extend(self.builder_settings)
         buildable.debug = self.debug
         buildable.define_macros.extend(self.define_macros)
-        buildable.headers.extend(self.headers)
         buildable.include_dirs.extend(self.include_dirs)
         buildable.libraries.extend(self.libraries)
         buildable.library_dirs.extend(self.library_dirs)
 
-        exe = project.builder.build_executable(buildable, fatal=False)
-        if exe is not None:
-            exe = os.path.join(buildable.build_dir, exe)
+        if test_source_path is None:
+            # Save the internal test to a file.
+            includes = ['#include <{}>'.format(h) for h in self.test_headers]
 
-        return exe
-
-    def _get_test_cpp_file(self):
-        """ Return 2-tuple of the name of a C++ source file that implements
-        module-specific tests and a flag saying if the compiled test program
-        should be run and its output processed.  If the source filename is None
-        then there is no test to compile.
-        """
-
-        project = self.project
-
-        test = 'cfgtest_' + self.name
-        test_source = test + '.cpp'
-
-        # See if there is an external test program.
-        test_source_path = os.path.join(project.tests_dir, test_source)
-        if os.path.isfile(test_source_path):
-            # External test programs are always run.
-            return test_source_path, True
-
-        # See if there is an internal test program.
-        if not self.test_statement:
-            return None, False
-
-        # Save the test to a file.
-        includes = ['#include <{}>'.format(h) for h in self.test_headers]
-
-        source_text = '''%s
+            source_text = '''%s
 
 int main(int, char **)
 {
@@ -198,29 +160,31 @@ int main(int, char **)
 }
 ''' % ('\n'.join(includes), self.test_statement)
 
-        test_source_path = os.path.join(project.build_dir, test_source)
+            test_source_path = os.path.join(buildable.build_dir, test_source)
 
-        tf = project.open_for_writing(test_source_path)
-        tf.write(source_text)
-        tf.close()
+            tf = project.open_for_writing(test_source_path)
+            tf.write(source_text)
+            tf.close()
 
-        # Internal test programs are never run.
-        return test_source_path, False
+        buildable.sources.append(test_source_path)
 
-    @staticmethod
-    def _matching_files(pattern):
-        """ Return a reproducable list of files that match a pattern. """
+        # Build the test program.
+        test_exe = project.builder.build_executable(buildable, fatal=False)
+        if test_exe is None:
+            return False
 
-        return sorted(glob.glob(pattern))
+        # If the test doesn't need to be run then we are done.
+        if not run_test:
+            return True
 
-    def _run_test_program(self, test_exe):
-        """ Run a test program and return the output as a list of lines. """
-
-        out_file = 'cfgtest_' + self.name + '.out'
+        # Run the test and capture the output as a list of lines.
+        test_exe = os.path.join(buildable.build_dir, test_exe)
 
         # Create the output file, first making sure it doesn't exist.  Note
         # that we don't use a pipe because we may want a copy of the output for
         # debugging purposes.
+        out_file = os.path.join(buildable.build_dir, test + '.out')
+
         try:
             os.remove(out_file)
         except OSError:
@@ -236,7 +200,15 @@ int main(int, char **)
         with open(out_file) as f:
             test_output = f.read().strip()
 
-        return test_output.split('\n') if test_output else []
+        test_output = test_output.split('\n') if test_output else []
+
+        return self.handle_test_output(test_output)
+
+    @staticmethod
+    def _matching_files(pattern):
+        """ Return a reproducable list of files that match a pattern. """
+
+        return sorted(glob.glob(pattern))
 
     def _update_builder_settings(self, name, modifications):
         """ Update the builder settings with a list of modifications to a

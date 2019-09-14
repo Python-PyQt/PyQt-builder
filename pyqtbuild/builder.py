@@ -175,11 +175,11 @@ class QmakeBuilder(Builder):
             args.append('--console-script')
             args.append(ep.replace(' ', ''))
 
-        args.append(self._qmake_quote(project.get_distinfo_name(target_dir)))
+        args.append(self.qmake_quote(project.get_distinfo_name(target_dir)))
 
         pro_lines.append('distinfo.extra = {}'.format(' '.join(args)))
         pro_lines.append(
-                'distinfo.path = {}'.format(self._qmake_quote(target_dir)))
+                'distinfo.path = {}'.format(self.qmake_quote(target_dir)))
         pro_lines.append('INSTALLS += distinfo')
 
         pro_name = os.path.join(project.build_dir, project.name + '.pro')
@@ -240,6 +240,18 @@ class QmakeBuilder(Builder):
         os.chdir(project.build_dir)
         self._run_project_make(install=True)
         os.chdir(saved_cwd)
+
+    @staticmethod
+    def qmake_quote(path):
+        """ Return a path quoted for qmake if it contains spaces. """
+
+        # Also convert to Unix path separators.
+        path = path.replace('\\', '/')
+
+        if ' ' in path:
+            path = '$$quote({})'.format(path)
+
+        return path
 
     @classmethod
     def _find_exe(cls, exe):
@@ -359,7 +371,7 @@ target.files = %s
 
         pro_lines.append(
                 'INCLUDEPATH += {}'.format(
-                        self._qmake_quote(project.py_include_dir)))
+                        self.qmake_quote(project.py_include_dir)))
 
         # Python.h on Windows seems to embed the need for pythonXY.lib, so tell
         # it where it is.
@@ -459,18 +471,6 @@ target.files = %s
         """ Return True if an executable exists. """
 
         return os.access(exe_path, os.X_OK)
-
-    @staticmethod
-    def _qmake_quote(path):
-        """ Return a path quoted for qmake if it contains spaces. """
-
-        # Also convert to Unix path separators.
-        path = path.replace('\\', '/')
-
-        if ' ' in path:
-            path = '$$quote({})'.format(path)
-
-        return path
 
     @staticmethod
     def _quote(path):
@@ -604,13 +604,13 @@ target.files = %s
         # Handle the include directories.
         for include_dir in buildable.include_dirs:
             pro_lines.append(
-                    'INCLUDEPATH += {}'.format(self._qmake_quote(include_dir)))
+                    'INCLUDEPATH += {}'.format(self.qmake_quote(include_dir)))
 
         # Handle any additional libraries.
         libs = []
 
         for l_dir in buildable.library_dirs:
-            libs.append('-L' + self._qmake_quote(l_dir))
+            libs.append('-L' + self.qmake_quote(l_dir))
 
         for l in buildable.libraries:
             libs.append('-l' + l)
@@ -618,10 +618,10 @@ target.files = %s
         if libs:
             pro_lines.append('LIBS += {}'.format(' '.join(libs)))
 
-        headers = [self._qmake_quote(f) for f in buildable.headers]
+        headers = [self.qmake_quote(f) for f in buildable.headers]
         pro_lines.append('HEADERS = {}'.format(' '.join(headers)))
 
-        sources = [self._qmake_quote(f) for f in buildable.sources]
+        sources = [self.qmake_quote(f) for f in buildable.sources]
         pro_lines.append('SOURCES = {}'.format(' '.join(sources)))
 
     def _write_pro_file(self, pro_fn, pro_lines):

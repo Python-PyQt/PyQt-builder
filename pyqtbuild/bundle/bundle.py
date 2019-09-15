@@ -21,7 +21,100 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-def bundle(wheel, qt_dir):
-    """ Bundle a Qt installation with a wheel. """
+import os
+import shutil
+from sipbuild import UserException
+import zipfile
 
-    raise NotImplementedError
+from . import packages
+
+
+def bundle(wheel_path, qt_dir, build_tag_suffix, msvc_runtime, openssl,
+        openssl_dir):
+    """ Bundle a Qt installation with a PyQt wheel. """
+
+    # Deconstruct the wheel name.
+    wheel_name = os.path.basename(wheel_path)
+    parts = wheel_name.split('-')
+
+    max_nr_parts = 6
+    if parts[-1] == 'unlicensed':
+        max_nr_parts += 1
+
+    if len(parts) == max_nr_parts:
+        # Remove the build tag.
+        del parts[2]
+    elif len(parts) != max_nr_parts - 1:
+        raise UserException(
+                "Unable to recognise '{0}' as a wheel name".format(wheel_name))
+
+    # Get the package object.
+    package_name = parts[0].split('_')[0]
+    package_factory = packages.__dict__.get(package_name)
+
+    if package_factory is None:
+        raise UserException(
+                "'{0}' is not a supported package".format(package_name))
+
+    package = package_factory(parts[1], qt_dir)
+
+    # Construct the name of the bundled wheel.
+    build_tag = package.get_qt_version_str()
+
+    if build_tag_suffix:
+        build_tag += build_tag_suffix
+
+    parts.insert(2, build_tag)
+
+    bundled_wheel_name = '-'.join(parts)
+
+    bundled_wheel_dir = bundled_wheel_name
+    for tail in ('-unlicensed', '.whl'):
+        if bundled_wheel_dir.endswith(tail):
+            bundled_wheel_dir = bundled_wheel_dir[:-len(tail)]
+
+    # Create the directory to contain the existing wheel contents.
+    shutil.rmtree(bundled_wheel_dir, ignore_errors=True)
+    os.mkdir(bundled_wheel_dir)
+
+    # Unpack the existing wheel.
+    saved_cwd = os.getcwd()
+    os.chdir(bundled_wheel_dir)
+
+    try:
+        zf = zipfile.ZipFile(wheel_path)
+    except FileNotFoundError:
+        raise UserException("Unable to find '{0}'".format(wheel_path))
+
+    for zi in zf.infolist():
+        zf.extract(zi)
+        attr = zi.external_attr >> 16
+        if attr:
+            os.chmod(zi.filename, attr)
+
+    os.chdir(saved_cwd)
+
+    # Remove any existing bundled Qt installation.
+    target_qt_dir = os.path.join(bundled_wheel_dir,
+            package.get_target_qt_dir())
+    shutil.rmtree(target_qt_dir, ignore_errors=True)
+
+    # Bundle the relevant parts of the Qt installation.
+    package.bundle_qt(target_qt_dir)
+
+    # Bundle the MSVC runtime if required.
+    if msvc_runtime:
+        package.bundle_msvc_runtime(target_qt_dir)
+
+    # Bundle OpenSSL if required.
+    if openssl:
+        package.bundle_openssl(target_qt_dir, openssl_dir)
+
+    # Rewrite the wheel's RECORD file.
+    # TODO
+
+    # Create the bundled wheel.
+    # TODO
+
+    # Tidy up.
+    shutil.rmtree(bundled_wheel_dir)

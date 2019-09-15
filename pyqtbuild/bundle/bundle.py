@@ -21,6 +21,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
+import base64
+import fnmatch
+import hashlib
 import os
 import shutil
 from sipbuild import UserException
@@ -67,6 +70,7 @@ def bundle(wheel_path, qt_dir, build_tag_suffix, msvc_runtime, openssl,
     parts.insert(2, build_tag)
 
     bundled_wheel_name = '-'.join(parts)
+    bundled_wheel_path = os.path.abspath(bundled_wheel_name)
 
     bundled_wheel_dir = bundled_wheel_name
     for tail in ('-unlicensed', '.whl'):
@@ -92,11 +96,8 @@ def bundle(wheel_path, qt_dir, build_tag_suffix, msvc_runtime, openssl,
         if attr:
             os.chmod(zi.filename, attr)
 
-    os.chdir(saved_cwd)
-
     # Remove any existing bundled Qt installation.
-    target_qt_dir = os.path.join(bundled_wheel_dir,
-            package.get_target_qt_dir())
+    target_qt_dir = package.get_target_qt_dir()
     shutil.rmtree(target_qt_dir, ignore_errors=True)
 
     # Bundle the relevant parts of the Qt installation.
@@ -111,10 +112,50 @@ def bundle(wheel_path, qt_dir, build_tag_suffix, msvc_runtime, openssl,
         package.bundle_openssl(target_qt_dir, openssl_dir)
 
     # Rewrite the wheel's RECORD file.
-    # TODO
+    for dist_info in os.listdir('.'):
+        if fnmatch.fnmatch(dist_info, '*.dist-info'):
+            break
+    else:
+        raise UserException(
+                "'{0}' doesn't contain a .dist-info directory".format(
+                        wheel_path))
+
+    record_path = os.path.join(dist_info, 'RECORD')
+    os.remove(record_path)
+
+    # Calculate the signatures of the files.
+    record = []
+
+    for dirpath, dirnames, filenames in os.walk('.'):
+        # Reproducable builds.
+        dirnames.sort()
+        filenames.sort()
+
+        for filename in filenames:
+            # This will result in a name with no leading '.'.
+            name = os.path.relpath(os.path.join(dirpath, filename))
+
+            with open(name, 'rb') as f:
+                data = f.read()
+
+            digest = base64.urlsafe_b64encode(
+                    hashlib.sha256(data).digest()).rstrip(b'=').decode('ascii')
+            record.append((name, digest, len(data)))
+
+    with open(record_path, 'w') as f:
+        for name, digest, nbytes in record:
+            name = name.replace(os.path.sep, '/')
+            f.write('{},sha256={},{}\n'.format(name, digest, nbytes))
+
+        f.write('{},,\n'.format(record_path))
 
     # Create the bundled wheel.
-    # TODO
+    with zipfile.ZipFile(bundled_wheel_path, 'w', compression=zipfile.ZIP_DEFLATED) as zf:
+        for name, _, _ in record:
+            zf.write(name)
+
+        zf.write(record_path)
 
     # Tidy up.
+    os.chdir(saved_cwd)
     shutil.rmtree(bundled_wheel_dir)

@@ -36,6 +36,9 @@ def bundle(wheel_path, qt_dir, build_tag_suffix, msvc_runtime, openssl,
         openssl_dir):
     """ Bundle a Qt installation with a PyQt wheel. """
 
+    if openssl_dir:
+        openssl_dir = os.path.abspath(openssl_dir)
+
     # Deconstruct the wheel name.
     wheel_name = os.path.basename(wheel_path)
     parts = wheel_name.split('-')
@@ -77,6 +80,8 @@ def bundle(wheel_path, qt_dir, build_tag_suffix, msvc_runtime, openssl,
         if bundled_wheel_dir.endswith(tail):
             bundled_wheel_dir = bundled_wheel_dir[:-len(tail)]
 
+    arch = bundled_wheel_dir.split('-')[-1]
+
     # Create the directory to contain the existing wheel contents.
     shutil.rmtree(bundled_wheel_dir, ignore_errors=True)
     os.mkdir(bundled_wheel_dir)
@@ -103,13 +108,14 @@ def bundle(wheel_path, qt_dir, build_tag_suffix, msvc_runtime, openssl,
     # Bundle the relevant parts of the Qt installation.
     package.bundle_qt(target_qt_dir)
 
-    # Bundle the MSVC runtime if required.
-    if msvc_runtime:
-        package.bundle_msvc_runtime(target_qt_dir)
+    if arch in ('win32', 'win_amd64'):
+        # Bundle the MSVC runtime if required.
+        if msvc_runtime:
+            package.bundle_msvc_runtime(target_qt_dir)
 
-    # Bundle OpenSSL if required.
-    if openssl:
-        package.bundle_openssl(target_qt_dir, openssl_dir)
+        # Bundle OpenSSL if required.
+        if openssl:
+            package.bundle_openssl(target_qt_dir, openssl_dir, arch)
 
     # Rewrite the wheel's RECORD file.
     for dist_info in os.listdir('.'):

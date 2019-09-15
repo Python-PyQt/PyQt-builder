@@ -21,7 +21,14 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
+import os
+import shutil
+
 from ..abstract_package import AbstractPackage
+
+
+# The directory containing the DLLs.
+_dlls_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'dlls')
 
 
 class PyQt5(AbstractPackage):
@@ -30,9 +37,24 @@ class PyQt5(AbstractPackage):
     def bundle_msvc_runtime(self, target_qt_dir):
         """ Bundle the MSVC runtime. """
 
-        # TODO
+        self._bundle_dlls(target_qt_dir,
+                os.path.join(_dlls_dir, 'msvc_runtime'))
 
-    def bundle_openssl(self, target_qt_dir, openssl_dir):
+    def bundle_openssl(self, target_qt_dir, openssl_dir, arch):
         """ Bundle the OpenSSL DLLs. """
 
-        # TODO
+        if not openssl_dir:
+            openssl_dir = os.path.join(_dlls_dir,
+                    'openssl-64' if arch == 'win_amd64' else 'openssl-32')
+
+        self._bundle_dlls(target_qt_dir, openssl_dir)
+
+    @staticmethod
+    def _bundle_dlls(target_qt_dir, dlls_dir):
+        """ Bundle the DLLs in a directory. """
+
+        bin_dir = os.path.join(target_qt_dir, 'bin')
+        os.makedirs(bin_dir, exist_ok=True)
+
+        for dll in os.listdir(dlls_dir):
+            shutil.copy2(os.path.join(dlls_dir, dll), bin_dir)

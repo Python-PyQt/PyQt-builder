@@ -54,6 +54,9 @@ setup(
         # Update when sip v5 is released.
         #install_requires=['sip >=5, <6'],
         packages=find_packages(),
+        package_data={
+            'pyqtbuild.bundle': ['dlls/*/*'],
+        },
         entry_points={
             'console_scripts': [
                     'pyqt-bundle = pyqtbuild.bundle.main:main']

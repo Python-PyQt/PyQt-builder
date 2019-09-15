@@ -56,7 +56,7 @@ class AbstractPackage(ABC):
 
         # This default implementation does nothing.
 
-    def bundle_openssl(self, target_qt_dir, openssl_dir):
+    def bundle_openssl(self, target_qt_dir, openssl_dir, arch):
         """ Bundle the OpenSSL DLLs. """
 
         # This default implementation does nothing.

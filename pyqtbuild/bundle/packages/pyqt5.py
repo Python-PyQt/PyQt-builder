@@ -25,6 +25,7 @@ import os
 import shutil
 
 from ..abstract_package import AbstractPackage
+from ..qt_metadata import QtMetadata
 
 
 # The directory containing the DLLs.
@@ -48,6 +49,13 @@ class PyQt5(AbstractPackage):
                     'openssl-64' if arch == 'win_amd64' else 'openssl-32')
 
         self._bundle_dlls(target_qt_dir, openssl_dir)
+
+    def get_qt_metadata(self):
+        """ Return the package-specific meta-data describing the parts of Qt to
+        install.
+        """
+
+        return QtMetadata()
 
     @staticmethod
     def _bundle_dlls(target_qt_dir, dlls_dir):

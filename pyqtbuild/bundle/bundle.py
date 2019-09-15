@@ -106,7 +106,7 @@ def bundle(wheel_path, qt_dir, build_tag_suffix, msvc_runtime, openssl,
     shutil.rmtree(target_qt_dir, ignore_errors=True)
 
     # Bundle the relevant parts of the Qt installation.
-    package.bundle_qt(target_qt_dir)
+    package.bundle_qt(target_qt_dir, arch)
 
     if arch in ('win32', 'win_amd64'):
         # Bundle the MSVC runtime if required.

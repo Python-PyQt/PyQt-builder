@@ -61,10 +61,16 @@ class AbstractPackage(ABC):
 
         # This default implementation does nothing.
 
-    def bundle_qt(self, target_qt_dir):
+    def bundle_qt(self, target_qt_dir, arch):
         """ Bundle the relevant parts of the Qt installation. """
 
         # TODO
+
+    @abstractmethod
+    def get_qt_metadata(self):
+        """ Return the package-specific meta-data describing the parts of Qt to
+        install.
+        """
 
     def get_qt_version_str(self):
         """ Return the version number of the Qt installation to bundle. """

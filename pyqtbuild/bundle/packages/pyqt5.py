@@ -26,6 +26,7 @@ import shutil
 
 from ..abstract_package import AbstractPackage
 from ..qt_metadata import VersionedMetadata
+from ..verbose import verbose
 
 
 # The directory containing the DLLs.
@@ -180,13 +181,21 @@ class PyQt5(AbstractPackage):
     def bundle_msvc_runtime(self, target_qt_dir):
         """ Bundle the MSVC runtime. """
 
+        verbose("Bundling the MSVC runtime")
+
         self._bundle_dlls(target_qt_dir,
                 os.path.join(_DLLS_DIR, 'msvc_runtime'))
 
     def bundle_openssl(self, target_qt_dir, openssl_dir, arch):
         """ Bundle the OpenSSL DLLs. """
 
-        if not openssl_dir:
+        if openssl_dir:
+            verbose(
+                    "Bundling the OpenSSL libraries from '{0}'".format(
+                            openssl_dir))
+        else:
+            verbose("Bundling the default OpenSSL libraries")
+
             openssl_dir = os.path.join(_DLLS_DIR,
                     'openssl-64' if arch == 'win_amd64' else 'openssl-32')
 

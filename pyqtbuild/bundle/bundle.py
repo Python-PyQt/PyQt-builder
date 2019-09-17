@@ -30,12 +30,14 @@ from sipbuild import UserException
 import zipfile
 
 from . import packages
+from .verbose import verbose
 
 
 def bundle(wheel_path, qt_dir, build_tag_suffix, msvc_runtime, openssl,
         openssl_dir):
     """ Bundle a Qt installation with a PyQt wheel. """
 
+    wheel_path = os.path.abspath(wheel_path)
     qt_dir = os.path.abspath(qt_dir)
 
     if openssl_dir:
@@ -92,6 +94,8 @@ def bundle(wheel_path, qt_dir, build_tag_suffix, msvc_runtime, openssl,
     saved_cwd = os.getcwd()
     os.chdir(bundled_wheel_dir)
 
+    verbose("Unpacking {0}".format(wheel_name))
+
     try:
         zf = zipfile.ZipFile(wheel_path)
     except FileNotFoundError:
@@ -104,6 +108,8 @@ def bundle(wheel_path, qt_dir, build_tag_suffix, msvc_runtime, openssl,
             os.chmod(zi.filename, attr)
 
     # Remove any existing bundled Qt installation.
+    verbose("Removing any existing Qt bundle")
+
     target_qt_dir = package.get_target_qt_dir()
     shutil.rmtree(target_qt_dir, ignore_errors=True)
 
@@ -120,6 +126,8 @@ def bundle(wheel_path, qt_dir, build_tag_suffix, msvc_runtime, openssl,
             package.bundle_openssl(target_qt_dir, openssl_dir, arch)
 
     # Rewrite the wheel's RECORD file.
+    verbose("Writing the RECORD file")
+
     for dist_info in os.listdir('.'):
         if fnmatch.fnmatch(dist_info, '*.dist-info'):
             break
@@ -158,6 +166,8 @@ def bundle(wheel_path, qt_dir, build_tag_suffix, msvc_runtime, openssl,
         f.write('{},,\n'.format(record_path))
 
     # Create the bundled wheel.
+    verbose("Writing {0}".format(bundled_wheel_name))
+
     with zipfile.ZipFile(bundled_wheel_path, 'w', compression=zipfile.ZIP_DEFLATED) as zf:
         for name, _, _ in record:
             zf.write(name)
@@ -167,3 +177,5 @@ def bundle(wheel_path, qt_dir, build_tag_suffix, msvc_runtime, openssl,
     # Tidy up.
     os.chdir(saved_cwd)
     shutil.rmtree(bundled_wheel_dir)
+
+    verbose("Bundling complete.")

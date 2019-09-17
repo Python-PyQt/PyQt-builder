@@ -27,6 +27,7 @@ import packaging
 from sipbuild import UserException
 
 from .qt_metadata import VersionedMetadata
+from .verbose import verbose
 
 
 class AbstractPackage(ABC):
@@ -42,8 +43,7 @@ class AbstractPackage(ABC):
         # of Qt the wheel was built against.  (This is not a valid assumption
         # on Windows because of the QAxContainer problem but this is handled
         # elsewhere.)
-        _min_qt_version = list(self._version)
-        _min_qt_version[-1] = 0
+        _min_qt_version = (self._version[0], self._version[1], 0)
 
         # Get the Qt version being bundled.
         self._qt_version = self._parse_version(
@@ -69,10 +69,10 @@ class AbstractPackage(ABC):
         # Architecture-specific values.
         if arch.startswith('manylinux'):
             metadata_arch = 'linux'
-            module_extensions = ['.ab3.so', '.so']
+            module_extensions = ['.abi3.so', '.so']
         elif arch.startswith('macosx'):
             metadata_arch = 'macos'
-            module_extensions = ['.ab3.so', '.so']
+            module_extensions = ['.abi3.so', '.so']
         elif arch.startswith('win'):
             metadata_arch = 'win'
             module_extensions = ['.pyd']
@@ -95,6 +95,8 @@ class AbstractPackage(ABC):
                                     metadata_arch, self._qt_version)
 
                     break
+            else:
+                verbose("Skipping {0} as it is not in the wheel".format(name))
 
     @abstractmethod
     def get_qt_metadata(self):
@@ -116,8 +118,8 @@ class AbstractPackage(ABC):
 
     @staticmethod
     def _parse_version(version_str):
-        """ Parse a version string as a 3 element list of major, minor and
-        maintenance versions.
+        """ Parse a version string as a 3-tuple of major, minor and maintenance
+        versions.
         """
 
         base_version = packaging.version.parse(version_str).base_version
@@ -136,4 +138,4 @@ class AbstractPackage(ABC):
                         "Unable to parse '{0}' as a version number".format(
                                 version_str))
 
-        return version
+        return tuple(version)

@@ -27,6 +27,7 @@ from sipbuild import handle_exception
 from ..version import PYQTBUILD_VERSION_STR
 
 from .bundle import bundle
+from .verbose import set_verbose
 
 
 def main():
@@ -38,6 +39,9 @@ def main():
 
     parser.add_argument('-V', '--version', action='version',
             version=PYQTBUILD_VERSION_STR)
+
+    parser.add_argument('--verbose', default=False, action='store_true',
+            help="enable verbose progress messages")
 
     parser.add_argument('--build-tag-suffix', metavar='SUFFIX',
             help="append SUFFIX to the build tag in the wheel name")
@@ -63,6 +67,8 @@ def main():
     args = parser.parse_args()
 
     try:
+        set_verbose(args.verbose)
+
         bundle(wheel_path=args.wheels[0], qt_dir=args.qt_dir,
                 build_tag_suffix=args.build_tag_suffix,
                 msvc_runtime=args.msvc_runtime, openssl=args.openssl,

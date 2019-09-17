@@ -26,6 +26,8 @@ import os
 import shutil
 import subprocess
 
+from .verbose import verbose
+
 
 class VersionedMetadata:
     """ Encapsulate the meta-data for a set of bindings for a particular
@@ -53,6 +55,8 @@ class VersionedMetadata:
 
     def bundle(self, name, target_qt_dir, qt_dir, arch, qt_version):
         """ Bundle part of Qt as defined by the meta-data. """
+
+        verbose("Bundling {0}".format(name))
 
         if self._name is None:
             self._name = name
@@ -131,7 +135,7 @@ class VersionedMetadata:
                             self._bundle_file(qm, target_tr_dir, tr_dir)
 
         # Bundle any dynamically created files.
-        for files_arch, filesers in self._filesers.items():
+        for files_arch, files in self._files.items():
             if files_arch == '' or files_arch == arch:
                 for fn, content in files:
                     with open(os.path.join(target_qt_dir, fn), 'w') as f:
@@ -183,12 +187,15 @@ class VersionedMetadata:
         file (or directory).
         """
 
-        os.makedirs(target_dir, exist_ok=True)
-
         src = os.path.join(src_dir, name)
         dst = os.path.join(target_dir, name)
 
-        shutil.copytree(src, dst)
+        os.makedirs(os.path.dirname(dst), exist_ok=True)
+
+        if os.path.isdir(src):
+            shutil.copytree(src, dst)
+        else:
+            shutil.copy2(src, dst)
 
         return dst
 

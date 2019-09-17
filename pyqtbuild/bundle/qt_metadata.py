@@ -138,7 +138,10 @@ class VersionedMetadata:
         for files_arch, files in self._files.items():
             if files_arch == '' or files_arch == arch:
                 for fn, content in files:
-                    with open(os.path.join(target_qt_dir, fn), 'w') as f:
+                    fn = os.path.join(target_qt_dir, fn)
+                    os.makedirs(os.path.dirname(fn), exist_ok=True)
+
+                    with open(fn, 'w') as f:
                         f.write(content)
 
         # Bundle anything else.
@@ -277,18 +280,18 @@ class VersionedMetadata:
 this program.
 """)
         else:
-            # pip doesn't support symbolic links in wheels so the helper will
-            # be installed in its 'logical' location so adjust rpath so that it
-            # can still find the Qt libraries.  The required change is simple
-            # so we just patch the binary rather than require
+            # pip doesn't support symbolic links in wheels so the executable
+            # will be installed in its 'logical' location so adjust rpath so
+            # that it can still find the Qt libraries.  The required change is
+            # simple so we just patch the binary rather than require
             # install_name_tool.
-            with open(helper, 'rb') as f:
+            with open(exe, 'rb') as f:
                 contents = f.read()
 
             contents = contents.replace(b'@loader_path/../../../../../../../',
                     b'@loader_path/../../../../../\0\0\0\0\0\0')
 
-            with open(helper, 'wb') as f:
+            with open(exe, 'wb') as f:
                 f.write(contents)
 
     @classmethod

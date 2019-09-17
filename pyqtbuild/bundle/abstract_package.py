@@ -21,10 +21,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-from abc import ABC
+from abc import ABC, abstractmethod
 import os
 import packaging
 from sipbuild import UserException
+
+from .qt_metadata import VersionedMetadata
 
 
 class AbstractPackage(ABC):
@@ -61,10 +63,38 @@ class AbstractPackage(ABC):
 
         # This default implementation does nothing.
 
-    def bundle_qt(self, target_qt_dir, arch):
+    def bundle_qt(self, target_qt_dir, qt_dir, arch):
         """ Bundle the relevant parts of the Qt installation. """
 
-        # TODO
+        # Architecture-specific values.
+        if arch.startswith('manylinux'):
+            metadata_arch = 'linux'
+            module_extensions = ['.ab3.so', '.so']
+        elif arch.startswith('macosx'):
+            metadata_arch = 'macos'
+            module_extensions = ['.ab3.so', '.so']
+        elif arch.startswith('win'):
+            metadata_arch = 'win'
+            module_extensions = ['.pyd']
+        else:
+            raise UserException("Unsupported platform tag '{0}'".format(arch))
+
+        # Bundle for bindings that are installed.
+        package_dir = os.path.dirname(target_qt_dir)
+
+        for name, metadata in self.get_qt_metadata().items():
+            for ext in module_extensions:
+                if os.path.isfile(os.path.join(package_dir, name + ext)):
+                    if isinstance(metadata, VersionedMetadata):
+                        metadata = [metadata]
+
+                    # Check there is an applicable version.
+                    for md in metadata:
+                        if md.is_applicable(self._qt_version):
+                            md.bundle(name, target_qt_dir, qt_dir,
+                                    metadata_arch, self._qt_version)
+
+                    break
 
     @abstractmethod
     def get_qt_metadata(self):

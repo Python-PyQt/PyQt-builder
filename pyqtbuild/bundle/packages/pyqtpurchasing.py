@@ -3,10 +3,10 @@
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
-#
+# 
 # 1. Redistributions of source code must retain the above copyright notice,
 #    this list of conditions and the following disclaimer.
-#
+# 
 # 2. Redistributions in binary form must reproduce the above copyright notice,
 #    this list of conditions and the following disclaimer in the documentation
 #    and/or other materials provided with the distribution.
@@ -24,10 +24,24 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-# Publish the API.
-from .pyqt5 import PyQt5
-from .pyqt3d import PyQt3D
-from .pyqtchart import PyQtChart
-from .pyqtdatavisualization import PyQtDataVisualization
-from .pyqtpurchasing import PyQtPurchasing
-from .pyqtwebengine import PyQtWebEngine
+from ..abstract_package import AbstractPackage
+from ..qt_metadata import VersionedMetadata
+
+
+# The Qt meta-data for this package.
+_QT_METADATA = {
+    'QtPurchasing':
+        VersionedMetadata(version=(5, 7, 0),
+            qml=True),
+}
+
+
+class PyQtPurchasing(AbstractPackage):
+    """ The PyQtPurchasing package. """
+
+    def get_qt_metadata(self):
+        """ Return the package-specific meta-data describing the parts of Qt to
+        install.
+        """
+
+        return _QT_METADATA

@@ -21,7 +21,319 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-class QtMetadata:
-    """ This defines the package-specific meta-data describing the parts of Qt
-    to be bundled.
+import fnmatch
+import os
+import shutil
+import subprocess
+
+
+class VersionedMetadata:
+    """ Encapsulate the meta-data for a set of bindings for a particular
+    version of Qt.
     """
+
+    def __init__(self, *, version=None, name=None, lib_deps=None,
+            other_lib_deps=None, exes=None, files=None, others=None, dll=True,
+            qml=False, qml_names=None, translations=None,
+            excluded_plugins=None):
+        """ Initialise the versioned bindings. """
+
+        self._version = version
+        self._name = name
+        self._lib_deps = {} if lib_deps is None else lib_deps
+        self._other_lib_deps = {} if other_lib_deps is None else other_lib_deps
+        self._exes = {} if exes is None else exes
+        self._files = {} if files is None else files
+        self._others = {} if others is None else others
+        self._dll = dll
+        self._qml = qml
+        self._qml_names = qml_names
+        self._translations = () if translations is None else translations
+        self._excluded_plugins = excluded_plugins
+
+    def bundle(self, name, target_qt_dir, qt_dir, arch, qt_version):
+        """ Bundle part of Qt as defined by the meta-data. """
+
+        if self._name is None:
+            self._name = name
+
+        # Bundle the Qt library that has been wrapped (if there is one).
+        if self._dll:
+            self._bundle_qt_library(self._name, target_qt_dir, qt_dir, arch,
+                    qt_version)
+
+        # Bundle any other dependent Qt libraries.
+        for lib_arch, libs in self._lib_deps.items():
+            if lib_arch == '' or lib_arch == arch:
+                for lib in libs:
+                    self._bundle_qt_library(lib, target_qt_dir, qt_dir, arch,
+                            qt_version)
+
+        # Bundle any other libraries.
+        lib_contents = None
+
+        for lib_arch, libs in self._other_lib_deps.items():
+            if lib_arch == '' or lib_arch == arch:
+                for lib in libs:
+                    if '*' in lib:
+                        # A wildcard implies the dependency is optional.  This
+                        # is mainly to (historically) deal with ICU on Windows.
+                        if lib_contents is None:
+                            lib_contents = os.listdir(
+                                    self._get_qt_library_dir(qt_dir, arch))
+
+                        for qt_lib in lib_contents:
+                            if fnmatch.fnmatch(qt_lib, lib):
+                                self._bundle_library(qt_lib, target_qt_dir,
+                                        qt_dir, arch)
+                    else:
+                        self._bundle_library(lib, target_qt_dir, qt_dir, arch)
+
+        # Bundle any executables.
+        for exe_arch, exes in self._exes.items():
+            if exe_arch == '' or exe_arch == arch:
+                for exe in exes:
+                    bundled_exe = self._bundle_file(exe, target_qt_dir, qt_dir)
+
+                    if arch == 'linux':
+                        self._fix_linux_executable(bundled_exe, qt_version)
+                    elif arch == 'macos':
+                        self._fix_macos_executable(bundled_exe, qt_version)
+                    elif arch == 'win':
+                        self._fix_win_executable(bundled_exe)
+
+        # Bundle any QML files.
+        if self._qml:
+            qml_names = self._qml_names
+            if qml_names is None:
+                qml_names = [self._name]
+
+            for qml_subdir in qml_names:
+                self._bundle_nondebug(os.path.join('qml', qml_subdir),
+                        target_qt_dir, qt_dir, arch)
+
+        # Bundle any plugins.  We haven't done the analysis of which plugins
+        # belong to which package so we assume that only the QtCore package
+        # will specify any to exclude and we bundle all of them with that.
+        if self._excluded_plugins is not None:
+            self._bundle_nondebug('plugins', target_qt_dir, qt_dir, arch,
+                    exclude=self._excluded_plugins)
+
+        # Bundle any translations:
+        if self._translations:
+            target_tr_dir = os.path.join(target_qt_dir, 'translations')
+            tr_dir = os.path.join(qt_dir, 'translations')
+
+            for qm in os.listdir(tr_dir):
+                if qm.endswith('.qm'):
+                    for prefix in self._translations:
+                        if qm.startswith(prefix):
+                            self._bundle_file(qm, target_tr_dir, tr_dir)
+
+        # Bundle any dynamically created files.
+        for files_arch, filesers in self._filesers.items():
+            if files_arch == '' or files_arch == arch:
+                for fn, content in files:
+                    with open(os.path.join(target_qt_dir, fn), 'w') as f:
+                        f.write(content)
+
+        # Bundle anything else.
+        for oth_arch, others in self._others.items():
+            if oth_arch == '' or oth_arch == arch:
+                for oth in others:
+                    self._bundle_file(oth, target_qt_dir, qt_dir)
+
+    def is_applicable(self, qt_version):
+        """ Returns True if this meta-data is applicable for a particular Qt
+        version.
+        """
+
+        return self._version is None or qt_version >= self._version
+
+    @classmethod
+    def _bundle_nondebug(cls, src_dir, target_qt_dir, qt_dir, arch,
+            exclude=None):
+        """ Bundle the non-debug contents of a directory. """
+
+        if exclude is None:
+            exclude = ()
+
+        for dirpath, dirnames, filenames in os.walk(os.path.join(qt_dir, src_dir)):
+            for ignore in exclude:
+                try:
+                    dirnames.remove(ignore)
+                except ValueError:
+                    pass
+
+            for name in list(dirnames):
+                if cls._is_debug(name, arch):
+                    dirnames.remove(name)
+
+            for name in filenames:
+                if cls._is_debug(name, arch):
+                    continue
+
+                cls._bundle_file(
+                        os.path.relpath(os.path.join(dirpath, name), qt_dir),
+                        target_qt_dir, qt_dir)
+
+    @staticmethod
+    def _bundle_file(name, target_dir, src_dir):
+        """ Bundle a file (or directory) and return the name of the installed
+        file (or directory).
+        """
+
+        os.makedirs(target_dir, exist_ok=True)
+
+        src = os.path.join(src_dir, name)
+        dst = os.path.join(target_dir, name)
+
+        shutil.copytree(src, dst)
+
+        return dst
+
+    @classmethod
+    def _bundle_library(cls, name, target_qt_dir, qt_dir, arch):
+        """ Bundle a library. """
+
+        cls._bundle_file(name,
+                os.path.join(target_qt_dir, cls._get_qt_library_subdir(arch)),
+                cls._get_qt_library_dir(qt_dir, arch))
+
+    @classmethod
+    def _bundle_qt_library(cls, name, target_qt_dir, qt_dir, arch, qt_version):
+        """ Bundle a Qt library. """
+
+        cls._bundle_library(cls._impl_from_library(name, arch, qt_version),
+                target_qt_dir, qt_dir, arch)
+
+    @staticmethod
+    def _check_executable(exe):
+        """ Return True if an executable can be found on PATH. """
+
+        for p in os.environ.get('PATH', '').split(os.pathsep):
+            exe_path = os.path.join(p, exe)
+
+            if os.access(exe_path, os.X_OK):
+                return True
+
+        return False
+
+    @staticmethod
+    def _create_qt_conf(exe):
+        """ Create a qt.conf file for an executable. """
+
+        qt_conf = os.path.join(os.path.dirname(exe), 'qt.conf')
+
+        with open(qt_conf, 'w') as f:
+            f.write('[Paths]\nPrefix = ..\n')
+
+    @classmethod
+    def _fix_linux_executable(cls, exe, qt_version):
+        """ Fix a Linux executable. """
+
+        # Note that this assumes the executable is QWebEngineProcess.
+
+        if qt_version == (5, 6, 0):
+            if cls._check_executable('chrpath'):
+                # Replace the incorrect rpath with the correct one.
+                subprocess.run(['chrpath', '--replace', '$ORIGIN/../lib', exe])
+            else:
+                print(
+"""QWebEngineProcess is broken in Qt v5.6.0. This can be fixed but requires
+'chrpath' to be installed on your system before running this program.
+""")
+
+        cls._create_qt_conf(exe)
+
+    @classmethod
+    def _fix_macos_executable(cls, exe, qt_version):
+        """ Fix a macOS executable. """
+
+        # Note that this assumes the executable is QWebEngineProcess.
+
+        if qt_version == (5, 6, 0):
+            if cls._check_executable('install_name_tool'):
+                # The rpaths were completly broken in this version.
+                subprocess.run(['install_name_tool', '-delete_rpath',
+                        '@loader_path/../../../../../../../../Frameworks',
+                        exe])
+                subprocess.run(['install_name_tool', '-delete_rpath',
+                        '/Users/qt/work/install/lib', exe])
+
+                subprocess.run(['install_name_tool', '-add_rpath',
+                        '@loader_path/../../../../../', exe])
+            else:
+                print(
+"""QWebEngineProcess is broken in Qt v5.6.0. This can be fixed but requires
+'install_name_tool' from Xcode to be installed on your system before running
+this program.
+""")
+        else:
+            # pip doesn't support symbolic links in wheels so the helper will
+            # be installed in its 'logical' location so adjust rpath so that it
+            # can still find the Qt libraries.  The required change is simple
+            # so we just patch the binary rather than require
+            # install_name_tool.
+            with open(helper, 'rb') as f:
+                contents = f.read()
+
+            contents = contents.replace(b'@loader_path/../../../../../../../',
+                    b'@loader_path/../../../../../\0\0\0\0\0\0')
+
+            with open(helper, 'wb') as f:
+                f.write(contents)
+
+    @classmethod
+    def _fix_win_executable(cls, exe):
+        """ Fix a Windows executable. """
+
+        # Note that this assumes the executable is QWebEngineProcess.
+
+        cls._create_qt_conf(exe)
+
+    @classmethod
+    def _get_qt_library_dir(cls, qt_dir, arch):
+        """ Return the name of the directory in the Qt installation containing
+        the libraries.
+        """
+
+        return os.path.join(qt_dir, cls._get_qt_library_subdir(arch))
+
+    @staticmethod
+    def _get_qt_library_subdir(arch):
+        """ Return the name of the sub-directory in the Qt installation
+        containing the libraries.
+        """
+
+        return 'bin' if arch == 'win' else 'lib'
+
+    @staticmethod
+    def _impl_from_library(name, arch, qt_version):
+        """ Return the architecture-specific name of a Qt library. """
+
+        qt_major = qt_version[0]
+
+        if arch == 'linux':
+            return 'libQt{}{}.so.{}'.format(qt_major, name[2:], qt_major)
+
+        if arch == 'macos':
+            return '{}.framework/Versions/{}/{}'.format(name, qt_major, name)
+
+        if arch == 'win':
+            return 'Qt{}{}.dll'.format(qt_major, name[2:])
+
+    @staticmethod
+    def _is_debug(name, arch):
+        """ Return True if a name implies a debug version. """
+
+        if arch == 'linux':
+            return name.endswith('.debug')
+
+        if arch == 'macos':
+            return name.endswith('_debug.dylib') or name.endswith('.dSYM')
+
+        if arch == 'win':
+            # This is a bit flakely as we could have a non-debug DLL that ends
+            # with a 'd'.
+            return name.endswith('.pdb') or name.endswith('d.dll')

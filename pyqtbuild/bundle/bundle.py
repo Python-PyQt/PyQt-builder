@@ -36,6 +36,8 @@ def bundle(wheel_path, qt_dir, build_tag_suffix, msvc_runtime, openssl,
         openssl_dir):
     """ Bundle a Qt installation with a PyQt wheel. """
 
+    qt_dir = os.path.abspath(qt_dir)
+
     if openssl_dir:
         openssl_dir = os.path.abspath(openssl_dir)
 
@@ -106,7 +108,7 @@ def bundle(wheel_path, qt_dir, build_tag_suffix, msvc_runtime, openssl,
     shutil.rmtree(target_qt_dir, ignore_errors=True)
 
     # Bundle the relevant parts of the Qt installation.
-    package.bundle_qt(target_qt_dir, arch)
+    package.bundle_qt(target_qt_dir, qt_dir, arch)
 
     if arch in ('win32', 'win_amd64'):
         # Bundle the MSVC runtime if required.

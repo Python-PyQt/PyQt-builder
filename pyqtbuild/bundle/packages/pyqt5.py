@@ -25,11 +25,153 @@ import os
 import shutil
 
 from ..abstract_package import AbstractPackage
-from ..qt_metadata import QtMetadata
+from ..qt_metadata import VersionedMetadata
 
 
 # The directory containing the DLLs.
-_dlls_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'dlls')
+_DLLS_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'dlls')
+
+
+# The Qt meta-data for this package.
+_QT_METADATA = {
+    'QAxContainer':
+        VersionedMetadata(dll=False),
+
+    'QtAndroidExtras':
+        VersionedMetadata(),
+
+    'QtBluetooth': (
+        VersionedMetadata(version=(5, 7, 1),
+            lib_deps={
+                'linux': ('QtConcurrent', ),
+                'macos': ('QtConcurrent', )},
+            qml=True),
+        VersionedMetadata(
+            lib_deps={'macos': ('QtConcurrent', )},
+            qml=True)),
+
+    'QtCore':
+        VersionedMetadata(
+            other_lib_deps={
+                'linux': ('libicui18n.so.56', 'libicuuc.so.56',
+                          'libicudata.so.56'),
+                'win': ('icudt*.dll', 'icuin*.dll', 'icuuc*.dll')},
+            translations=('qt_help', 'qtbase', 'qtconnectivity',
+                'qtdeclarative', 'qtlocation', 'qtmultimedia',
+                'qtquickcontrols', 'qtserialport', 'qtwebsockets',
+                'qtxmlpatterns', 'qt_', 'xcbglintegrations'),
+            excluded_plugins=('canbus', 'designer', 'qmltooling')),
+
+    'QtDBus':
+        VersionedMetadata(),
+
+    'QtDesigner':
+        VersionedMetadata(),
+
+    'QtGui':
+        VersionedMetadata(lib_deps={'linux': ('QtWaylandClient', 'QtXcbQpa')},
+                other_lib_deps={
+                        'win': ('d3dcompiler_47.dll', 'libEGL.dll',
+                                'libGLESv2.dll', 'opengl32sw.dll')}),
+
+    'QtHelp': (
+        VersionedMetadata(version=(5, 9, 0)),
+        VersionedMetadata(lib_deps={'': ('QtCLucene', )})),
+
+    'QtLocation': (
+        VersionedMetadata(version=(5, 11, 0), qml=True,
+                lib_deps={'': ('QtPositioningQuick', )}),
+        VersionedMetadata(qml=True)),
+
+    'QtMacExtras':
+        VersionedMetadata(),
+
+    'QtMultimedia': (
+        VersionedMetadata(version=(5, 10, 0),
+                lib_deps={'linux': ('QtMultimediaGstTools', )},
+                qml=True, qml_names=('QtAudioEngine', 'QtMultimedia')),
+        VersionedMetadata(lib_deps={'win': ('QtMultimediaQuick_p', )},
+                qml=True, qml_names=('QtAudioEngine', 'QtMultimedia'))),
+
+    'QtMultimediaWidgets':
+        VersionedMetadata(),
+
+    'QtNetwork':
+        VersionedMetadata(),
+
+    'QtNetworkAuth':
+        VersionedMetadata(version=(5, 10, 0)),
+
+    'QtNfc':
+        VersionedMetadata(qml=True),
+
+    'QtOpenGL':
+        VersionedMetadata(),
+
+    'QtPositioning':
+        VersionedMetadata(qml=True),
+
+    'QtPrintSupport':
+        VersionedMetadata(),
+
+    'QtQml':
+        VersionedMetadata(qml=True),
+
+    'QtQuick':
+        VersionedMetadata(
+                lib_deps={'': ('QtQuickControls2', 'QtQuickParticles',
+                        'QtQuickShapes', 'QtQuickTemplates2', 'QtQuickTest')},
+                qml=True,
+                qml_names=('QtCanvas3D', 'QtGraphicalEffects', 'QtQuick',
+                        'QtQuick.2')),
+
+    'QtQuickWidgets':
+        VersionedMetadata(),
+
+    'QtRemoteObjects':
+        VersionedMetadata(version=(5, 12, 0)),
+
+    'QtSensors':
+        VersionedMetadata(qml=True),
+
+    'QtSerialPort':
+        VersionedMetadata(),
+
+    'QtSql':
+        VersionedMetadata(),
+
+    'QtSvg':
+        VersionedMetadata(),
+
+    'QtTest':
+        VersionedMetadata(qml=True),
+
+    'QtWebChannel':
+        VersionedMetadata(qml=True),
+
+    'QtWebSockets':
+        VersionedMetadata(qml=True),
+
+    'QtWebView':
+        VersionedMetadata(qml=True),
+
+    'QtWidgets':
+        VersionedMetadata(),
+
+    'QtWinExtras':
+        VersionedMetadata(),
+
+    'QtX11Extras':
+        VersionedMetadata(),
+
+    'QtXml':
+        VersionedMetadata(),
+
+    'QtXmlPatterns':
+        VersionedMetadata(
+            qml=True,
+            qml_names=('Qt', )),
+}
 
 
 class PyQt5(AbstractPackage):
@@ -39,13 +181,13 @@ class PyQt5(AbstractPackage):
         """ Bundle the MSVC runtime. """
 
         self._bundle_dlls(target_qt_dir,
-                os.path.join(_dlls_dir, 'msvc_runtime'))
+                os.path.join(_DLLS_DIR, 'msvc_runtime'))
 
     def bundle_openssl(self, target_qt_dir, openssl_dir, arch):
         """ Bundle the OpenSSL DLLs. """
 
         if not openssl_dir:
-            openssl_dir = os.path.join(_dlls_dir,
+            openssl_dir = os.path.join(_DLLS_DIR,
                     'openssl-64' if arch == 'win_amd64' else 'openssl-32')
 
         self._bundle_dlls(target_qt_dir, openssl_dir)
@@ -55,7 +197,7 @@ class PyQt5(AbstractPackage):
         install.
         """
 
-        return QtMetadata()
+        return _QT_METADATA
 
     @staticmethod
     def _bundle_dlls(target_qt_dir, dlls_dir):

@@ -149,23 +149,33 @@ class AbstractPackage(ABC):
         if output.returncode != 0:
             raise UserException("otool returned a non-zero exit status")
 
-        args = ['install_name_tool']
-
         # Delete any existing rpaths.
+        args = []
+        new_rpath = '@loader_path/Qt/lib'
+        add_new_rpath = True
+
         for line in output.stdout.split('\n'):
             parts = line.split()
 
             if len(parts) >= 2 and parts[0] == 'path':
-                args.append('-delete_rpath')
-                args.append(parts[1])
+                rpath = parts[1]
 
-        # Add an rpath for the bundled Qt installation.
-        args.append('-add_rpath')
-        args.append('@loader_path/Qt/lib')
+                if rpath == new_rpath:
+                    add_new_rpath = False
+                else:
+                    args.append('-delete_rpath')
+                    args.append(rpath)
 
-        args.append(bindings)
+        # Add an rpath for the bundled Qt installation if it is not already
+        # there.
+        if add_new_rpath:
+            args.append('-add_rpath')
+            args.append('@loader_path/Qt/lib')
 
-        subprocess.run(args)
+        if args:
+            args.insert(0, 'install_name_tool')
+            args.append(bindings)
+            subprocess.run(args)
 
     @staticmethod
     def _missing_executable(exe):

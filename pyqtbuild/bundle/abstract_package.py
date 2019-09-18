@@ -93,6 +93,7 @@ class AbstractPackage(ABC):
                         if md.is_applicable(self._qt_version):
                             md.bundle(name, target_qt_dir, qt_dir,
                                     metadata_arch, self._qt_version)
+                            break
 
                     break
             else:

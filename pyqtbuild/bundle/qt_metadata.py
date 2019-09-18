@@ -218,18 +218,6 @@ class VersionedMetadata:
                 target_qt_dir, qt_dir, arch)
 
     @staticmethod
-    def _check_executable(exe):
-        """ Return True if an executable can be found on PATH. """
-
-        for p in os.environ.get('PATH', '').split(os.pathsep):
-            exe_path = os.path.join(p, exe)
-
-            if os.access(exe_path, os.X_OK):
-                return True
-
-        return False
-
-    @staticmethod
     def _create_qt_conf(exe):
         """ Create a qt.conf file for an executable. """
 
@@ -245,14 +233,8 @@ class VersionedMetadata:
         # Note that this assumes the executable is QWebEngineProcess.
 
         if qt_version == (5, 6, 0):
-            if cls._check_executable('chrpath'):
-                # Replace the incorrect rpath with the correct one.
-                subprocess.run(['chrpath', '--replace', '$ORIGIN/../lib', exe])
-            else:
-                print(
-"""QWebEngineProcess is broken in Qt v5.6.0. This can be fixed but requires
-'chrpath' to be installed on your system before running this program.
-""")
+            # Replace the incorrect rpath with the correct one.
+            subprocess.run(['chrpath', '--replace', '$ORIGIN/../lib', exe])
 
         cls._create_qt_conf(exe)
 
@@ -263,28 +245,21 @@ class VersionedMetadata:
         # Note that this assumes the executable is QWebEngineProcess.
 
         if qt_version == (5, 6, 0):
-            if cls._check_executable('install_name_tool'):
-                # The rpaths were completly broken in this version.
-                subprocess.run(['install_name_tool', '-delete_rpath',
-                        '@loader_path/../../../../../../../../Frameworks',
-                        exe])
-                subprocess.run(['install_name_tool', '-delete_rpath',
-                        '/Users/qt/work/install/lib', exe])
+            # The rpaths were completly broken in this version.
+            subprocess.run(['install_name_tool', '-delete_rpath',
+                    '@loader_path/../../../../../../../../Frameworks', exe])
+            subprocess.run(['install_name_tool', '-delete_rpath',
+                    '/Users/qt/work/install/lib', exe])
 
-                subprocess.run(['install_name_tool', '-add_rpath',
-                        '@loader_path/../../../../../', exe])
-            else:
-                print(
-"""QWebEngineProcess is broken in Qt v5.6.0. This can be fixed but requires
-'install_name_tool' from Xcode to be installed on your system before running
-this program.
-""")
+            subprocess.run(['install_name_tool', '-add_rpath',
+                    '@loader_path/../../../../../', exe])
         else:
             # pip doesn't support symbolic links in wheels so the executable
             # will be installed in its 'logical' location so adjust rpath so
             # that it can still find the Qt libraries.  The required change is
             # simple so we just patch the binary rather than require
-            # install_name_tool.
+            # install_name_tool.  Note that install_name_tool is now always
+            # needed anyway.
             with open(exe, 'rb') as f:
                 contents = f.read()
 

@@ -25,6 +25,7 @@ from abc import ABC, abstractmethod
 import os
 import packaging
 from sipbuild import UserException
+import subprocess
 
 from .qt_metadata import VersionedMetadata
 from .verbose import verbose
@@ -84,13 +85,20 @@ class AbstractPackage(ABC):
 
         for name, metadata in self.get_qt_metadata().items():
             for ext in module_extensions:
-                if os.path.isfile(os.path.join(package_dir, name + ext)):
+                bindings = os.path.join(package_dir, name + ext)
+
+                if os.path.isfile(bindings):
                     if isinstance(metadata, VersionedMetadata):
                         metadata = [metadata]
 
                     # Check there is an applicable version.
                     for md in metadata:
                         if md.is_applicable(self._qt_version):
+                            if metadata_arch == 'linux':
+                                self._fix_linux_rpath(bindings)
+                            elif metadata_arch == 'macos':
+                                self._fix_macos_rpath(bindings)
+
                             md.bundle(name, target_qt_dir, qt_dir,
                                     metadata_arch, self._qt_version)
                             break
@@ -116,6 +124,60 @@ class AbstractPackage(ABC):
         """
 
         return os.path.join('PyQt{}'.format(self._version[0]), 'Qt')
+
+    @classmethod
+    def _fix_linux_rpath(cls, bindings):
+        """ Fix the rpath for Linux bindings. """
+
+        if cls._missing_executable('chrpath'):
+            raise UserException("'chrpath' must be installed on your system")
+
+        subprocess.run(['chrpath', '-r', '$ORIGIN/Qt/lib', bindings])
+
+    @classmethod
+    def _fix_macos_rpath(cls, bindings):
+        """ Fix the rpath for macOS bindings. """
+
+        if cls._missing_executable('otool') or cls._missing_executable('install_name_tool'):
+            raise UserException(
+                    "'otool' and 'install_name_tool' from Xcode must be "
+                    "installed on your system")
+
+        # Use otool to get all current rpaths.
+        output = subprocess.run(['otool', '-l', bindings], capture_output=True,
+                text=True)
+        if output.returncode != 0:
+            raise UserException("otool returned a non-zero exit status")
+
+        args = ['install_name_tool']
+
+        # Delete any existing rpaths.
+        for line in output.stdout.split('\n'):
+            parts = line.split()
+
+            if len(parts) >= 2 and parts[0] == 'path':
+                args.append('-delete_rpath')
+                args.append(parts[1])
+
+        # Add an rpath for the bundled Qt installation.
+        args.append('-add_rpath')
+        args.append('@loader_path/Qt/lib')
+
+        args.append(bindings)
+
+        subprocess.run(args)
+
+    @staticmethod
+    def _missing_executable(exe):
+        """ Return True if an executable cannot be found on PATH. """
+
+        for p in os.environ.get('PATH', '').split(os.pathsep):
+            exe_path = os.path.join(p, exe)
+
+            if os.access(exe_path, os.X_OK):
+                return False
+
+        return True
 
     @staticmethod
     def _parse_version(version_str):

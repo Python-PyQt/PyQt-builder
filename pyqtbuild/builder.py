@@ -45,7 +45,7 @@ class QmakeBuilder(Builder):
         self.qt_version_str = ''
         self.qt_version_tag = ''
 
-    def apply_user_options(self, tool):
+    def apply_user_defaults(self, tool):
         """ Set default values for user options that haven't been set yet. """
 
         if tool in Option.BUILD_TOOLS:
@@ -75,7 +75,7 @@ class QmakeBuilder(Builder):
                     # This will exist (and we can't check anyway).
                     self.spec = 'macx-clang'
 
-        super().apply_user_options(tool)
+        super().apply_user_defaults(tool)
 
     def build_executable(self, buildable, fatal=True):
         """ Build an executable from a BuildableExecutable object and return

@@ -45,10 +45,6 @@ class PyQtProject(Project):
             from .builder import QmakeBuilder
             self.builder_factory = QmakeBuilder
 
-        if self.dunder_init is None:
-            # __init__.py should be installed by the main PyQt package.
-            self.dunder_init = False
-
         if self.sip_files_dir is None:
             self.sip_files_dir = 'sip'
 

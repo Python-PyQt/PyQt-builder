@@ -180,7 +180,7 @@ class QmakeBuilder(Builder):
             args.append('--console-script')
             args.append(ep.replace(' ', ''))
 
-        args.append(self.qmake_quote(project.get_distinfo_name(target_dir)))
+        args.append(self.qmake_quote(project.get_distinfo_dir(target_dir)))
 
         pro_lines.append('distinfo.extra = {}'.format(' '.join(args)))
         pro_lines.append(

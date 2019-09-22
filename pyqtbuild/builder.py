@@ -45,7 +45,7 @@ class QmakeBuilder(Builder):
         self.qt_version_str = ''
         self.qt_version_tag = ''
 
-    def apply_user_defaults(self, tool):
+    def apply_user_options(self, tool):
         """ Set default values for user options that haven't been set yet. """
 
         if tool != 'sdist':
@@ -75,7 +75,7 @@ class QmakeBuilder(Builder):
                     # This will exist (and we can't check anyway).
                     self.spec = 'macx-clang'
 
-        super().apply_user_defaults(tool)
+        super().apply_user_options(tool)
 
     def build_executable(self, buildable, fatal=True):
         """ Build an executable from a BuildableExecutable object and return
@@ -216,21 +216,21 @@ class QmakeBuilder(Builder):
         # Add our new options.
         options.append(
                 Option('make', option_type=bool, inverted=True,
-                        help="do not run make or nmake", tools='build'))
+                        help="do not run make or nmake", tools=['build']))
 
         options.append(
                 Option('qmake', help="the pathname of qmake is FILE",
-                        metavar="FILE", tools='build install wheel'))
+                        metavar="FILE", tools=['build', 'install', 'wheel']))
 
         options.append(
                 Option('qmake_settings', option_type=list,
                         help="add the 'NAME += VALUE' setting to any .pro file",
                         metavar="'NAME += VALUE'",
-                        tools='build install wheel'))
+                        tools=['build', 'install', 'wheel']))
 
         options.append(
                 Option('spec', help="pass -spec SPEC to qmake",
-                        metavar="SPEC", tools='build install wheel'))
+                        metavar="SPEC", tools=['build', 'install', 'wheel']))
 
         return options
 

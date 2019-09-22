@@ -33,7 +33,7 @@ from sipbuild import Option, Project
 class PyQtProject(Project):
     """ Encapsulate a PyQt based project. """
 
-    def apply_nonuser_defaults(self, tool):
+    def apply_nonuser_options(self, tool):
         """ Set default values for non-user options that haven't been set yet.
         """
 
@@ -73,12 +73,12 @@ class PyQtProject(Project):
         if not os.path.isabs(self.tests_dir):
             self.tests_dir = os.path.join(self.root_dir, self.tests_dir)
 
-        super().apply_nonuser_defaults(tool)
+        super().apply_nonuser_options(tool)
 
-    def apply_user_defaults(self, tool):
+    def apply_user_options(self, tool):
         """ Set default values for user options that haven't been set yet. """
 
-        super().apply_user_defaults(tool)
+        super().apply_user_options(tool)
 
         # Get the details of the default Python interpreter library.  Note that
         # these are actually non-user options but we need the 'link_full_dll'
@@ -168,11 +168,11 @@ class PyQtProject(Project):
                 Option('link_full_dll', option_type=bool,
                         help="on Windows link against the full Python DLL "
                                 "rather than the limited API DLL",
-                        tools='build install wheel'))
+                        tools=['build', 'install', 'wheel']))
 
         options.append(
                 Option('qml_debug', option_type=bool,
                         help="enable the QML debugging infrastructure",
-                        tools='build install wheel'))
+                        tools=['build', 'install', 'wheel'))
 
         return options

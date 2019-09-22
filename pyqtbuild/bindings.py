@@ -33,7 +33,7 @@ from sipbuild import Bindings, BuildableExecutable, UserException, Option
 class PyQtBindings(Bindings):
     """ A base class for all PyQt-based bindings. """
 
-    def apply_nonuser_defaults(self, tool):
+    def apply_nonuser_options(self, tool):
         """ Set default values for non-user options that haven't been set yet.
         """
 
@@ -43,7 +43,7 @@ class PyQtBindings(Bindings):
             # The (not very good) naming convention used by MetaSIP.
             self.sip_file = os.path.join(self.name, self.name + 'mod.sip')
 
-        super().apply_nonuser_defaults(tool)
+        super().apply_nonuser_options(tool)
 
         self._update_builder_settings('CONFIG', self.qmake_CONFIG)
         self._update_builder_settings('QT', self.qmake_QT)
@@ -63,7 +63,7 @@ class PyQtBindings(Bindings):
             if headers or sources:
                 self.include_dirs.append(qpy_dir)
 
-    def apply_user_defaults(self, tool):
+    def apply_user_options(self, tool):
         """ Set default values for user options that haven't been set yet. """
 
         # Although tags is not a user option, the default depends on one.
@@ -73,7 +73,7 @@ class PyQtBindings(Bindings):
             self.tags = ['{}_{}'.format(project.tag_prefix,
                     project.builder.qt_version_tag)]
 
-        super().apply_user_defaults(tool)
+        super().apply_user_options(tool)
 
     def get_options(self):
         """ Return the list of configurable options. """

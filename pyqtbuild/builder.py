@@ -48,7 +48,7 @@ class QmakeBuilder(Builder):
     def apply_user_options(self, tool):
         """ Set default values for user options that haven't been set yet. """
 
-        if tool != 'sdist':
+        if tool in Option.BUILD_TOOLS:
             # Check we have a qmake.
             if self.qmake is None:
                 self.qmake = self._find_exe('qmake')
@@ -220,17 +220,16 @@ class QmakeBuilder(Builder):
 
         options.append(
                 Option('qmake', help="the pathname of qmake is FILE",
-                        metavar="FILE", tools=['build', 'install', 'wheel']))
+                        metavar="FILE"))
 
         options.append(
                 Option('qmake_settings', option_type=list,
                         help="add the 'NAME += VALUE' setting to any .pro file",
-                        metavar="'NAME += VALUE'",
-                        tools=['build', 'install', 'wheel']))
+                        metavar="'NAME += VALUE'"))
 
         options.append(
                 Option('spec', help="pass -spec SPEC to qmake",
-                        metavar="SPEC", tools=['build', 'install', 'wheel']))
+                        metavar="SPEC"))
 
         return options
 

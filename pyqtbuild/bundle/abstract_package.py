@@ -132,7 +132,7 @@ class AbstractPackage(ABC):
         if cls._missing_executable('chrpath'):
             raise UserException("'chrpath' must be installed on your system")
 
-        subprocess.run(['chrpath', '-r', '$ORIGIN/Qt/lib', bindings])
+        subprocess.run(['chrpath', '--replace', '$ORIGIN/Qt/lib', bindings])
 
     @classmethod
     def _fix_macos_rpath(cls, bindings):

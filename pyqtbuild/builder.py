@@ -167,10 +167,9 @@ class QmakeBuilder(Builder):
         args.append('--inventory')
         args.append(inventory_fn)
 
-        requires_dist = project.get_requires_dist()
-        if requires_dist:
+        for rd in project.get_requires_dists()
             args.append('--requires-dist')
-            args.append('\\"{}\\"'.format(requires_dist))
+            args.append('\\"{}\\"'.format(rd))
 
         if wheel is not None:
             args.append('--wheel-tag')

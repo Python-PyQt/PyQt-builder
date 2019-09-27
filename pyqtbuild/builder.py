@@ -402,7 +402,7 @@ target.files = %s
 
         self.qt_configuration = {}
 
-        for line in project.read_command_pipe(self.qmake + ' -query'):
+        for line in project.read_command_pipe([self.qmake, '-query']):
             line = line.strip()
 
             tokens = line.split(':', maxsplit=1)

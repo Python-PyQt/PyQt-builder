@@ -77,7 +77,7 @@ class QmakeBuilder(Builder):
 
         super().apply_user_defaults(tool)
 
-    def build_executable(self, buildable, fatal=True):
+    def build_executable(self, buildable, *, fatal=True):
         """ Build an executable from a BuildableExecutable object and return
         the relative pathname of the executable.
         """
@@ -107,7 +107,7 @@ class QmakeBuilder(Builder):
 
         return exe
 
-    def build_project(self, target_dir, wheel=None):
+    def build_project(self, target_dir, *, wheel_tag=None):
         """ Build the project. """
 
         project = self.project
@@ -171,9 +171,9 @@ class QmakeBuilder(Builder):
             args.append('--requires-dist')
             args.append('\\"{}\\"'.format(rd))
 
-        if wheel is not None:
+        if wheel_tag is not None:
             args.append('--wheel-tag')
-            args.append(wheel.tag)
+            args.append(wheel_tag)
 
         for ep in project.console_scripts:
             args.append('--console-script')
@@ -232,7 +232,7 @@ class QmakeBuilder(Builder):
 
         return options
 
-    def install_project(self, target_dir, wheel=None):
+    def install_project(self, target_dir, *, wheel_tag=None):
         """ Install the project into a target directory. """
 
         project = self.project

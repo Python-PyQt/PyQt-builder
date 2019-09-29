@@ -167,7 +167,7 @@ class QmakeBuilder(Builder):
         args.append('--inventory')
         args.append(inventory_fn)
 
-        for rd in project.get_requires_dists()
+        for rd in project.get_requires_dists():
             args.append('--requires-dist')
             args.append('\\"{}\\"'.format(rd))
 

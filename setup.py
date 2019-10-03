@@ -51,8 +51,7 @@ setup(
         version=version,
         license='BSD',
         python_requires='>=3.5',
-        # Update when sip v5 is released.
-        #install_requires=['sip >=5, <6'],
+        install_requires=['sip >=5, <6'],
         packages=find_packages(),
         package_data={
             'pyqtbuild.bundle': ['dlls/*/*'],

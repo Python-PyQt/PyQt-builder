@@ -44,5 +44,6 @@ installed automatically when it is needed.
 Documentation
 -------------
 
-The documentation for the latest release can be found
-`here <https://www.riverbankcomputing.com/static/Docs/PyQt-builder/>`__.
+The documentation for the latest release is part of the
+`PyQt5 <https://www.riverbankcomputing.com/static/Docs/PyQt5/>`__
+documentation.

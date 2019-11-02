@@ -144,7 +144,7 @@ class AbstractPackage(ABC):
                     "installed on your system")
 
         # Use otool to get all current rpaths.
-        pipe = subprocess.Popen('otool -l {}'.format(bindings),
+        pipe = subprocess.Popen('otool -l {}'.format(bindings), shell=True,
                 stdout=subprocess.PIPE, universal_newlines=True)
 
         # Delete any existing rpaths.

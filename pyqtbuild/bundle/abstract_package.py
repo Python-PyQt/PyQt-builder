@@ -146,7 +146,7 @@ class AbstractPackage(ABC):
 
         # Use otool to get all current rpaths.
         output = subprocess.run(['otool', '-l', bindings], capture_output=True,
-                text=True)
+                universal_newlines=True)
         if output.returncode != 0:
             raise UserException("otool returned a non-zero exit status")
 

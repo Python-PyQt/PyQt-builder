@@ -132,8 +132,7 @@ class AbstractPackage(ABC):
         if cls._missing_executable('chrpath'):
             raise UserException("'chrpath' must be installed on your system")
 
-        subprocess.run(['chrpath', '--replace', '$ORIGIN/Qt/lib', bindings],
-                capture_output=True)
+        subprocess.run(['chrpath', '--replace', '$ORIGIN/Qt/lib', bindings])
 
     @classmethod
     def _fix_macos_rpath(cls, bindings):
@@ -145,17 +144,15 @@ class AbstractPackage(ABC):
                     "installed on your system")
 
         # Use otool to get all current rpaths.
-        output = subprocess.run(['otool', '-l', bindings], capture_output=True,
-                universal_newlines=True)
-        if output.returncode != 0:
-            raise UserException("otool returned a non-zero exit status")
+        pipe = subprocess.Popen('otool -l {}'.format(bindings),
+                stdout=subprocess.PIPE, universal_newlines=True)
 
         # Delete any existing rpaths.
         args = []
         new_rpath = '@loader_path/Qt/lib'
         add_new_rpath = True
 
-        for line in output.stdout.split('\n'):
+        for line in pipe.stdout:
             parts = line.split()
 
             if len(parts) >= 2 and parts[0] == 'path':
@@ -166,6 +163,10 @@ class AbstractPackage(ABC):
                 else:
                     args.append('-delete_rpath')
                     args.append(rpath)
+
+        rc = pipe.wait()
+        if rc != 0:
+            raise UserException("otool returned a non-zero exit status")
 
         # Add an rpath for the bundled Qt installation if it is not already
         # there.

@@ -1,5 +1,6 @@
 syntax: glob
 .DS_Store
 __pycache__
+build
 PyQt_builder.egg-info
 pyqtbuild/version.py

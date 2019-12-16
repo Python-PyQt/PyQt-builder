@@ -1,3 +1,6 @@
+v1.1.0 ??? December 2019
+  - Added support for bundling Qt v5.14.
+
 v1.0.1 3rd November 2019
   - A bug fix release.
 

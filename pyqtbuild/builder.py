@@ -364,13 +364,14 @@ target.files = %s
         # This optimisation could apply to other platforms.
         if 'linux' in self.spec and not buildable.static:
             exp = project.open_for_writing(
-                    os.path.join(buildable.build_dir, buildable.name + '.exp'))
-            exp.write('{ global: PyInit_%s; local: *; };' % buildable.name)
+                    os.path.join(buildable.build_dir,
+                            buildable.target + '.exp'))
+            exp.write('{ global: PyInit_%s; local: *; };' % buildable.target)
             exp.close()
 
             pro_lines.append(
                     'QMAKE_LFLAGS += -Wl,--version-script={}.exp'.format(
-                            buildable.name))
+                            buildable.target))
 
         pro_lines.append(
                 'INCLUDEPATH += {}'.format(

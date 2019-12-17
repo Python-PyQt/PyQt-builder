@@ -153,7 +153,7 @@ class QmakeBuilder(Builder):
 
         inventory.close()
 
-        args = ['sip-distinfo']
+        args = [os.path.join(os.path.dirname(sys.argv[0]), 'sip-distinfo')]
 
         args.append('--project-root')
         args.append(project.root_dir)

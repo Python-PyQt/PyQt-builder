@@ -26,6 +26,7 @@
 
 import glob
 import os
+import sys
 
 from sipbuild import Bindings, BuildableExecutable, UserException, Option
 
@@ -190,7 +191,24 @@ int main(int, char **)
         except OSError:
             pass
 
+        # Make sure the Qt DLLs get picked up.
+        original_path = None
+
+        if sys.platform == 'win32':
+            qt_bin_dir = os.path.dirname(project.builder.qmake)
+            path = os.environ['PATH']
+            path_parts = path.split(os.path.pathsep)
+
+            if qt_bin_dir not in path_parts:
+                original_path = path
+
+                path_parts.insert(0, qt_bin_dir)
+                os.environ['PATH'] = os.pathsep.join(path_parts)
+
         self.project.run_command([test_exe, out_file], fatal=False)
+
+        if original_path is not None:
+            os.environ['PATH'] = original_path
 
         if not os.path.isfile(out_file):
             raise UserException(

@@ -57,7 +57,7 @@ class QmakeBuilder(Builder):
             # corresponding to the frontend (and, anyway, the frontend may not
             # be on PATH).
             if tool != 'pep517':
-                self._sip_dist_info = os.path.join(
+                self._sip_distinfo = os.path.join(
                         os.path.dirname(sys.argv[0]), self._sip_distinfo)
 
             # Check we have a qmake.

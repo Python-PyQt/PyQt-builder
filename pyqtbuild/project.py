@@ -1,4 +1,4 @@
-# Copyright (c) 2019, Riverbank Computing Limited
+# Copyright (c) 2020, Riverbank Computing Limited
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,6 +28,11 @@ import os
 import sys
 
 from sipbuild import Option, Project
+
+
+# The minimum GLIBC version required by Qt.  Strinctly speaking this should
+# depend on the Qt version being used.
+MINIMUM_GLIBC_VERSION = '2.17'
 
 
 class PyQtProject(Project):
@@ -68,6 +73,10 @@ class PyQtProject(Project):
         self.tests_dir = self.tests_dir.replace('/', os.sep)
         if not os.path.isabs(self.tests_dir):
             self.tests_dir = os.path.join(self.root_dir, self.tests_dir)
+
+        # Set default minimum GLIBC version.
+        if self.minimum_glibc_version is None:
+            self.minimum_glibc_version = MINIMUM_GLIBC_VERSION
 
         super().apply_nonuser_defaults(tool)
 

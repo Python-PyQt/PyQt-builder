@@ -35,6 +35,12 @@ _DLLS_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'dlls')
 
 # The Qt meta-data for this package.
 _QT_METADATA = {
+    'pylupdate':
+        VersionedMetadata(dll=False),
+
+    'pyrcc':
+        VersionedMetadata(dll=False),
+
     'QAxContainer':
         VersionedMetadata(dll=False),
 

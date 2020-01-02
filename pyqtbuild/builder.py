@@ -45,10 +45,21 @@ class QmakeBuilder(Builder):
         self.qt_version_str = ''
         self.qt_version_tag = ''
 
+        # Assume for the moment that this will be found on PATH.
+        self._sip_distinfo = 'sip-distinfo'
+
     def apply_user_defaults(self, tool):
         """ Set default values for user options that haven't been set yet. """
 
         if tool in Option.BUILD_TOOLS:
+            # A PEP 517 frontend will set PATH so that sip-distinfo is found on
+            # it.  However for our own frontends we want to use the version
+            # corresponding to the frontend (and, anyway, the frontend may not
+            # be on PATH).
+            if tool != 'pep517':
+                self._sip_distinfo = os.path.join(
+                        os.path.dirname(sys.argv[0]), self._sip_distinfo)
+
             # Check we have a qmake.
             if self.qmake is None:
                 self.qmake = self._find_exe('qmake')
@@ -153,7 +164,7 @@ class QmakeBuilder(Builder):
 
         inventory.close()
 
-        args = [os.path.join(os.path.dirname(sys.argv[0]), 'sip-distinfo')]
+        args = [self._sip_distinfo]
 
         args.append('--project-root')
         args.append(project.root_dir)

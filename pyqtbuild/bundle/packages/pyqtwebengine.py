@@ -1,4 +1,4 @@
-# Copyright (c) 2019, Riverbank Computing Limited
+# Copyright (c) 2020, Riverbank Computing Limited
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -36,8 +36,7 @@ _QT_METADATA = {
     'QtWebEngineCore':
         VersionedMetadata(
             other_lib_deps={
-                'macos': ('QtWebEngineCore.framework/Resources',
-                          'QtWebEngineCore.framework/Helpers/QtWebEngineProcess.app/Contents/Info.plist')},
+                'macos': ('QtWebEngineCore.framework/Helpers/QtWebEngineProcess.app/Contents/Info.plist', )},
             exes={
                 'linux': ('libexec/QtWebEngineProcess', ),
                 'macos': ('lib/QtWebEngineCore.framework/Helpers/QtWebEngineProcess.app/Contents/MacOS/QtWebEngineProcess', ),

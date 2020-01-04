@@ -185,7 +185,7 @@ class VersionedMetadata:
                         target_qt_dir, qt_dir)
 
     @staticmethod
-    def _bundle_file(name, target_dir, src_dir):
+    def _bundle_file(name, target_dir, src_dir, ignore=None):
         """ Bundle a file (or directory) and return the name of the installed
         file (or directory).
         """
@@ -196,19 +196,19 @@ class VersionedMetadata:
         os.makedirs(os.path.dirname(dst), exist_ok=True)
 
         if os.path.isdir(src):
-            shutil.copytree(src, dst)
+            shutil.copytree(src, dst, ignore=ignore)
         else:
             shutil.copy2(src, dst)
 
         return dst
 
     @classmethod
-    def _bundle_library(cls, name, target_qt_dir, qt_dir, arch):
+    def _bundle_library(cls, name, target_qt_dir, qt_dir, arch, ignore=None):
         """ Bundle a library. """
 
         cls._bundle_file(name,
                 os.path.join(target_qt_dir, cls._get_qt_library_subdir(arch)),
-                cls._get_qt_library_dir(qt_dir, arch))
+                cls._get_qt_library_dir(qt_dir, arch), ignore=ignore)
 
     @classmethod
     def _bundle_qt_library(cls, name, target_qt_dir, qt_dir, arch, qt_version):
@@ -216,6 +216,12 @@ class VersionedMetadata:
 
         cls._bundle_library(cls._impl_from_library(name, arch, qt_version),
                 target_qt_dir, qt_dir, arch)
+
+        if arch == 'macos':
+            # Copy the Resources directory without the unnecessary .prl files.
+            cls._bundle_library('{}.framework/Resources'.format(name),
+                    target_qt_dir, qt_dir, arch,
+                    ignore=lambda d, c: [f for f in c if f.endswith('.prl')])
 
     @staticmethod
     def _create_qt_conf(exe):
@@ -230,7 +236,7 @@ class VersionedMetadata:
     def _fix_linux_executable(cls, exe, qt_version):
         """ Fix a Linux executable. """
 
-        # Note that this assumes the executable is QWebEngineProcess.
+        # Note that this assumes the executable is QtWebEngineProcess.
 
         if qt_version == (5, 6, 0):
             # Replace the incorrect rpath with the correct one.
@@ -242,7 +248,7 @@ class VersionedMetadata:
     def _fix_macos_executable(cls, exe, qt_version):
         """ Fix a macOS executable. """
 
-        # Note that this assumes the executable is QWebEngineProcess.
+        # Note that this assumes the executable is QtWebEngineProcess.
 
         if qt_version == (5, 6, 0):
             # The rpaths were completly broken in this version.
@@ -273,7 +279,7 @@ class VersionedMetadata:
     def _fix_win_executable(cls, exe):
         """ Fix a Windows executable. """
 
-        # Note that this assumes the executable is QWebEngineProcess.
+        # Note that this assumes the executable is QtWebEngineProcess.
 
         cls._create_qt_conf(exe)
 

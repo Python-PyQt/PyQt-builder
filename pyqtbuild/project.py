@@ -74,7 +74,7 @@ class PyQtProject(Project):
         if not os.path.isabs(self.tests_dir):
             self.tests_dir = os.path.join(self.root_dir, self.tests_dir)
 
-        # Set default minimum GLIBC version.
+        # Set the default minimum GLIBC version.
         if self.minimum_glibc_version is None:
             self.minimum_glibc_version = MINIMUM_GLIBC_VERSION
 
@@ -169,6 +169,7 @@ class PyQtProject(Project):
         # containing any external test programs.
         options.append(Option('tests_dir', default='config-tests'))
 
+        # The user options.
         options.append(
                 Option('link_full_dll', option_type=bool,
                         help="on Windows link against the full Python DLL "
@@ -177,5 +178,10 @@ class PyQtProject(Project):
         options.append(
                 Option('qml_debug', option_type=bool,
                         help="enable the QML debugging infrastructure"))
+
+        options.append(Option('target_qt_dir',
+                help="the Qt libraries will be found in DIR when the wheel is "
+                        "installed",
+                metavar="DIR", tools=['wheel']))
 
         return options

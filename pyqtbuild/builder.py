@@ -319,7 +319,7 @@ class QmakeBuilder(Builder):
         else:
             # Note some version of Qt5 (probably incorrectly) implements
             # 'plugin_bundle' instead of 'plugin' so we specify both.
-            pro_lines.append('CONFIG += plugin plugin_bundle')
+            pro_lines.append('CONFIG += plugin plugin_bundle no_default_rpath')
 
         if project.qml_debug:
             pro_lines.append('CONFIG += qml_debug')
@@ -371,6 +371,22 @@ target.files = %s
 
         buildable.installables.append(
                 QmakeTargetInstallable(module, buildable.get_install_subdir()))
+
+        # Handle an explicit Qt target directory.
+        if project.target_qt_dir:
+            rpath = '''
+linux {
+    QMAKE_LFLAGS_RPATH =
+    QMAKE_LFLAGS += -Wl,-rpath,\\'\\$$ORIGIN/%s\\'
+} else {
+    macx {
+        CONFIG += no_qt_rpath
+        QMAKE_RPATHDIR = @loader_path/%s
+    }
+}
+''' % (project.target_qt_dir, project.target_qt_dir)
+
+            pro_lines.extend(rpath.split('\n'))
 
         # This optimisation could apply to other platforms.
         if 'linux' in self.spec and not buildable.static:

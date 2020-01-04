@@ -94,6 +94,9 @@ class AbstractPackage(ABC):
                     # Check there is an applicable version.
                     for md in metadata:
                         if md.is_applicable(self._qt_version):
+                            # This isn't necessary for newer wheels built with
+                            # '--target-qt-dir' but we still have to handle
+                            # older wheels.
                             if metadata_arch == 'linux':
                                 self._fix_linux_rpath(bindings)
                             elif metadata_arch == 'macos':

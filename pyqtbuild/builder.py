@@ -375,14 +375,12 @@ target.files = %s
         # Handle an explicit Qt target directory.
         if project.target_qt_dir:
             rpath = '''
+CONFIG += no_qt_rpath
 linux {
-    QMAKE_LFLAGS_RPATH =
-    QMAKE_LFLAGS += -Wl,-rpath,\\'\\$$ORIGIN/%s\\'
-} else {
-    macx {
-        CONFIG += no_qt_rpath
-        QMAKE_RPATHDIR = @loader_path/%s
-    }
+    QMAKE_RPATHDIR = %s
+}
+macx {
+    QMAKE_RPATHDIR = @loader_path/%s
 }
 ''' % (project.target_qt_dir, project.target_qt_dir)
 

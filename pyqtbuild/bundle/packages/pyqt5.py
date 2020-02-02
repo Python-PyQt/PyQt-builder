@@ -193,7 +193,8 @@ class PyQt5(AbstractPackage):
         verbose("Bundling the MSVC runtime")
 
         self._bundle_dlls(target_qt_dir,
-                os.path.join(_DLLS_DIR, 'msvc_runtime'))
+                os.path.join(_DLLS_DIR,
+                        'msvc-64' if arch == 'win_amd64' else 'msvc-32'))
 
     def bundle_openssl(self, target_qt_dir, openssl_dir, arch):
         """ Bundle the OpenSSL DLLs. """

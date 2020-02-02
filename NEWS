@@ -1,3 +1,6 @@
+v1.2.1 ??? February 2020
+  - A bug fix release (specifically for 32 bit Windows).
+
 v1.2.0 6th January 2020
   - Added the 'target-qt-dir' project option and corresponding
     '--target-qt-dir' command line option to sip-wheel.

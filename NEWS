@@ -1,5 +1,5 @@
-v1.2.1 ??? February 2020
-  - A bug fix release (specifically for 32 bit Windows).
+v1.3.0 ??? February 2020
+  - Added the '--exclude' command line option to pyqt-bundle.
 
 v1.2.0 6th January 2020
   - Added the 'target-qt-dir' project option and corresponding

@@ -65,7 +65,7 @@ class AbstractPackage(ABC):
 
         # This default implementation does nothing.
 
-    def bundle_qt(self, target_qt_dir, qt_dir, arch):
+    def bundle_qt(self, target_qt_dir, qt_dir, arch, exclude):
         """ Bundle the relevant parts of the Qt installation. """
 
         # Architecture-specific values.
@@ -85,6 +85,10 @@ class AbstractPackage(ABC):
         package_dir = os.path.dirname(target_qt_dir)
 
         for name, metadata in self.get_qt_metadata().items():
+            # Ignore a module if it is explicitly excluded.
+            if name in exclude:
+                continue
+
             for ext in module_extensions:
                 bindings = os.path.join(package_dir, name + ext)
 

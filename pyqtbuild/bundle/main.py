@@ -1,4 +1,4 @@
-# Copyright (c) 2019, Riverbank Computing Limited
+# Copyright (c) 2020, Riverbank Computing Limited
 # All rights reserved.
 #
 # This copy of SIP is licensed for use under the terms of the SIP License
@@ -22,6 +22,7 @@
 
 
 from argparse import ArgumentParser
+
 from sipbuild import handle_exception
 
 from ..version import PYQTBUILD_VERSION_STR

@@ -1,4 +1,4 @@
-# Copyright (c) 2019, Riverbank Computing Limited
+# Copyright (c) 2020, Riverbank Computing Limited
 # All rights reserved.
 #
 # This copy of SIP is licensed for use under the terms of the SIP License
@@ -26,8 +26,9 @@ import fnmatch
 import hashlib
 import os
 import shutil
-from sipbuild import UserException
 import zipfile
+
+from sipbuild import UserException
 
 from . import packages
 from .verbose import verbose

@@ -407,7 +407,8 @@ macx {
         # TODO: is this still necessary for Python v3.8?
         if not buildable.static:
             pro_lines.extend(['win32 {',
-                    '    LIBS += -L{}'.format(project.py_pylib_dir),
+                    '    LIBS += -L{}'.format(
+                            self.qmake_quote(project.py_pylib_dir)),
                     '}'])
 
         # Add any installables from the buildable.

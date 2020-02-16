@@ -1,4 +1,4 @@
-# Copyright (c) 2019, Riverbank Computing Limited
+# Copyright (c) 2020, Riverbank Computing Limited
 # All rights reserved.
 #
 # This copy of SIP is licensed for use under the terms of the SIP License
@@ -24,8 +24,9 @@
 from abc import ABC, abstractmethod
 import os
 import packaging
-from sipbuild import UserException
 import subprocess
+
+from sipbuild import UserException
 
 from .qt_metadata import VersionedMetadata
 from .verbose import verbose

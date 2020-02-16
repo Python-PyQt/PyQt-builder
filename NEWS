@@ -1,6 +1,9 @@
+v1.2.1 ??? February 2020
+  - A bug fix release (specifically for 32 bit Windows).
+
 v1.2.0 6th January 2020
-  - Added the 'rpath' project option and corresponding '--rpath' command line
-    option to sip-wheel.
+  - Added the 'target-qt-dir' project option and corresponding
+    '--target-qt-dir' command line option to sip-wheel.
 
 v1.1.0 18th December 2019
   - Added support for bundling Qt v5.14.

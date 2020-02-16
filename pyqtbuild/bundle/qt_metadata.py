@@ -1,4 +1,4 @@
-# Copyright (c) 2019, Riverbank Computing Limited
+# Copyright (c) 2020, Riverbank Computing Limited
 # All rights reserved.
 #
 # This copy of SIP is licensed for use under the terms of the SIP License
@@ -25,6 +25,8 @@ import fnmatch
 import os
 import shutil
 import subprocess
+
+from sipbuild import UserException
 
 from .verbose import verbose
 
@@ -197,8 +199,11 @@ class VersionedMetadata:
 
         if os.path.isdir(src):
             shutil.copytree(src, dst, ignore=ignore)
-        else:
+        elif os.path.isfile(src):
             shutil.copy2(src, dst)
+        else:
+            raise UserException(
+                    "'{0}' is missing from the Qt installation".format(name))
 
         return dst
 

@@ -192,6 +192,10 @@ class QmakeBuilder(Builder):
 
         args.append(self.qmake_quote(project.get_distinfo_dir(target_dir)))
 
+        pro_lines.append('distinfo.depends = {}'.format(
+                ' '.join(
+                        ['install_' + installable.name
+                                for installable in project.installables])))
         pro_lines.append('distinfo.extra = {}'.format(' '.join(args)))
         pro_lines.append(
                 'distinfo.path = {}'.format(self.qmake_quote(target_dir)))

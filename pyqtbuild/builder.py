@@ -192,7 +192,7 @@ class QmakeBuilder(Builder):
 
         args.append(self.qmake_quote(project.get_distinfo_dir(target_dir)))
 
-        pro_lines.append('distinfo.depends = {}'.format(
+        pro_lines.append('distinfo.depends = install_subtargets {}'.format(
                 ' '.join(
                         ['install_' + installable.name
                                 for installable in project.installables])))

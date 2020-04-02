@@ -187,7 +187,7 @@ _QT_METADATA = {
 class PyQt5(AbstractPackage):
     """ The PyQt5 package. """
 
-    def bundle_msvc_runtime(self, target_qt_dir):
+    def bundle_msvc_runtime(self, target_qt_dir, arch):
         """ Bundle the MSVC runtime. """
 
         verbose("Bundling the MSVC runtime")

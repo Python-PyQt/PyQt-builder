@@ -55,7 +55,7 @@ class AbstractPackage(ABC):
         if self._qt_version < _min_qt_version:
             raise UserException("The version of Qt being bundled is too old")
 
-    def bundle_msvc_runtime(self, target_qt_dir):
+    def bundle_msvc_runtime(self, target_qt_dir, arch):
         """ Bundle the MSVC runtime. """
 
         # This default implementation does nothing.

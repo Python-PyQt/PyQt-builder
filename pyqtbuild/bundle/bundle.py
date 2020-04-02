@@ -120,7 +120,7 @@ def bundle(wheel_path, qt_dir, build_tag_suffix, msvc_runtime, openssl,
     if arch in ('win32', 'win_amd64'):
         # Bundle the MSVC runtime if required.
         if msvc_runtime:
-            package.bundle_msvc_runtime(target_qt_dir)
+            package.bundle_msvc_runtime(target_qt_dir, arch)
 
         # Bundle OpenSSL if required.
         if openssl:

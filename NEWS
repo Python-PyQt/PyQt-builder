@@ -1,3 +1,6 @@
+v1.3.1 ??? April 2020
+  - A bug fix release.
+
 v1.3.0 3rd April 2020
   - Added the '--exclude' command line option to pyqt-bundle.
 

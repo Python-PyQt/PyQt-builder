@@ -108,11 +108,16 @@ def bundle(wheel_path, qt_dir, build_tag_suffix, msvc_runtime, openssl,
         if attr:
             os.chmod(zi.filename, attr)
 
-    # Remove any existing bundled Qt installation.
+    # Remove any existing bundled Qt installation while protecting some
+    # specific directories.
     verbose("Removing any existing Qt bundle")
 
     target_qt_dir = package.get_target_qt_dir()
-    shutil.rmtree(target_qt_dir, ignore_errors=True)
+    if os.path.isdir(target_qt_dir):
+        for fn in os.listdir(target_qt_dir):
+            if fn not in ('qsci', ):
+                shutil.rmtree(os.path.join(target_qt_dir, fn),
+                        ignore_errors=True)
 
     # Bundle the relevant parts of the Qt installation.
     package.bundle_qt(target_qt_dir, qt_dir, arch, exclude)

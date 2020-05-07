@@ -50,6 +50,9 @@ def main():
     parser.add_argument('--exclude', metavar="NAME", default=[],
             action='append', help="exclude the NAME bindings from the wheel")
 
+    parser.add_argument('--ignore-missing', default=False, action='store_true',
+            help="ignore any missing files in the Qt installation")
+
     parser.add_argument('--no-msvc-runtime', dest='msvc_runtime', default=True,
             action='store_false',
             help="don't include msvcp140.dll, concrt140.dll and "
@@ -76,7 +79,8 @@ def main():
         bundle(wheel_path=args.wheels[0], qt_dir=args.qt_dir,
                 build_tag_suffix=args.build_tag_suffix,
                 msvc_runtime=args.msvc_runtime, openssl=args.openssl,
-                openssl_dir=args.openssl_dir, exclude=args.exclude)
+                openssl_dir=args.openssl_dir, exclude=args.exclude,
+                ignore_missing=args.ignore_missing)
     except Exception as e:
         handle_exception(e)
 

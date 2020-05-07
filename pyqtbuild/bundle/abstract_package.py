@@ -65,7 +65,7 @@ class AbstractPackage(ABC):
 
         # This default implementation does nothing.
 
-    def bundle_qt(self, target_qt_dir, qt_dir, arch, exclude):
+    def bundle_qt(self, target_qt_dir, qt_dir, arch, exclude, ignore_missing):
         """ Bundle the relevant parts of the Qt installation. """
 
         # Architecture-specific values.
@@ -108,7 +108,8 @@ class AbstractPackage(ABC):
                                 self._fix_macos_rpath(bindings)
 
                             md.bundle(name, target_qt_dir, qt_dir,
-                                    metadata_arch, self._qt_version)
+                                    metadata_arch, self._qt_version,
+                                    ignore_missing)
                             break
 
                     break

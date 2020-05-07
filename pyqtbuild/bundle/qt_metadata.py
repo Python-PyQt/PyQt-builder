@@ -55,7 +55,8 @@ class VersionedMetadata:
         self._translations = () if translations is None else translations
         self._excluded_plugins = excluded_plugins
 
-    def bundle(self, name, target_qt_dir, qt_dir, arch, qt_version):
+    def bundle(self, name, target_qt_dir, qt_dir, arch, qt_version,
+            ignore_missing):
         """ Bundle part of Qt as defined by the meta-data. """
 
         verbose("Bundling {0}".format(name))
@@ -66,14 +67,14 @@ class VersionedMetadata:
         # Bundle the Qt library that has been wrapped (if there is one).
         if self._dll:
             self._bundle_qt_library(self._name, target_qt_dir, qt_dir, arch,
-                    qt_version)
+                    qt_version, ignore_missing)
 
         # Bundle any other dependent Qt libraries.
         for lib_arch, libs in self._lib_deps.items():
             if lib_arch == '' or lib_arch == arch:
                 for lib in libs:
                     self._bundle_qt_library(lib, target_qt_dir, qt_dir, arch,
-                            qt_version)
+                            qt_version, ignore_missing)
 
         # Bundle any other libraries.
         lib_contents = None
@@ -91,22 +92,25 @@ class VersionedMetadata:
                         for qt_lib in lib_contents:
                             if fnmatch.fnmatch(qt_lib, lib):
                                 self._bundle_library(qt_lib, target_qt_dir,
-                                        qt_dir, arch)
+                                        qt_dir, arch, ignore_missing)
                     else:
-                        self._bundle_library(lib, target_qt_dir, qt_dir, arch)
+                        self._bundle_library(lib, target_qt_dir, qt_dir, arch,
+                                ignore_missing)
 
         # Bundle any executables.
         for exe_arch, exes in self._exes.items():
             if exe_arch == '' or exe_arch == arch:
                 for exe in exes:
-                    bundled_exe = self._bundle_file(exe, target_qt_dir, qt_dir)
+                    bundled_exe = self._bundle_file(exe, target_qt_dir, qt_dir,
+                            ignore_missing)
 
-                    if arch == 'linux':
-                        self._fix_linux_executable(bundled_exe, qt_version)
-                    elif arch == 'macos':
-                        self._fix_macos_executable(bundled_exe, qt_version)
-                    elif arch == 'win':
-                        self._fix_win_executable(bundled_exe)
+                    if bundled_exe is not None:
+                        if arch == 'linux':
+                            self._fix_linux_executable(bundled_exe, qt_version)
+                        elif arch == 'macos':
+                            self._fix_macos_executable(bundled_exe, qt_version)
+                        elif arch == 'win':
+                            self._fix_win_executable(bundled_exe)
 
         # Bundle any QML files.
         if self._qml:
@@ -116,14 +120,14 @@ class VersionedMetadata:
 
             for qml_subdir in qml_names:
                 self._bundle_nondebug(os.path.join('qml', qml_subdir),
-                        target_qt_dir, qt_dir, arch)
+                        target_qt_dir, qt_dir, arch, ignore_missing)
 
         # Bundle any plugins.  We haven't done the analysis of which plugins
         # belong to which package so we assume that only the QtCore package
         # will specify any to exclude and we bundle all of them with that.
         if self._excluded_plugins is not None:
             self._bundle_nondebug('plugins', target_qt_dir, qt_dir, arch,
-                    exclude=self._excluded_plugins)
+                    ignore_missing, exclude=self._excluded_plugins)
 
         # Bundle any translations:
         if self._translations:
@@ -134,7 +138,8 @@ class VersionedMetadata:
                 if qm.endswith('.qm'):
                     for prefix in self._translations:
                         if qm.startswith(prefix):
-                            self._bundle_file(qm, target_tr_dir, tr_dir)
+                            self._bundle_file(qm, target_tr_dir, tr_dir,
+                                    ignore_missing)
 
         # Bundle any dynamically created files.
         for files_arch, files in self._files.items():
@@ -150,7 +155,8 @@ class VersionedMetadata:
         for oth_arch, others in self._others.items():
             if oth_arch == '' or oth_arch == arch:
                 for oth in others:
-                    self._bundle_file(oth, target_qt_dir, qt_dir)
+                    self._bundle_file(oth, target_qt_dir, qt_dir,
+                            ignore_missing)
 
     def is_applicable(self, qt_version):
         """ Returns True if this meta-data is applicable for a particular Qt
@@ -161,7 +167,7 @@ class VersionedMetadata:
 
     @classmethod
     def _bundle_nondebug(cls, src_dir, target_qt_dir, qt_dir, arch,
-            exclude=None):
+            ignore_missing, exclude=None):
         """ Bundle the non-debug contents of a directory. """
 
         if exclude is None:
@@ -184,12 +190,12 @@ class VersionedMetadata:
 
                 cls._bundle_file(
                         os.path.relpath(os.path.join(dirpath, name), qt_dir),
-                        target_qt_dir, qt_dir)
+                        target_qt_dir, qt_dir, ignore_missing)
 
     @staticmethod
-    def _bundle_file(name, target_dir, src_dir, ignore=None):
+    def _bundle_file(name, target_dir, src_dir, ignore_missing, ignore=None):
         """ Bundle a file (or directory) and return the name of the installed
-        file (or directory).
+        file (or directory) or None if it was missing.
         """
 
         src = os.path.join(src_dir, name)
@@ -201,6 +207,9 @@ class VersionedMetadata:
             shutil.copytree(src, dst, ignore=ignore)
         elif os.path.isfile(src):
             shutil.copy2(src, dst)
+        elif ignore_missing:
+            verbose("Ignoring missing '{0}'".format(name))
+            dst = None
         else:
             raise UserException(
                     "'{0}' is missing from the Qt installation".format(name))
@@ -208,24 +217,27 @@ class VersionedMetadata:
         return dst
 
     @classmethod
-    def _bundle_library(cls, name, target_qt_dir, qt_dir, arch, ignore=None):
+    def _bundle_library(cls, name, target_qt_dir, qt_dir, arch, ignore_missing,
+            ignore=None):
         """ Bundle a library. """
 
         cls._bundle_file(name,
                 os.path.join(target_qt_dir, cls._get_qt_library_subdir(arch)),
-                cls._get_qt_library_dir(qt_dir, arch), ignore=ignore)
+                cls._get_qt_library_dir(qt_dir, arch), ignore_missing,
+                ignore=ignore)
 
     @classmethod
-    def _bundle_qt_library(cls, name, target_qt_dir, qt_dir, arch, qt_version):
+    def _bundle_qt_library(cls, name, target_qt_dir, qt_dir, arch, qt_version,
+            ignore_missing):
         """ Bundle a Qt library. """
 
         cls._bundle_library(cls._impl_from_library(name, arch, qt_version),
-                target_qt_dir, qt_dir, arch)
+                target_qt_dir, qt_dir, arch, ignore_missing)
 
         if arch == 'macos':
             # Copy the Resources directory without the unnecessary .prl files.
             cls._bundle_library('{}.framework/Resources'.format(name),
-                    target_qt_dir, qt_dir, arch,
+                    target_qt_dir, qt_dir, arch, ignore_missing,
                     ignore=lambda d, c: [f for f in c if f.endswith('.prl')])
 
     @staticmethod

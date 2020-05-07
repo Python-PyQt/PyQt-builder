@@ -51,7 +51,7 @@ setup(
         version=version,
         license='BSD',
         python_requires='>=3.5',
-        install_requires=['sip >=5.1, <6'],
+        install_requires=['sip >=5.3, <6'],
         packages=find_packages(),
         package_data={
             'pyqtbuild.bundle': ['dlls/*/*'],

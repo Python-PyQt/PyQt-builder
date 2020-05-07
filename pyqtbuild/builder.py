@@ -190,6 +190,10 @@ class QmakeBuilder(Builder):
             args.append('--console-script')
             args.append(ep.replace(' ', ''))
 
+        for ep in project.gui_scripts:
+            args.append('--gui-script')
+            args.append(ep.replace(' ', ''))
+
         args.append(self.qmake_quote(project.get_distinfo_dir(target_dir)))
 
         pro_lines.append('distinfo.depends = install_subtargets {}'.format(

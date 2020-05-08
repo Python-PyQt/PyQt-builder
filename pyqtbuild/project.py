@@ -30,7 +30,7 @@ import sys
 from sipbuild import Option, Project
 
 
-# The minimum GLIBC version required by Qt.  Strinctly speaking this should
+# The minimum GLIBC version required by Qt.  Strictly speaking this should
 # depend on the Qt version being used.
 MINIMUM_GLIBC_VERSION = '2.17'
 
@@ -185,3 +185,28 @@ class PyQtProject(Project):
                 metavar="DIR", tools=['wheel']))
 
         return options
+
+    def update(self, tool):
+        """ Re-implemented to carry out any final updates to the confoguration.
+        """
+
+        super().update(tool)
+
+        # Set the default minimum macOS version now that we should know the Qt
+        # version.  However, don't make any assumptions about the builder used.
+        if self.minimum_macos_version == '':
+            try:
+                qt_version = self.builder.qt_version
+            except AttributeError:
+                qt_version = 0
+
+            if qt_version >= 0x050e00:
+                self.minimum_macos_version = '10.13'
+            elif qt_version >= 0x050c00:
+                self.minimum_macos_version = '10.12'
+            elif qt_version >= 0x050a00:
+                self.minimum_macos_version = '10.11'
+            elif qt_version >= 0x050900:
+                self.minimum_macos_version = '10.10'
+            else:
+                self.minimum_macos_version = '10.9'

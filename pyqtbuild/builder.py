@@ -164,36 +164,9 @@ class QmakeBuilder(Builder):
 
         inventory.close()
 
-        args = [self._sip_distinfo]
-
-        args.append('--project-root')
-        args.append(project.root_dir)
-
-        args.append('--generator')
-        args.append(os.path.basename(sys.argv[0]))
-
-        args.append('--prefix')
-        args.append('\\"$(INSTALL_ROOT)\\"')
-
-        args.append('--inventory')
-        args.append(inventory_fn)
-
-        for rd in project.get_requires_dists():
-            args.append('--requires-dist')
-            args.append('\\"{}\\"'.format(rd))
-
-        if wheel_tag is not None:
-            args.append('--wheel-tag')
-            args.append(wheel_tag)
-
-        for ep in project.console_scripts:
-            args.append('--console-script')
-            args.append(ep.replace(' ', ''))
-
-        for ep in project.gui_scripts:
-            args.append('--gui-script')
-            args.append(ep.replace(' ', ''))
-
+        args = project.get_sip_distinfo_command_line(self._sip_distinfo,
+                inventory_fn, generator=os.path.basename(sys.argv[0]),
+                wheel_tag=wheel_tag)
         args.append(self.qmake_quote(project.get_distinfo_dir(target_dir)))
 
         pro_lines.append('distinfo.depends = install_subtargets {}'.format(

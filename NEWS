@@ -1,5 +1,4 @@
 v1.4.0 ??? ??? 2020
-  - Added support for the 'gui-scripts' project option added in SIP v5.3.0.
   - Added the '--ignore-missing' command line option to pyqt-bundle.  This will
     ignore any files missing from the Qt installation.  This allows the
     bundling of an unsupported or non-standard Qt installation but may result

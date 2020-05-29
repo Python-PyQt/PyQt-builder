@@ -1,4 +1,4 @@
-# Copyright (c) 2019, Riverbank Computing Limited
+# Copyright (c) 2020, Riverbank Computing Limited
 # All rights reserved.
 #
 # This copy of SIP is licensed for use under the terms of the SIP License
@@ -134,6 +134,13 @@ _QT_METADATA = {
                 qml=True,
                 qml_names=('QtCanvas3D', 'QtGraphicalEffects', 'QtQuick',
                         'QtQuick.2')),
+
+    'QtQuick3D':
+        VersionedMetadata(version=(5, 15, 0),
+                lib_deps={
+                        '': ('QtQuick3DAssetImport', 'QtQuick3DRender',
+                                'QtQuick3DRuntimeRender', 'QtQuick3DUtils')},
+                qml=True)),
 
     'QtQuickWidgets':
         VersionedMetadata(),

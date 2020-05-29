@@ -1,8 +1,12 @@
-v1.4.0 ??? ??? 2020
+v1.4.0 ??? June 2020
   - Added the '--ignore-missing' command line option to pyqt-bundle.  This will
     ignore any files missing from the Qt installation.  This allows the
     bundling of an unsupported or non-standard Qt installation but may result
     in a non-working wheel.
+  - The minimum macOS version specified in a wheel name is now dependent on the
+    version of Qt.
+  - Added support for bundling Qt v5.15.
+  - Updated the redistributables to MSVC 2019.
 
 v1.3.2 20th April 2020
   - A bug fix release.

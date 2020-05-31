@@ -1,4 +1,4 @@
-v1.4.0 ??? June 2020
+v1.4.0 1st June 2020
   - Added the '--ignore-missing' command line option to pyqt-bundle.  This will
     ignore any files missing from the Qt installation.  This allows the
     bundling of an unsupported or non-standard Qt installation but may result

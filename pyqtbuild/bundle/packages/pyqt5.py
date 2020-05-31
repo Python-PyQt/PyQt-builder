@@ -140,7 +140,7 @@ _QT_METADATA = {
                 lib_deps={
                         '': ('QtQuick3DAssetImport', 'QtQuick3DRender',
                                 'QtQuick3DRuntimeRender', 'QtQuick3DUtils')},
-                qml=True)),
+                qml=True),
 
     'QtQuickWidgets':
         VersionedMetadata(),

@@ -187,7 +187,7 @@ class PyQtProject(Project):
         return options
 
     def update(self, tool):
-        """ Re-implemented to carry out any final updates to the confoguration.
+        """ Re-implemented to carry out any final updates to the configuration.
         """
 
         super().update(tool)

@@ -146,7 +146,7 @@ _QT_METADATA = {
         VersionedMetadata(),
 
     'QtRemoteObjects':
-        VersionedMetadata(version=(5, 12, 0)),
+        VersionedMetadata(version=(5, 12, 0), qml=True),
 
     'QtSensors':
         VersionedMetadata(qml=True),

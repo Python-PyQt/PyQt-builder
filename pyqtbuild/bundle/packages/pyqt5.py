@@ -163,6 +163,9 @@ _QT_METADATA = {
     'QtTest':
         VersionedMetadata(qml=True),
 
+    'QtTextToSpeech':
+        VersionedMetadata(version=(5, 15, 0)),
+
     'QtWebChannel':
         VersionedMetadata(qml=True),
 

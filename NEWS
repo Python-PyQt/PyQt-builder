@@ -1,3 +1,6 @@
+v1.4.1 ??? ??? 2020
+  - Added support for bundling QtTextToSpeech.
+
 v1.4.0 1st June 2020
   - Added the '--ignore-missing' command line option to pyqt-bundle.  This will
     ignore any files missing from the Qt installation.  This allows the

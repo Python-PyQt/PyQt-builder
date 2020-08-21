@@ -58,7 +58,8 @@ class QmakeBuilder(Builder):
             # be on PATH).
             if tool != 'pep517':
                 self._sip_distinfo = os.path.join(
-                        os.path.dirname(sys.argv[0]), self._sip_distinfo)
+                        os.path.abspath(os.path.dirname(sys.argv[0])),
+                        self._sip_distinfo)
 
             # Check we have a qmake.
             if self.qmake is None:

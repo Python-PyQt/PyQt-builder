@@ -146,7 +146,7 @@ _QT_METADATA = {
         VersionedMetadata(),
 
     'QtRemoteObjects':
-        VersionedMetadata(version=(5, 12, 0)),
+        VersionedMetadata(version=(5, 12, 0), qml=True),
 
     'QtSensors':
         VersionedMetadata(qml=True),
@@ -162,6 +162,9 @@ _QT_METADATA = {
 
     'QtTest':
         VersionedMetadata(qml=True),
+
+    'QtTextToSpeech':
+        VersionedMetadata(version=(5, 15, 0)),
 
     'QtWebChannel':
         VersionedMetadata(qml=True),

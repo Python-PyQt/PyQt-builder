@@ -151,6 +151,11 @@ class PyQtProject(Project):
         options = super().get_options()
 
         # The directory containing the target Python interpreter library.
+        options.append(
+                Option('android_abis', option_type=list,
+                        help="the target Android ABI", metavar="ABI"))
+
+        # The directory containing the target Python interpreter library.
         options.append(Option('py_pylib_dir'))
 
         # The name of the target Python interpreter library.

@@ -309,6 +309,11 @@ class QmakeBuilder(Builder):
         # Work around QTBUG-39300.
         pro_lines.append('CONFIG -= android_install')
 
+        if project.android_abis:
+            pro_lines.append(
+                    'ANDROID_ABIS = "{}"'.format(
+                            ' '.join(project.android_abis)))
+
         self._update_pro_file(pro_lines, buildable)
 
         # Qt (when built with MinGW) assumes that stack frames are 16 byte

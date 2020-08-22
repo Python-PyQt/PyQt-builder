@@ -27,7 +27,7 @@
 import os
 import sys
 
-from sipbuild import Option, Project
+from sipbuild import Option, Project, SIP_VERSION, UserException
 
 
 # The minimum GLIBC version required by Qt.  Strictly speaking this should
@@ -54,9 +54,12 @@ class PyQtProject(Project):
             self.sip_files_dir = 'sip'
 
         if self.sip_module is None:
-            # TODO: don't hardcode PyQt5 (maybe something based on
-            # requires-dist)
-            self.sip_module = 'PyQt5.sip'
+            # It was a mistake to default to 'PyQt5.sip' rather than requiring
+            # it to be set explicitly.  We fix this for SIP v6.
+            if SIP_VERSION >= 0x060000:
+                raise UserException("'sip-module' must be set")
+            else:
+                self.sip_module = 'PyQt5.sip'
 
         # The tag prefix defaults to the meta-data name without any 'Py'
         # prefix.

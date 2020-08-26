@@ -156,28 +156,29 @@ class QmakeBuilder(Builder):
         for installable in project.installables:
             self._install(pro_lines, installed, installable, target_dir)
 
-        # Make the .dist-info directory.
-        inventory_fn = os.path.join(project.build_dir, 'inventory.txt')
-        inventory = project.open_for_writing(inventory_fn)
+        # Make the .dist-info directory if required.
+        if project.distinfo:
+            inventory_fn = os.path.join(project.build_dir, 'inventory.txt')
+            inventory = project.open_for_writing(inventory_fn)
 
-        for fn in installed:
-            print(fn, file=inventory)
+            for fn in installed:
+                print(fn, file=inventory)
 
-        inventory.close()
+            inventory.close()
 
-        args = project.get_sip_distinfo_command_line(self._sip_distinfo,
-                inventory_fn, generator=os.path.basename(sys.argv[0]),
-                wheel_tag=wheel_tag)
-        args.append(self.qmake_quote(project.get_distinfo_dir(target_dir)))
+            args = project.get_sip_distinfo_command_line(self._sip_distinfo,
+                    inventory_fn, generator=os.path.basename(sys.argv[0]),
+                    wheel_tag=wheel_tag)
+            args.append(self.qmake_quote(project.get_distinfo_dir(target_dir)))
 
-        pro_lines.append('distinfo.depends = install_subtargets {}'.format(
-                ' '.join(
-                        ['install_' + installable.name
-                                for installable in project.installables])))
-        pro_lines.append('distinfo.extra = {}'.format(' '.join(args)))
-        pro_lines.append(
-                'distinfo.path = {}'.format(self.qmake_quote(target_dir)))
-        pro_lines.append('INSTALLS += distinfo')
+            pro_lines.append('distinfo.depends = install_subtargets {}'.format(
+                    ' '.join(
+                            ['install_' + installable.name
+                                    for installable in project.installables])))
+            pro_lines.append('distinfo.extra = {}'.format(' '.join(args)))
+            pro_lines.append(
+                    'distinfo.path = {}'.format(self.qmake_quote(target_dir)))
+            pro_lines.append('INSTALLS += distinfo')
 
         pro_name = os.path.join(project.build_dir, project.name + '.pro')
         self._write_pro_file(pro_name, pro_lines)

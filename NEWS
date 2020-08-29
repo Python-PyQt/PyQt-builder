@@ -1,4 +1,4 @@
-v1.5.0 ??? August 2020
+v1.5.0 29th August 2020
   - Added the 'android-abis' project option and corresponding '--android-abi'
     command line option to sip-build, sip-install and sip-wheel.
   - Added 'PYQTBUILD_VERSION' and 'PYQTBUILD_VERSION_STR' to the 'pyqtbuild'

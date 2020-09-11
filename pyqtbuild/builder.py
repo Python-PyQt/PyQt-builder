@@ -1,4 +1,4 @@
-# Copyright (c) 2019, Riverbank Computing Limited
+# Copyright (c) 2020, Riverbank Computing Limited
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -86,6 +86,25 @@ class QmakeBuilder(Builder):
                 if self.spec == 'macx-xcode':
                     # This will exist (and we can't check anyway).
                     self.spec = 'macx-clang'
+
+            if self.py_platform is None:
+                # Determine the target platform from qmake.
+                xspec = self.qt_configuration['QMAKE_XSPEC']
+
+                # Note that the order of these tests is important.
+                if 'android' in xspec:
+                    self.py_platform = 'android'
+                elif 'ios' in xspec:
+                    self.py_platform = 'ios'
+                elif 'macx' in xspec:
+                    self.py_platform = 'darwin'
+                elif 'wasm' in xspec:
+                    self.py_platform = 'wasm'
+                elif 'win32' in xspec:
+                    self.py_platform = 'win32'
+                else:
+                    # Treat everything else as Linux.
+                    self.py_platform = 'linux'
 
         super().apply_user_defaults(tool)
 

@@ -153,7 +153,7 @@ class PyQtProject(Project):
 
         options = super().get_options()
 
-        # The directory containing the target Python interpreter library.
+        # The list of target Android ABIs.
         options.append(
                 Option('android_abis', option_type=list,
                         help="the target Android ABI", metavar="ABI"))

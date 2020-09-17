@@ -229,6 +229,10 @@ class QmakeBuilder(Builder):
 
         # Add our new options.
         options.append(
+                Option('jobs', option_type=int,
+                        help="run N make jobs in parallel", metavar='N'))
+
+        options.append(
                 Option('make', option_type=bool, inverted=True,
                         help="do not run make or nmake", tools=['build']))
 
@@ -581,6 +585,9 @@ macx {
 
         if install:
             args.append('install')
+        elif self.jobs:
+            args.append('-j')
+            args.append(str(self.jobs))
 
         self.project.run_command(args)
 

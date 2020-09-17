@@ -1,4 +1,4 @@
-# Copyright (c) 2019, Riverbank Computing Limited
+# Copyright (c) 2020, Riverbank Computing Limited
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -86,6 +86,27 @@ class QmakeBuilder(Builder):
                 if self.spec == 'macx-xcode':
                     # This will exist (and we can't check anyway).
                     self.spec = 'macx-clang'
+
+            # Determine the target platform from qmake, ignoring any current
+            # value.
+            xspec = self.qt_configuration['QMAKE_XSPEC']
+
+            # Note that the order of these tests is important.
+            if 'android' in xspec:
+                py_platform = 'android'
+            elif 'ios' in xspec:
+                py_platform = 'ios'
+            elif 'macx' in xspec:
+                py_platform = 'darwin'
+            elif 'wasm' in xspec:
+                py_platform = 'wasm'
+            elif 'win32' in xspec:
+                py_platform = 'win32'
+            else:
+                # Treat everything else as Linux.
+                py_platform = 'linux'
+
+            self.project.py_platform = py_platform
 
         super().apply_user_defaults(tool)
 
@@ -295,7 +316,12 @@ class QmakeBuilder(Builder):
 
         pro_lines = ['TEMPLATE = lib']
 
-        pro_lines.append('CONFIG += warn_on exceptions_off')
+        pro_lines.append('CONFIG += warn_on')
+
+        if buildable.exceptions:
+            pro_lines.append('CONFIG += exceptions')
+        else:
+            pro_lines.append('CONFIG += exceptions_off')
 
         if buildable.static:
             pro_lines.append('CONFIG += staticlib hide_symbols')

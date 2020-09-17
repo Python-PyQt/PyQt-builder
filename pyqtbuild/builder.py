@@ -316,7 +316,12 @@ class QmakeBuilder(Builder):
 
         pro_lines = ['TEMPLATE = lib']
 
-        pro_lines.append('CONFIG += warn_on exceptions_off')
+        pro_lines.append('CONFIG += warn_on')
+
+        if buildable.exceptions:
+            pro_lines.append('CONFIG += exceptions')
+        else:
+            pro_lines.append('CONFIG += exceptions_off')
 
         if buildable.static:
             pro_lines.append('CONFIG += staticlib hide_symbols')

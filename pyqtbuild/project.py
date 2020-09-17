@@ -27,7 +27,7 @@
 import os
 import sys
 
-from sipbuild import Option, Project, SIP_VERSION, UserException
+from sipbuild import Option, Project, UserException
 
 
 # The minimum GLIBC version required by Qt.  Strictly speaking this should
@@ -52,14 +52,6 @@ class PyQtProject(Project):
 
         if self.sip_files_dir is None:
             self.sip_files_dir = 'sip'
-
-        if self.sip_module is None:
-            # It was a mistake to default to 'PyQt5.sip' rather than requiring
-            # it to be set explicitly.  We fix this for SIP v6.
-            if SIP_VERSION >= 0x060000:
-                raise UserException("'sip-module' must be set")
-            else:
-                self.sip_module = 'PyQt5.sip'
 
         # The tag prefix defaults to the meta-data name without any 'Py'
         # prefix.
@@ -200,14 +192,11 @@ class PyQtProject(Project):
 
         super().update(tool)
 
-        # Set the default minimum macOS version now that we should know the Qt
-        # version.  However, don't make any assumptions about the builder used.
-        if self.minimum_macos_version == '':
-            try:
-                qt_version = self.builder.qt_version
-            except AttributeError:
-                qt_version = 0
+        # We should now know the Qt version.
+        qt_version = self.builder.qt_version
 
+        # Set the default minimum macOS version.
+        if not self.minimum_macos_version:
             if qt_version >= 0x050e00:
                 self.minimum_macos_version = '10.13'
             elif qt_version >= 0x050c00:
@@ -218,3 +207,14 @@ class PyQtProject(Project):
                 self.minimum_macos_version = '10.10'
             else:
                 self.minimum_macos_version = '10.9'
+
+        # Set the default name of the sip module.
+        if not self.sip_module:
+            self.sip_module = 'PyQt{}.sip'.format(qt_version >> 16)
+
+        # Set the default ABI version of the sip module.
+        if not self.abi_version:
+            if self.sip_module == 'PyQt5.sip':
+                self.abi_version = '12'
+            elif self.sip_module == 'PyQt6.sip':
+                self.abi_version = '13'

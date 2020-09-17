@@ -1,4 +1,6 @@
 v1.6.0 ??? ??? 2020
+  - Appropriate defaults are now provided for the 'abi-version' and
+    'sip-module' options.
   - Added the 'jobs' builder option and corresponding '--jobs' command line
     option to sip-build, sip-install and sip-wheel.
 

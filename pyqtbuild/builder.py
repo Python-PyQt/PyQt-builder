@@ -87,8 +87,11 @@ class QmakeBuilder(Builder):
                     # This will exist (and we can't check anyway).
                     self.spec = 'macx-clang'
 
-            # Determine the target platform from qmake, ignoring any current
-            # value.
+            # The remaining options influenced by the Qt configuration are
+            # project options.
+            project = self.project
+
+            # Determine the target platform, ignoring any current value.
             xspec = self.qt_configuration['QMAKE_XSPEC']
 
             # Note that the order of these tests is important.
@@ -106,7 +109,31 @@ class QmakeBuilder(Builder):
                 # Treat everything else as Linux.
                 py_platform = 'linux'
 
-            self.project.py_platform = py_platform
+            project.py_platform = py_platform
+
+            # Set the default minimum macOS version.
+            if not project.minimum_macos_version:
+                if self.qt_version >= 0x050e00:
+                    project.minimum_macos_version = '10.13'
+                elif self.qt_version >= 0x050c00:
+                    project.minimum_macos_version = '10.12'
+                elif self.qt_version >= 0x050a00:
+                    project.minimum_macos_version = '10.11'
+                elif self.qt_version >= 0x050900:
+                    project.minimum_macos_version = '10.10'
+                else:
+                    project.minimum_macos_version = '10.9'
+
+            # Set the default name of the sip module.
+            if not project.sip_module:
+                project.sip_module = 'PyQt{}.sip'.format(self.qt_version >> 16)
+
+            # Set the default ABI version of the sip module.
+            if not project.abi_version:
+                if project.sip_module == 'PyQt5.sip':
+                    project.abi_version = '12'
+                elif project.sip_module == 'PyQt6.sip':
+                    project.abi_version = '13'
 
         super().apply_user_defaults(tool)
 

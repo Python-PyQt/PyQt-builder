@@ -185,36 +185,3 @@ class PyQtProject(Project):
                 metavar="DIR", tools=['wheel']))
 
         return options
-
-    def update(self, tool):
-        """ Re-implemented to carry out any final updates to the configuration.
-        """
-
-        super().update(tool)
-
-        # We should now know the Qt version.
-        qt_version = self.builder.qt_version
-
-        # Set the default minimum macOS version.
-        if not self.minimum_macos_version:
-            if qt_version >= 0x050e00:
-                self.minimum_macos_version = '10.13'
-            elif qt_version >= 0x050c00:
-                self.minimum_macos_version = '10.12'
-            elif qt_version >= 0x050a00:
-                self.minimum_macos_version = '10.11'
-            elif qt_version >= 0x050900:
-                self.minimum_macos_version = '10.10'
-            else:
-                self.minimum_macos_version = '10.9'
-
-        # Set the default name of the sip module.
-        if not self.sip_module:
-            self.sip_module = 'PyQt{}.sip'.format(qt_version >> 16)
-
-        # Set the default ABI version of the sip module.
-        if not self.abi_version:
-            if self.sip_module == 'PyQt5.sip':
-                self.abi_version = '12'
-            elif self.sip_module == 'PyQt6.sip':
-                self.abi_version = '13'

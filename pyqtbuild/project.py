@@ -145,11 +145,6 @@ class PyQtProject(Project):
 
         options = super().get_options()
 
-        # The list of target Android ABIs.
-        options.append(
-                Option('android_abis', option_type=list,
-                        help="the target Android ABI", metavar="ABI"))
-
         # The directory containing the target Python interpreter library.
         options.append(Option('py_pylib_dir'))
 
@@ -170,6 +165,10 @@ class PyQtProject(Project):
         options.append(Option('tests_dir', default='config-tests'))
 
         # The user options.
+        options.append(
+                Option('android_abis', option_type=list,
+                        help="the target Android ABI", metavar="ABI"))
+
         options.append(
                 Option('link_full_dll', option_type=bool,
                         help="on Windows link against the full Python DLL "

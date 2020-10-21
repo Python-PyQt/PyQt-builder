@@ -16,24 +16,29 @@ values of all list options may contain environment markers as defined in `PEP
 508 <https://www.python.org/dev/peps/pep-0508/>`__.
 
 **jobs**
-    TODO
-    There is also a corresponding command line option.
+    The integer value is the number of make jobs that will be run in parallel
+    (on Linux and macOS).  There is also a corresponding command line option.
 
 **make**
-    TODO
-    There is also a corresponding command line option.
+    The boolean value specifies if :program:`make` (or :program:`nmake` on
+    Windows) is executed automatically.  By default it is executed
+    automatically.  There is also a corresponding command line option for
+    :program:`sip-build`.
 
 **qmake**
-    TODO
-    There is also a corresponding command line option.
+    The value is the full path name of the :program:`qmake` executable.  By
+    default it is assumed to be on :envvar:`PATH`.  There is also a
+    corresponding command line option.
 
 **qmake-settings**
-    TODO
-    There is also a corresponding command line option.
+    The value is a list of strings, usually of the form ``NAME += VALUE``, that
+    are added to any :program:`qmake` :file:`.pro` file that is created.  There
+    is also a corresponding command line option.
 
 **spec**
-    TODO
-    There is also a corresponding command line option.
+    The value is passed as the ``-spec`` argument to :program:`qmake` whenever
+    it is executed by the builder.  There is also a corresponding command line
+    option.
 
 
 ``[tool.sip.project]`` Section
@@ -45,35 +50,49 @@ list options may contain environment markers as defined in `PEP 508
 <https://www.python.org/dev/peps/pep-0508/>`__.
 
 **android-abis**
-    TODO
+    The value is a list of target Android ABIs (e.g. armeabi-v7a, arm64-v8a).
     There is also a corresponding command line option.
 
 **link-full-dll**
-    TODO
-    There is also a corresponding command line option.
+    The boolean value specifies if, on Windows, the full Python DLL should be
+    linked against rather than the limited API DLL.  There is also a
+    corresponding command line option.
 
 **py-pylib-dir**
-    TODO
+    The value is the name of the directory containing the target Python
+    interpreter library.  By default this is determined dynamically from the
+    Python installation.
 
 **py-pylib-lib**
-    TODO
+    The value is the name of the target Python interpreter library.  By default
+    this is determined dynamically from the Python installation.
 
 **py-pylib-shlib**
-    TODO
+    The value is the name of the target Python interpreter library if it is a
+    shared library.  By default this is determined dynamically from the Python
+    installation.
 
 **qml-debug**
-    TODO
-    There is also a corresponding command line option.
+    The boolean value specifies if the QML debugging infrastructure should be
+    enabled.  There is also a corresponding command line option.
 
 **tag-prefix**
-    TODO
+    The value is the prefix of the timeline tag to use (with the Qt version
+    automatically appended).  By default the value of the ``name`` key in the
+    ``[tool.sip.metadata]`` section of :file:`pyproject.toml` is used with any
+    leading ``Py`` removed.
 
 **target-qt-dir**
-    TODO
-    There is also a corresponding command line option.
+    The value specifies the name of the directory where the Qt libraries will
+    be found.  By default the location of the Qt libraries being built against
+    is used.  If Qt libraries to be included by running :program:`pyqt-bundle`
+    are to be used then the value should be :file:`Qt/lib`.  There is also a
+    corresponding command line option for :program:`sip-wheel`.
 
 **tests-dir**
-    TODO
+    The value is the name of the directory, relative to the directory
+    containing :file:`pyproject.toml`, containing any external test programs.
+    The default value is :file:`config-tests`.
 
 
 Bindings Sections
@@ -84,24 +103,19 @@ values of all list options may contain environment markers as defined in `PEP
 508 <https://www.python.org/dev/peps/pep-0508/>`__.
 
 **qmake-CONFIG**
-    TODO
-    The value is a list of values that are passed to the builder.  It is up to
-    the builder to determine how these values are used.
+    The value is a list of modifications to make to the ``CONFIG`` value in all
+    generated :file:`.pro` files.  An element may start with ``-`` to specify
+    that the value should be removed.
 
 **qmake-QT**
-    TODO
-    The value is a list of values that are passed to the builder.  It is up to
-    the builder to determine how these values are used.
+    The value is a list of modifications to make to the ``QT`` value in all
+    generated :file:`.pro` files.  An element may start with ``-`` to specify
+    that the value should be removed.
 
 **test-headers**
-    TODO
-    The value is a list of values that are passed to the builder.  It is up to
-    the builder to determine how these values are used.
+    The value is a list of :file:`.h` header files to include in any internal
+    test program.
 
 **test-statement**
-    TODO
-    The value, interpreted as a number, specifies that the generated code is
-    split into that number of source files.  By default one file is generated
-    for each C structure or C++ class.  Specifying a low value can
-    significantly speed up the build of large projects.  This is also a user
-    option.
+    The value is a C++ statement that will be included in any internal test
+    program.

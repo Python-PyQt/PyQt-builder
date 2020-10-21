@@ -36,7 +36,7 @@ Unless stated otherwise, each option is added to all of the build tools.
     This option can be used to specify a particular instance of
     :program:`qmake` to use.
 
-.. option:: --qmake-settings 'NAME += VALUE'
+.. option:: --qmake-setting 'NAME += VALUE'
 
     The setting will be added to any :program:`qmake` :file:`.pro` file that is
     created.  This option may be given any number of times.

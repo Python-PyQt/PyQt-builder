@@ -1,0 +1,28 @@
+# Specify the build system requirements.
+[build-system]
+requires = ["sip >=5.3, <7", "PyQt-builder >=1.6, <2"]
+build-backend = "sipbuild.api"
+
+# Specify the PEP 566 metadata for the project.
+[tool.sip.metadata]
+name = "PyQtChart"
+version = "5.15.2"
+summary = "Python bindings for the Qt Charts library"
+home-page = "https://www.riverbankcomputing.com/software/pyqtchart/"
+author = "Riverbank Computing Limited"
+author-email = "info@riverbankcomputing.com"
+license = "GPL v3"
+requires-dist = "PyQt5 (>=5.15)"
+description-file = "README"
+
+# Specify a PyQt-based project.
+[tool.sip]
+project-factory = "pyqtbuild:PyQtProject"
+
+# Configure the project.
+[tool.sip.project]
+tag-prefix = "QtChart"
+
+# Define and configure each set of bindings.
+[tool.sip.bindings.QtChart]
+qmake-QT = ["charts"]

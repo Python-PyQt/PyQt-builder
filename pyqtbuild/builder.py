@@ -702,6 +702,21 @@ macx {
         sources = [self.qmake_quote(f) for f in buildable.sources]
         pro_lines.append('SOURCES = {}'.format(' '.join(sources)))
 
+        # Add any extras.
+        if buildable.extra_compile_args:
+            pro_lines.append(
+                    'QMAKE_CXXFLAGS += {}'.format(
+                            ' '.join(buildable.extra_compile_args)))
+
+        if buildable.extra_link_args:
+            pro_lines.append(
+                    'QMAKE_LFLAGS += {}'.format(
+                            ' '.join(buildable.extra_link_args)))
+
+        if buildable.extra_objects:
+            objects = [self.qmake_quote(f) for f in buildable.objects]
+            pro_lines.append('OBJECTS += {}'.format(' '.join(objects)))
+
     def _write_pro_file(self, pro_fn, pro_lines):
         """ Write a .pro file. """
 

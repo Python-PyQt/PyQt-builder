@@ -1,4 +1,4 @@
-v1.6.0 ??? November 2020
+v1.6.0 23rd November 2020
   - Appropriate defaults are now provided for the 'abi-version' and
     'sip-module' options.
   - Added the 'jobs' builder option and corresponding '--jobs' command line

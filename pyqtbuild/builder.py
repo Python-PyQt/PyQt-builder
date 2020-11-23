@@ -606,15 +606,17 @@ macx {
         directory.
         """
 
+        project = self.project
+
         args = [self._find_make()]
 
         if install:
             args.append('install')
-        elif self.jobs:
+        elif project.py_platform != 'win32' and self.jobs:
             args.append('-j')
             args.append(str(self.jobs))
 
-        self.project.run_command(args)
+        project.run_command(args)
 
     def _run_qmake(self, pro_name, fatal=True, recursive=False):
         """ Run qmake against a .pro file.  fatal is set if a qmake failure is

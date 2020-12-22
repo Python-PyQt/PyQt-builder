@@ -29,8 +29,8 @@ from .pyqt import PyQt
 
 # The Qt meta-data for this package.
 _QT_METADATA = {
-    'QAxContainer':
-        VersionedMetadata(dll=False),
+    #'QAxContainer':
+    #    VersionedMetadata(dll=False),
 
     #'QtBluetooth':
     #    VersionedMetadata(
@@ -43,13 +43,14 @@ _QT_METADATA = {
         VersionedMetadata(
             other_lib_deps={
                 'linux': ('libicui18n.so.56', 'libicuuc.so.56',
-                          'libicudata.so.56'),
-                'win': ('icudt*.dll', 'icuin*.dll', 'icuuc*.dll')},
-            translations=('qt_help', 'qtbase', 'qtconnectivity',
-                'qtdeclarative', 'qtlocation', 'qtmultimedia',
-                'qtquickcontrols', 'qtserialport', 'qtwebsockets',
-                'qtxmlpatterns', 'qt_', 'xcbglintegrations'),
-            excluded_plugins=('canbus', 'designer', 'qmltooling')),
+                          'libicudata.so.56')},
+            translations=('qt_help', 'qtbase', 'qtdeclarative', 
+                'qtquickcontrols2', 'qt_'),
+            #translations=('qt_help', 'qtbase', 'qtconnectivity',
+            #    'qtdeclarative', 'qtlocation', 'qtmultimedia',
+            #    'qtquickcontrols2', 'qtserialport', 'qtwebsockets',
+            #    'qtxmlpatterns', 'qt_'),
+            excluded_plugins=('designer', 'qmltooling')),
 
     'QtDBus':
         VersionedMetadata(),
@@ -60,8 +61,7 @@ _QT_METADATA = {
     'QtGui':
         VersionedMetadata(lib_deps={'linux': ('QtWaylandClient', 'QtXcbQpa')},
                 other_lib_deps={
-                        'win': ('d3dcompiler_47.dll', 'libEGL.dll',
-                                'libGLESv2.dll', 'opengl32sw.dll')}),
+                        'win': ('d3dcompiler_47.dll', 'opengl32sw.dll')}),
 
     'QtHelp':
         VersionedMetadata(),
@@ -107,17 +107,16 @@ _QT_METADATA = {
 
     'QtQuick':
         VersionedMetadata(
-                lib_deps={'': ('QtQuickControls2', 'QtQuickParticles',
-                        'QtQuickShapes', 'QtQuickTemplates2', 'QtQuickTest')},
-                qml=True,
-                qml_names=('QtCanvas3D', 'QtGraphicalEffects', 'QtQuick',
-                        'QtQuick.2')),
+                lib_deps={'': ('QtQuickControls2', 'QtQuickControls2Impl',
+                        'QtQuickParticles', 'QtQuickShapes',
+                        'QtQuickTemplates2', 'QtQuickTest')},
+                qml=True),
 
     'QtQuick3D':
         VersionedMetadata(
                 lib_deps={
-                        '': ('QtQuick3DAssetImport', 'QtQuick3DRender',
-                                'QtQuick3DRuntimeRender', 'QtQuick3DUtils')},
+                        '': ('QtQuick3DAssetImport', 'QtQuick3DRuntimeRender',
+                        'QtQuick3DUtils')},
                 qml=True),
 
     'QtQuickWidgets':

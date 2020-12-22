@@ -327,7 +327,9 @@ class VersionedMetadata:
             return 'libQt{}{}.so.{}'.format(qt_major, name[2:], qt_major)
 
         if arch == 'macos':
-            return '{}.framework/Versions/{}/{}'.format(name, qt_major, name)
+            framework = '5' if qt_major == 5 else 'A'
+
+            return '{}.framework/Versions/{}/{}'.format(name, framework, name)
 
         if arch == 'win':
             return 'Qt{}{}.dll'.format(qt_major, name[2:])

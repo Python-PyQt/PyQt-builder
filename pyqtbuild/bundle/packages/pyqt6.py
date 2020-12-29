@@ -82,9 +82,6 @@ _QT_METADATA = {
     'QtNetwork':
         VersionedMetadata(),
 
-    #'QtNetworkAuth':
-    #    VersionedMetadata(),
-
     #'QtNfc':
     #    VersionedMetadata(qml=True),
 

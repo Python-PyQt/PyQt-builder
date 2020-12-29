@@ -61,7 +61,11 @@ def bundle(wheel_path, qt_dir, build_tag_suffix, msvc_runtime, openssl,
                 "Unable to recognise '{0}' as a wheel name".format(wheel_name))
 
     # Get the package object.
-    package_name = parts[0].split('_')[0]
+    sub_parts = parts[0].split('_')
+    if sub_parts[-1] == 'commercial':
+        sub_parts.pop()
+
+    package_name = '_'.join(sub_parts)
     package_factory = packages.__dict__.get(package_name)
 
     if package_factory is None:

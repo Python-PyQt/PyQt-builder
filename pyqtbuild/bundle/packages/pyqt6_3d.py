@@ -29,17 +29,17 @@ from ..qt_metadata import VersionedMetadata
 # The Qt meta-data for this package.
 _QT_METADATA = {
     'Qt3DAnimation':
-        VersionedMetadata(
+        VersionedMetadata()
             lib_deps={'': ('Qt3DQuickAnimation', )}),
 
     'Qt3DCore':
         VersionedMetadata(
-            lib_deps={'': ('Qt3DQuick', )},
+            lib_deps={'': ('QtConcurrent', )},
             qml=True,
             qml_names=('Qt3D', )),
 
     'Qt3DExtras':
-        VersionedMetadata(
+        VersionedMetadata()
             lib_deps={'': ('Qt3DQuickExtras', )}),
 
     'Qt3DInput':
@@ -51,9 +51,7 @@ _QT_METADATA = {
 
     'Qt3DRender':
         VersionedMetadata(
-            lib_deps={
-                'win': ('QtConcurrent', ),
-                '': ('Qt3DQuickRender', 'Qt3DQuickScene2D')}),
+            lib_deps={'': ('Qt3DQuickRender', 'Qt3DQuickScene2D')}),
 }
 
 

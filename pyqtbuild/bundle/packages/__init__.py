@@ -24,6 +24,7 @@
 
 # Publish the API.
 from .pyqt6 import PyQt6
+from .pyqt6_3d import PyQt6_3D
 from .pyqt6_networkauth import PyQt6_NetworkAuth
 
 from .pyqt5 import PyQt5

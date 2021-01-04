@@ -2,10 +2,10 @@ An Example
 ==========
 
 In this section we walk through the :file:`pyproject.toml` file for the
-PyQtChart project.  PyQtChart is the set of bindings for the QtCharts library
-and is built on top of PyQt.  It comprises a single extension module.  The
-simplicitly of PyQtChart means that there is no need to provide any additional
-code in a :file:`project.py` file.
+PyQtChart project.  PyQtChart is the set of bindings for the QtCharts v5
+library and is built on top of PyQt5.  It comprises a single extension module.
+The simplicitly of PyQtChart means that there is no need to provide any
+additional code in a :file:`project.py` file.
 
 If you want to look at a more complicated examples that require a
 :file:`project.py` file then the QScintilla Python bindings and PyQt itself are

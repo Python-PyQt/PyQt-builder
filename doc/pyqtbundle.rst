@@ -45,8 +45,8 @@ On Linux you must have the :program:`chrpath` program installed.
 On macOS you must have the :program:`install_name_tool` program installed.
 This is a part of Xcode.
 
-On Windows the binary installer for MSVC 2015, MSVC 2017 or MSVC 2019 must be
-used.  Also on Windows :program:`pyqt-bundle` also handles the MSVC runtime
+On Windows the binary installer for the latest supported version of MSVC must
+be used.  Also on Windows :program:`pyqt-bundle` also handles the MSVC runtime
 DLLs and the OpenSSL DLLs.
 
 .. note::
@@ -117,3 +117,24 @@ The full set of command line options is:
 By convention a wheel (e.g. a commercial wheel) without a copy of Qt bundled
 does not have a build tag.  A wheel with a copy of Qt bundled has a build tag
 corresponding to the version of Qt.
+
+
+Bundling Qt6 Additional Libraries
+.................................
+
+Unlike Qt5, the Qt6 online installer only provides binaries for the core Qt
+libraries.  It provides the sources for the additional libraries (e.g. Qt 3D)
+and these must be built and installed before they can be bundled.  While the Qt
+documentation talks about using the :program:`conan` package manager to do
+this, the additional libraries can also be built and installed using
+:program:`qmake`.
+
+At the moment :program:`pyqt-bundle` can only bundle additional libraries built
+using :program:`qmake`.  To build an additional library in this way change to
+the :file:`Src` subdirectory of the additional library and run::
+
+    qmake
+    make
+    make install
+
+This, of course, assumes that :program:`qmake` is on :envvar:`PATH`.

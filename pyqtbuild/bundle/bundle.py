@@ -22,17 +22,15 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-import base64
 import fnmatch
-import hashlib
 import os
 import shutil
-import zipfile
 
 from sipbuild import UserException
 
 from . import packages
 from .verbose import verbose
+from .wheel import create_wheel, write_record_file
 
 
 def bundle(wheel_path, qt_dir, build_tag_suffix, msvc_runtime, openssl,
@@ -139,51 +137,19 @@ def bundle(wheel_path, qt_dir, build_tag_suffix, msvc_runtime, openssl,
     # Rewrite the wheel's RECORD file.
     verbose("Writing the RECORD file")
 
-    for dist_info in os.listdir('.'):
-        if fnmatch.fnmatch(dist_info, '*.dist-info'):
+    for distinfo_dir in os.listdir('.'):
+        if fnmatch.fnmatch(distinfo_dir, '*.dist-info'):
             break
     else:
         raise UserException(
                 "'{0}' doesn't contain a .dist-info directory".format(
                         wheel_path))
 
-    record_path = os.path.join(dist_info, 'RECORD')
-    os.remove(record_path)
-
-    # Calculate the signatures of the files.
-    record = []
-
-    for dirpath, dirnames, filenames in os.walk('.'):
-        # Reproducable builds.
-        dirnames.sort()
-        filenames.sort()
-
-        for filename in filenames:
-            # This will result in a name with no leading '.'.
-            name = os.path.relpath(os.path.join(dirpath, filename))
-
-            with open(name, 'rb') as f:
-                data = f.read()
-
-            digest = base64.urlsafe_b64encode(
-                    hashlib.sha256(data).digest()).rstrip(b'=').decode('ascii')
-            record.append((name, digest, len(data)))
-
-    with open(record_path, 'w') as f:
-        for name, digest, nbytes in record:
-            name = name.replace(os.path.sep, '/')
-            f.write('{},sha256={},{}\n'.format(name, digest, nbytes))
-
-        f.write('{},,\n'.format(record_path))
+    names = write_record_file(distinfo_dir)
 
     # Create the bundled wheel.
     verbose("Writing {0}".format(bundled_wheel_name))
-
-    with zipfile.ZipFile(bundled_wheel_path, 'w', compression=zipfile.ZIP_DEFLATED) as zf:
-        for name, _, _ in record:
-            zf.write(name)
-
-        zf.write(record_path)
+    create_wheel(bundled_wheel_path, names)
 
     # Tidy up.
     os.chdir(saved_cwd)

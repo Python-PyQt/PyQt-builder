@@ -1,4 +1,4 @@
-# Copyright (c) 2020, Riverbank Computing Limited
+# Copyright (c) 2021, Riverbank Computing Limited
 # All rights reserved.
 #
 # This copy of PyQt-builder is licensed for use under the terms of the SIP
@@ -36,25 +36,29 @@ from .verbose import verbose
 class AbstractPackage(ABC):
     """ This specifies the API of a package. """
 
-    def __init__(self, version_str, qt_dir):
+    def __init__(self, qt_dir, version_str=None):
         """ Initialise the package. """
 
-        # Parse the version string.
-        self._version = self._parse_version(version_str)
+        self._qt_dir = os.path.abspath(qt_dir)
 
-        # If we set the maintenance number to 0 then this will be the version
-        # of Qt the wheel was built against.  (This is not a valid assumption
-        # on Windows because of the QAxContainer problem but this is handled
-        # elsewhere.)
-        _min_qt_version = (self._version[0], self._version[1], 0)
+        # Get the Qt version.
+        self.qt_version = self._parse_version(
+                os.path.basename(os.path.dirname(self._qt_dir)))
 
-        # Get the Qt version being bundled.
-        self._qt_version = self._parse_version(
-                os.path.basename(os.path.dirname(qt_dir)))
+        # Parse any package version string.
+        if version_str:
+            version = self._parse_version(version_str)
 
-        # Check the versions are compatible.
-        if self._qt_version < _min_qt_version:
-            raise UserException("The version of Qt being bundled is too old")
+            # If we set the maintenance number to 0 then this will be the
+            # version of Qt the wheel was built against.  (This is not a valid
+            # assumption on Windows because of the QAxContainer problem but
+            # this is handled elsewhere.)
+            min_qt_version = (version[0], version[1], 0)
+
+            # Check the versions are compatible.
+            if self.qt_version < min_qt_version:
+                raise UserException(
+                        "The version of Qt being bundled is too old")
 
     def bundle_msvc_runtime(self, target_qt_dir, arch):
         """ Bundle the MSVC runtime. """
@@ -66,8 +70,11 @@ class AbstractPackage(ABC):
 
         # This default implementation does nothing.
 
-    def bundle_qt(self, target_qt_dir, qt_dir, arch, exclude, ignore_missing):
-        """ Bundle the relevant parts of the Qt installation. """
+    def bundle_qt(self, target_qt_dir, arch, exclude, ignore_missing,
+            ignore_missing_bindings=True):
+        """ Bundle the relevant parts of the Qt installation.  Returns True if
+        the LGPL applies to all bundled parts.
+        """
 
         # Architecture-specific values.
         if arch.startswith('manylinux'):
@@ -84,6 +91,7 @@ class AbstractPackage(ABC):
 
         # Bundle for bindings that are installed.
         package_dir = os.path.dirname(target_qt_dir)
+        lgpl = True
 
         for name, metadata in self.get_qt_metadata().items():
             # Ignore a module if it is explicitly excluded.
@@ -91,15 +99,20 @@ class AbstractPackage(ABC):
                 continue
 
             for ext in module_extensions:
-                bindings = os.path.join(package_dir, name + ext)
+                if ignore_missing_bindings:
+                    bindings = os.path.join(package_dir, name + ext)
+                    if not os.path.isfile(bindings):
+                        continue
+                else:
+                    bindings = None
 
-                if os.path.isfile(bindings):
-                    if isinstance(metadata, VersionedMetadata):
-                        metadata = [metadata]
+                if isinstance(metadata, VersionedMetadata):
+                    metadata = [metadata]
 
-                    # Check there is an applicable version.
-                    for md in metadata:
-                        if md.is_applicable(self._qt_version):
+                # Check there is an applicable version.
+                for md in metadata:
+                    if md.is_applicable(self.qt_version):
+                        if bindings:
                             # This isn't necessary for newer wheels built with
                             # '--target-qt-dir' but we still have to handle
                             # older wheels.
@@ -108,14 +121,17 @@ class AbstractPackage(ABC):
                             elif metadata_arch == 'macos':
                                 self._fix_macos_rpath(bindings)
 
-                            md.bundle(name, target_qt_dir, qt_dir,
-                                    metadata_arch, self._qt_version,
-                                    ignore_missing)
-                            break
+                        lgpl = lgpl and md.lgpl
 
-                    break
+                        md.bundle(name, target_qt_dir, self._qt_dir,
+                                metadata_arch, self.qt_version, ignore_missing)
+                        break
+
+                break
             else:
                 verbose("Skipping {0} as it is not in the wheel".format(name))
+
+        return lgpl
 
     @abstractmethod
     def get_qt_metadata(self):
@@ -123,17 +139,18 @@ class AbstractPackage(ABC):
         install.
         """
 
-    def get_qt_version_str(self):
-        """ Return the version number of the Qt installation to bundle. """
-
-        return '.'.join([str(v) for v in self._qt_version])
-
     def get_target_qt_dir(self):
         """ Return the directory, relative to the wheel root, containing the
         bundled Qt directory.
         """
 
-        return os.path.join('PyQt{}'.format(self._version[0]), 'Qt')
+        return os.path.join('PyQt{}'.format(self.qt_version[0]), 'Qt')
+
+    @property
+    def qt_version_str(self):
+        """ The version number of the Qt installation as a string. """
+
+        return '.'.join([str(v) for v in self.qt_version])
 
     @classmethod
     def _fix_linux_rpath(cls, bindings):

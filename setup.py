@@ -1,4 +1,4 @@
-# Copyright (c) 2020, Riverbank Computing Limited
+# Copyright (c) 2021, Riverbank Computing Limited
 # All rights reserved.
 #
 # This copy of PyQt-builder is licensed for use under the terms of the SIP
@@ -52,10 +52,11 @@ setup(
         install_requires=['packaging', 'sip >=5.5, <7'],
         packages=find_packages(),
         package_data={
-            'pyqtbuild.bundle': ['dlls/*/*'],
+            'pyqtbuild.bundle': ['dlls/*/*', 'qt_wheel_distinfo/*'],
         },
         entry_points={
             'console_scripts': [
-                    'pyqt-bundle = pyqtbuild.bundle.main:main']
+                    'pyqt-bundle = pyqtbuild.bundle.bundle_main:main',
+                    'pyqt-qt-wheel = pyqtbuild.bundle.qt_wheel_main:main']
         }
      )

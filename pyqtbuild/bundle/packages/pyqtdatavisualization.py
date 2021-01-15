@@ -1,4 +1,4 @@
-# Copyright (c) 2020, Riverbank Computing Limited
+# Copyright (c) 2021, Riverbank Computing Limited
 # All rights reserved.
 #
 # This copy of PyQt-builder is licensed for use under the terms of the SIP
@@ -30,7 +30,7 @@ from ..qt_metadata import VersionedMetadata
 _QT_METADATA = {
     'QtDataVisualization':
         VersionedMetadata(version=(5, 7, 0),
-            qml=True),
+            qml=True, lgpl=False),
 }
 
 

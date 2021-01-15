@@ -1,4 +1,4 @@
-# Copyright (c) 2020, Riverbank Computing Limited
+# Copyright (c) 2021, Riverbank Computing Limited
 # All rights reserved.
 #
 # This copy of PyQt-builder is licensed for use under the terms of the SIP
@@ -72,10 +72,10 @@ def bundle(wheel_path, qt_dir, build_tag_suffix, msvc_runtime, openssl,
         raise UserException(
                 "'{0}' is not a supported package".format(package_name))
 
-    package = package_factory(parts[1], qt_dir)
+    package = package_factory(qt_dir, parts[1])
 
     # Construct the name of the bundled wheel.
-    build_tag = package.get_qt_version_str()
+    build_tag = package.qt_version_str
 
     if build_tag_suffix:
         build_tag += build_tag_suffix
@@ -125,7 +125,7 @@ def bundle(wheel_path, qt_dir, build_tag_suffix, msvc_runtime, openssl,
                         ignore_errors=True)
 
     # Bundle the relevant parts of the Qt installation.
-    package.bundle_qt(target_qt_dir, qt_dir, arch, exclude, ignore_missing)
+    package.bundle_qt(target_qt_dir, arch, exclude, ignore_missing)
 
     if arch in ('win32', 'win_amd64'):
         # Bundle the MSVC runtime if required.

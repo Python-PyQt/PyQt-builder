@@ -30,7 +30,7 @@ from sipbuild import UserException
 
 from . import packages
 from .verbose import verbose
-from .wheel import create_wheel, write_record_file
+from .wheel import create_wheel, unpack_wheel, write_record_file
 
 
 def bundle(wheel_path, qt_dir, build_tag_suffix, msvc_runtime, openssl,
@@ -99,17 +99,7 @@ def bundle(wheel_path, qt_dir, build_tag_suffix, msvc_runtime, openssl,
     os.chdir(bundled_wheel_dir)
 
     verbose("Unpacking {0}".format(wheel_name))
-
-    try:
-        zf = zipfile.ZipFile(wheel_path)
-    except FileNotFoundError:
-        raise UserException("Unable to find '{0}'".format(wheel_path))
-
-    for zi in zf.infolist():
-        zf.extract(zi)
-        attr = zi.external_attr >> 16
-        if attr:
-            os.chmod(zi.filename, attr)
+    unpack_wheel(wheel_path)
 
     # Remove any existing bundled Qt installation while protecting some
     # specific directories.

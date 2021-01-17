@@ -27,6 +27,8 @@ import hashlib
 import os
 import zipfile
 
+from sipbuild import UserException
+
 
 def create_wheel(wheel_path, names):
     """ Create the wheel from a list of file names. """
@@ -34,6 +36,21 @@ def create_wheel(wheel_path, names):
     with zipfile.ZipFile(wheel_path, 'w', compression=zipfile.ZIP_DEFLATED) as zf:
         for name in names:
             zf.write(name)
+
+
+def unpack_wheel(wheel_path):
+    """ Unpack a wheel in the current directory. """
+
+    try:
+        zf = zipfile.ZipFile(wheel_path)
+    except FileNotFoundError:
+        raise UserException("Unable to find '{0}'".format(wheel_path))
+
+    for zi in zf.infolist():
+        zf.extract(zi)
+        attr = zi.external_attr >> 16
+        if attr:
+            os.chmod(zi.filename, attr)
 
 
 def write_record_file(distinfo_dir):

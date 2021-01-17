@@ -64,11 +64,12 @@ def bundle(wheel_path, qt_dir, build_tag_suffix, msvc_runtime, openssl,
         sub_parts.pop()
 
     package_name = '_'.join(sub_parts)
+    package_title = package_name.replace('_', '-')
     package_factory = packages.__dict__.get(package_name)
 
     if package_factory is None:
         raise UserException(
-                "'{0}' is not a supported package".format(package_name))
+                "'{0}' is not a supported package".format(package_title))
 
     package = package_factory(qt_dir, parts[1])
 
@@ -124,9 +125,7 @@ def bundle(wheel_path, qt_dir, build_tag_suffix, msvc_runtime, openssl,
         if openssl:
             package.bundle_openssl(target_qt_dir, openssl_dir, arch)
 
-    # Rewrite the wheel's RECORD file.
-    verbose("Writing the RECORD file")
-
+    # Find the .dist-info directory.
     for distinfo_dir in os.listdir('.'):
         if fnmatch.fnmatch(distinfo_dir, '*.dist-info'):
             break
@@ -135,6 +134,27 @@ def bundle(wheel_path, qt_dir, build_tag_suffix, msvc_runtime, openssl,
                 "'{0}' doesn't contain a .dist-info directory".format(
                         wheel_path))
 
+    # Remove any dependency on an external Qt wheel from the METADATA file.
+    update_metadata = False
+    updated_metadata = ''
+    qt_wheel = package_title + '-Qt'
+    metadata_path = os.path.join(distinfo_dir, 'METADATA')
+
+    with open(metadata_path) as f:
+        for line in f:
+            if 'Requires-Dist:' in line and qt_wheel in line:
+                update_metadata = True
+            else:
+                updated_metadata += line
+
+    if update_metadata:
+        verbose("Updating the METADATA file")
+
+        with open(metadata_path, 'w') as f:
+            f.write(updated_metadata)
+
+    # Rewrite the wheel's RECORD file.
+    verbose("Writing the RECORD file")
     names = write_record_file(distinfo_dir)
 
     # Create the bundled wheel.

@@ -1,4 +1,4 @@
-v1.8.0 ??? February 2021
+v1.8.0 5th February 2021
   - Added the (as yet undocumented) pyqt-qt-wheel utility.
   - chrpath and install_name_tool are no longer required when bundling Qt v5.15
     or later.

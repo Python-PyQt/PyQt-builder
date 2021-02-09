@@ -29,7 +29,7 @@ from ..qt_metadata import VersionedMetadata
 # The Qt meta-data for this package.
 _QT_METADATA = {
     'QtNetworkAuth':
-        VersionedMetadata(name='QtNetworkAuth', lgpl=False),
+        VersionedMetadata(lgpl=False),
 }
 
 

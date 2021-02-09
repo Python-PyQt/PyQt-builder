@@ -29,8 +29,8 @@ from ..qt_metadata import VersionedMetadata
 # The Qt meta-data for this package.
 _QT_METADATA = {
     'QtNetworkAuth':
-        VersionedMetadata(version=(5, 10, 0), name='QtNetworkAuth',
-                lgpl=False),
+        VersionedMetadata(version=(5, 10, 0),
+            lgpl=False),
 }
 
 

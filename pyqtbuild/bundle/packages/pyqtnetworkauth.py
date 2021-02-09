@@ -22,15 +22,24 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-# Publish the API.
-from .pyqt6 import PyQt6
-from .pyqt6_3d import PyQt6_3D
-from .pyqt6_networkauth import PyQt6_NetworkAuth
+from ..abstract_package import AbstractPackage
+from ..qt_metadata import VersionedMetadata
 
-from .pyqt5 import PyQt5
-from .pyqt3d import PyQt3D
-from .pyqtchart import PyQtChart
-from .pyqtdatavisualization import PyQtDataVisualization
-from .pyqtnetworkauth import PyQtNetworkAuth
-from .pyqtpurchasing import PyQtPurchasing
-from .pyqtwebengine import PyQtWebEngine
+
+# The Qt meta-data for this package.
+_QT_METADATA = {
+    'QtNetworkAuth':
+        VersionedMetadata(version=(5, 10, 0), name='QtNetworkAuth',
+                lgpl=False),
+}
+
+
+class PyQtNetworkAuth(AbstractPackage):
+    """ The PyQtNetworkAuth package. """
+
+    def get_qt_metadata(self):
+        """ Return the package-specific meta-data describing the parts of Qt to
+        install.
+        """
+
+        return _QT_METADATA

@@ -40,7 +40,7 @@ class VersionedMetadata:
     def __init__(self, *, version=None, name=None, lib_deps=None,
             other_lib_deps=None, exes=None, files=None, others=None, dll=True,
             qml=False, qml_names=None, translations=None,
-            excluded_plugins=None, lgpl=True):
+            excluded_plugins=None, lgpl=True, legacy=False):
         """ Initialise the versioned bindings. """
 
         self._version = version
@@ -57,6 +57,7 @@ class VersionedMetadata:
         self._excluded_plugins = excluded_plugins
 
         self.lgpl = lgpl
+        self.legacy = legacy
 
     def bundle(self, name, target_qt_dir, qt_dir, arch, qt_version,
             ignore_missing):

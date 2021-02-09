@@ -71,7 +71,7 @@ class AbstractPackage(ABC):
         # This default implementation does nothing.
 
     def bundle_qt(self, target_qt_dir, arch, exclude, ignore_missing,
-            ignore_missing_bindings=True):
+            report_missing_bindings=True):
         """ Bundle the relevant parts of the Qt installation.  Returns True if
         the LGPL applies to all bundled parts.
         """
@@ -98,39 +98,43 @@ class AbstractPackage(ABC):
             if name in exclude:
                 continue
 
+            # Get any applicable version.
+            if isinstance(metadata, VersionedMetadata):
+                metadata = [metadata]
+
+            metadata = [md for md in metadata
+                    if md.is_applicable(self.qt_version)]
+
+            if len(metadata) == 0:
+                continue
+
+            metadata = metadata[0]
+
+            # Find the bindings.
             for ext in module_extensions:
-                if ignore_missing_bindings:
-                    bindings = os.path.join(package_dir, name + ext)
-                    if not os.path.isfile(bindings):
-                        continue
-                else:
-                    bindings = None
-
-                if isinstance(metadata, VersionedMetadata):
-                    metadata = [metadata]
-
-                # Check there is an applicable version.
-                for md in metadata:
-                    if md.is_applicable(self.qt_version):
-                        if bindings and self.qt_version < (5, 15, 0):
-                            # This isn't necessary for newer wheels built with
-                            # '--target-qt-dir' but we still have to handle
-                            # older wheels (ie. using versions of Qt released
-                            # before '--target-qt-dir' was added.
-                            if metadata_arch == 'linux':
-                                self._fix_linux_rpath(bindings)
-                            elif metadata_arch == 'macos':
-                                self._fix_macos_rpath(bindings)
-
-                        lgpl = lgpl and md.lgpl
-
-                        md.bundle(name, target_qt_dir, self._qt_dir,
-                                metadata_arch, self.qt_version, ignore_missing)
-                        break
-
-                break
+                bindings = os.path.join(package_dir, name + ext)
+                if os.path.isfile(bindings):
+                    break
             else:
+                bindings = None
+
+            if bindings is not None:
+                if self.qt_version < (5, 15, 0):
+                    # This isn't necessary for newer wheels built with
+                    # '--target-qt-dir' but we still have to handle older
+                    # wheels (ie. using versions of Qt released before
+                    # '--target-qt-dir' was added.
+                    if metadata_arch == 'linux':
+                        self._fix_linux_rpath(bindings)
+                    elif metadata_arch == 'macos':
+                        self._fix_macos_rpath(bindings)
+            elif report_missing_bindings and not metadata.legacy:
                 verbose("Skipping {0} as it is not in the wheel".format(name))
+
+            lgpl = lgpl and metadata.lgpl
+
+            metadata.bundle(name, target_qt_dir, self._qt_dir, metadata_arch,
+                    self.qt_version, ignore_missing)
 
         return lgpl
 

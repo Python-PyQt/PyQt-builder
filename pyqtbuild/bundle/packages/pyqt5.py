@@ -101,7 +101,7 @@ _QT_METADATA = {
         VersionedMetadata(),
 
     'QtNetworkAuth':
-        VersionedMetadata(version=(5, 10, 0)),
+        VersionedMetadata(version=(5, 10, 0), legacy=True),
 
     'QtNfc':
         VersionedMetadata(qml=True),

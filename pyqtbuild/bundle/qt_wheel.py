@@ -95,7 +95,7 @@ def qt_wheel(package, qt_dir, build_tag, msvc_runtime, openssl, openssl_dir,
     # Bundle the relevant parts of the Qt installation.
     target_qt_dir = package.get_target_qt_dir()
     lgpl = package.bundle_qt(target_qt_dir, arch, exclude, ignore_missing=True,
-            report_missing_bindings=False)
+            bindings=False)
 
     if arch in ('win32', 'win_amd64'):
         # Bundle the MSVC runtime if required.

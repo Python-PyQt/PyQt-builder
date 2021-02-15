@@ -111,7 +111,9 @@ class QmakeBuilder(Builder):
 
             # Set the default minimum macOS version.
             if not project.minimum_macos_version:
-                if self.qt_version >= 0x050e00:
+                if self.qt_version >= 0x060000:
+                    project.minimum_macos_version = '10.14'
+                elif self.qt_version >= 0x050e00:
                     project.minimum_macos_version = '10.13'
                 elif self.qt_version >= 0x050c00:
                     project.minimum_macos_version = '10.12'

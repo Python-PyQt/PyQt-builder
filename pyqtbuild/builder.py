@@ -109,6 +109,13 @@ class QmakeBuilder(Builder):
 
             project.py_platform = py_platform
 
+            # Set the default minimum GLIBC version.
+            if not project.minimum_glibc_version:
+                if self.qt_version >= 0x060000:
+                    project.minimum_glibc_version = '2.28'
+                else:
+                    project.minimum_glibc_version = '2.17'
+
             # Set the default minimum macOS version.
             if not project.minimum_macos_version:
                 if self.qt_version >= 0x060000:

@@ -1,4 +1,4 @@
-v1.9.0 ??? February 2021
+v1.9.0 23rd February 2021
   - Added support for PyQtNetworkAuth.
   - Added support for creating Qt5 wheels.
   - The default minimum glibc version for Qt6 is now v2.28.

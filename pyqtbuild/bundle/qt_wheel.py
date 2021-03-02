@@ -72,7 +72,7 @@ def qt_wheel(package, qt_dir, build_tag, msvc_runtime, openssl, openssl_dir,
     tag = '-'.join(tag_parts)
 
     # Construct the name of the wheel.
-    name_parts = [package_name + '_Qt']
+    name_parts = [package_name + '_Qt' + package.qt_version_str[0]]
     name_parts.append(package.qt_version_str)
 
     distinfo_dir = '-'.join(name_parts) + '.dist-info'

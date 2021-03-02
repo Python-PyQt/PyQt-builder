@@ -1,5 +1,5 @@
 Metadata-Version: 2.1
-Name: @RB_PACKAGE@-Qt
+Name: @RB_PACKAGE@-Qt@RB_MAJOR_VERSION@
 Version: @RB_VERSION@
 Summary: The subset of a Qt installation needed by @RB_PACKAGE@.
 Home-page: https://www.riverbankcomputing.com/software/pyqt/

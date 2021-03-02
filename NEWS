@@ -1,4 +1,4 @@
-v1.9.1 ??? March 2021
+v1.9.1 2nd March 2021
   - Handle the changed Qt installation directory used by PyQt5 v5.15.4 and
     later, and PyQt6 v6.0.3 and later.
 

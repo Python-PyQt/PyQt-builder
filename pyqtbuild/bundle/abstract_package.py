@@ -47,18 +47,20 @@ class AbstractPackage(ABC):
 
         # Parse any package version string.
         if version_str:
-            version = self._parse_version(version_str)
+            self._version = self._parse_version(version_str)
 
             # If we set the maintenance number to 0 then this will be the
             # version of Qt the wheel was built against.  (This is not a valid
             # assumption on Windows because of the QAxContainer problem but
             # this is handled elsewhere.)
-            min_qt_version = (version[0], version[1], 0)
+            min_qt_version = (self._version[0], self._version[1], 0)
 
             # Check the versions are compatible.
             if self.qt_version < min_qt_version:
                 raise UserException(
                         "The version of Qt being bundled is too old")
+        else:
+            self._version = None
 
     def bundle_msvc_runtime(self, target_qt_dir, arch):
         """ Bundle the MSVC runtime. """
@@ -154,7 +156,18 @@ class AbstractPackage(ABC):
         bundled Qt directory.
         """
 
-        return os.path.join('PyQt{}'.format(self.qt_version[0]), 'Qt')
+        # Assume the current naming of the bundled Qt directory.
+        qt_major_version = self.qt_version[0]
+
+        # See if it is an older version.
+        if self._version is not None:
+            if (6, 0, 0) <= self._version <= (6, 0, 2):
+                qt_major_version = ''
+            elif self._version <= (5, 15, 3):
+                qt_major_version = ''
+
+        return os.path.join('PyQt{}'.format(qt_major_version),
+                'Qt{}'.format(qt_major_version))
 
     @property
     def qt_version_str(self):

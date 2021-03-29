@@ -3,7 +3,7 @@
 Bundling Qt Using :program:`pyqt-bundle`
 ----------------------------------------
 
-PyQt wheels can contain a bundled copy of the relavent parts of Qt.  The main
+PyQt wheels can contain a bundled copy of the relevent parts of Qt.  The main
 reason for doing this is so that users can install a complete PyQt environment
 with a single :program:`pip` install.
 

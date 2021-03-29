@@ -8,7 +8,7 @@ reason for doing this is so that users can install a complete PyQt environment
 with a single :program:`pip` install.
 
 A bundled copy may also be replaced by a newer release of Qt.  Given the ABI
-guarantees made by Qt (i.e. that a later version or Qt should be able to
+guarantees made by Qt (i.e. that a later version of Qt should be able to
 replace an earlier version without having to re-compile an application) then it
 should be perfectly possible to bundle a later version of Qt that has a later
 minor version number with a version of PyQt that has an earlier minor version

@@ -115,15 +115,15 @@ Unlike Qt5, the Qt6 online installer only provides binaries for the core Qt
 libraries.  It provides the sources for the additional libraries (e.g. Qt 3D)
 and these must be built and installed before they can be bundled.  While the Qt
 documentation talks about using the :program:`conan` package manager to do
-this, the additional libraries can also be built and installed using
-:program:`qmake`.
+this it isn't actually necessary.
 
-At the moment :program:`pyqt-bundle` can only bundle additional libraries built
-using :program:`qmake`.  To build an additional library in this way change to
-the :file:`Src` subdirectory of the additional library and run::
+To build and additional library make sure you have :program:`CMake` and
+:program:`ninja` installed and on :envvar:`PATH`.  Change to the library's
+:file:`Src` subdirectory and run::
 
-    qmake
-    make
-    make install
+    cmake -G Ninja -DCMAKE_INSTALL_PREFIX=/path/to/qt-prefix-directory
+    ninja install
 
-This, of course, assumes that :program:`qmake` is on :envvar:`PATH`.
+The Qt prefix directory is the name of the architecture-specific directory of a
+Qt installation.  It is :file:`gcc_64` on Linux, :file:`clang_64` on macos and
+:file:`msvc2019_64` on Windows.

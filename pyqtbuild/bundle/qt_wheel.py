@@ -32,8 +32,8 @@ from .verbose import verbose
 from .wheel import create_wheel, write_record_file
 
 
-def qt_wheel(package, qt_dir, build_tag, msvc_runtime, openssl, openssl_dir,
-        exclude):
+def qt_wheel(package, qt_dir, build_tag, suffix, msvc_runtime, openssl,
+        openssl_dir, exclude):
     """ Create a wheel containing the subset of a Qt installation required for
     a particular PyQt package.
     """
@@ -54,6 +54,10 @@ def qt_wheel(package, qt_dir, build_tag, msvc_runtime, openssl, openssl_dir,
 
     package = package_factory(qt_dir)
 
+    version_str = package.qt_version_str
+    if suffix:
+        version_str += suffix
+
     # Construct the tag.
     qt_arch = os.path.basename(qt_dir)
     if qt_arch == 'gcc_64':
@@ -72,8 +76,8 @@ def qt_wheel(package, qt_dir, build_tag, msvc_runtime, openssl, openssl_dir,
     tag = '-'.join(tag_parts)
 
     # Construct the name of the wheel.
-    name_parts = [package_name + '_Qt' + package.qt_version_str[0]]
-    name_parts.append(package.qt_version_str)
+    name_parts = [package_name + '_Qt' + version_str[0]]
+    name_parts.append(version_str)
 
     distinfo_dir = '-'.join(name_parts) + '.dist-info'
 
@@ -119,9 +123,8 @@ def qt_wheel(package, qt_dir, build_tag, msvc_runtime, openssl, openssl_dir,
                 metadata = s.read()
 
             metadata = metadata.replace('@RB_PACKAGE@', package_title)
-            metadata = metadata.replace('@RB_MAJOR_VERSION@',
-                    package.qt_version_str[0])
-            metadata = metadata.replace('@RB_VERSION@', package.qt_version_str)
+            metadata = metadata.replace('@RB_MAJOR_VERSION@', version_str[0])
+            metadata = metadata.replace('@RB_VERSION@', version_str)
             metadata = metadata.replace('@RB_LICENSE@',
                     "LGPL v3" if lgpl else "GPL v3")
 

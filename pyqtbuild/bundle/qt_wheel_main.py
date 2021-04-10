@@ -66,6 +66,9 @@ def main():
     parser.add_argument('--qt-dir', metavar='DIR', required=True,
             help="the Qt installation in DIR to be copied to the wheel")
 
+    parser.add_argument('--suffix', metavar='SUFFIX',
+            help="append SUFFIX to the Qt version number")
+
     parser.add_argument(dest='packages', nargs=1, help="the PyQt package",
             metavar="package")
 
@@ -75,9 +78,9 @@ def main():
         set_verbose(args.verbose)
 
         qt_wheel(package=args.packages[0], qt_dir=args.qt_dir,
-                build_tag=args.build_tag, msvc_runtime=args.msvc_runtime,
-                openssl=args.openssl, openssl_dir=args.openssl_dir,
-                exclude=args.exclude)
+                build_tag=args.build_tag, suffix=args.suffix,
+                msvc_runtime=args.msvc_runtime, openssl=args.openssl,
+                openssl_dir=args.openssl_dir, exclude=args.exclude)
     except Exception as e:
         handle_exception(e)
 

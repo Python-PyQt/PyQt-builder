@@ -1,4 +1,5 @@
-v1.10.0 ??? April 2021
+v1.10.0 10th April 2021
+  - Added support for bundling Qt v6.1.
   - Added support for PyQt6-Charts to pyqt-bundle.
   - Added support for PyQt6-DataVisualization to pyqt-bundle.
 

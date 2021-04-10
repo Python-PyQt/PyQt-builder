@@ -109,12 +109,18 @@ _QT_METADATA = {
                         'QtQuickTemplates2', 'QtQuickTest')},
                 qml=True),
 
-    'QtQuick3D':
+    'QtQuick3D': (
+        VersionedMetadata(version=(6, 1, 0),
+                lib_deps={
+                        '': ('QtQuick3DAssetImport', 'QtQuick3DIblBaker',
+                        'QtQuick3DParticles', 'QtQuick3DRuntimeRender',
+                        'QtQuick3DUtils', 'QtShaderTools')},
+                qml=True),
         VersionedMetadata(
                 lib_deps={
                         '': ('QtQuick3DAssetImport', 'QtQuick3DRuntimeRender',
                         'QtQuick3DUtils', 'QtShaderTools')},
-                qml=True),
+                qml=True)),
 
     'QtQuickWidgets':
         VersionedMetadata(),

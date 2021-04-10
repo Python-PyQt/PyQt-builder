@@ -111,6 +111,12 @@ of Qt.
 Bundling Qt6 Additional Libraries
 .................................
 
+.. note::
+
+    Starting with Qt v6.1.0 the online installer now includes binaries for the
+    additional libraries, therefore the steps described below are no longer
+    necessary.
+
 Unlike Qt5, the Qt6 online installer only provides binaries for the core Qt
 libraries.  It provides the sources for the additional libraries (e.g. Qt 3D)
 and these must be built and installed before they can be bundled.  While the Qt

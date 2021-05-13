@@ -1,3 +1,7 @@
+v1.10.1 13th May 2021
+  - The default sip module ABI version is now the minimum required by current
+    PyQt versions rather than the latest available from SIP.
+
 v1.10.0 10th April 2021
   - Added support for bundling Qt v6.1.
   - Added support for PyQt6-Charts to pyqt-bundle.

@@ -5,7 +5,7 @@ What is PyQt-builder?
 ---------------------
 
 PyQt-builder is the PEP 517 compliant build system for PyQt and projects that
-extend PyQt.  It extends the sip build system and uses Qt's ``qmake`` to
+extend PyQt.  It extends the SIP build system and uses Qt's ``qmake`` to
 perform the actual compilation and installation of extension modules.
 
 Projects that use PyQt-builder provide an appropriate ``pyproject.toml`` file
@@ -18,7 +18,7 @@ Author
 ------
 
 PyQt-builder is copyright (c) Riverbank Computing Limited.  Its homepage is
-https://www.riverbankcomputing.com/software/pyqt/.
+https://www.riverbankcomputing.com/software/pyqt-builder/.
 
 Support may be obtained from the PyQt mailing list at
 https://www.riverbankcomputing.com/mailman/listinfo/pyqt/.
@@ -27,7 +27,7 @@ https://www.riverbankcomputing.com/mailman/listinfo/pyqt/.
 License
 -------
 
-PyQt-builder is released under the BSD license.
+PyQt-builder is released under the same licenses as SIP.
 
 
 Installation
@@ -44,6 +44,5 @@ installed automatically when it is needed.
 Documentation
 -------------
 
-The documentation for the latest release is part of the
-`PyQt5 <https://www.riverbankcomputing.com/static/Docs/PyQt5/>`__
-documentation.
+The documentation for the latest release can be found
+`here <https://www.riverbankcomputing.com/static/Docs/PyQt-builder/>`__.

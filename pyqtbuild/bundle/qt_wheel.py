@@ -63,7 +63,7 @@ def qt_wheel(package, qt_dir, build_tag, suffix, msvc_runtime, openssl,
     if qt_arch == 'gcc_64':
         arch = 'manylinux{}_x86_64'.format(
                 '_2_28' if package.qt_version[0] == 6 else '2014')
-    elif qt_arch == 'clang_64':
+    elif qt_arch in ('macos', 'clang_64'):
         arch = 'macosx_{}_intel'.format(
                 '10_14' if package.qt_version[0] == 6 else '10_13')
     elif qt_arch.startswith('msvc'):

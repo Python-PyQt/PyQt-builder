@@ -1,4 +1,4 @@
-# Copyright (c) 2020, Riverbank Computing Limited
+# Copyright (c) 2021, Riverbank Computing Limited
 # All rights reserved.
 #
 # This copy of PyQt-builder is licensed for use under the terms of the SIP
@@ -105,7 +105,7 @@ _QT_METADATA = {
     'QtQuick':
         VersionedMetadata(
                 lib_deps={'': ('QtQuickControls2', 'QtQuickControls2Impl',
-                        'QtQuickParticles', 'QtQuickShapes',
+                        'QtQuickLayouts', 'QtQuickParticles', 'QtQuickShapes',
                         'QtQuickTemplates2', 'QtQuickTest')},
                 qml=True),
 

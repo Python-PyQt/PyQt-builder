@@ -58,10 +58,14 @@ _QT_METADATA = {
     'QtDesigner':
         VersionedMetadata(),
 
-    'QtGui':
-        VersionedMetadata(lib_deps={'linux': ('QtWaylandClient', 'QtXcbQpa')},
+    'QtGui': (
+        VersionedMetadata(version=(6, 2, 0),
+                lib_deps={'linux': ('QtWaylandClient', 'QtXcbQpaPrivate')},
                 other_lib_deps={
                         'win': ('d3dcompiler_47.dll', 'opengl32sw.dll')}),
+        VersionedMetadata(lib_deps={'linux': ('QtWaylandClient', 'QtXcbQpa')},
+                other_lib_deps={
+                        'win': ('d3dcompiler_47.dll', 'opengl32sw.dll')})),
 
     'QtHelp':
         VersionedMetadata(),
@@ -102,12 +106,18 @@ _QT_METADATA = {
                 lib_deps={'': ('QtQmlModels', 'QtQmlWorkerScript')},
                 qml=True),
 
-    'QtQuick':
+    'QtQuick': (
+        VersionedMetadata(version=(6, 2, 0),
+                lib_deps={'': ('QtQuickControls2', 'QtQuickControls2Impl',
+                        'QtQuickLayouts', 'QtQuickParticlesPrivate',
+                        'QtQuickShapesPrivate', 'QtQuickTemplates2',
+                        'QtQuickTest')},
+                qml=True),
         VersionedMetadata(
                 lib_deps={'': ('QtQuickControls2', 'QtQuickControls2Impl',
                         'QtQuickLayouts', 'QtQuickParticles', 'QtQuickShapes',
                         'QtQuickTemplates2', 'QtQuickTest')},
-                qml=True),
+                qml=True)),
 
     'QtQuick3D': (
         VersionedMetadata(version=(6, 1, 0),

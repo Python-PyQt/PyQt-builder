@@ -64,7 +64,7 @@ _QT_METADATA = {
 
     'QtGui': (
         VersionedMetadata(version=(6, 2, 0),
-                lib_deps={'linux': ('Qt6WaylandClient', 'Qt6XcbQpa')},
+                lib_deps={'linux': ('QtWaylandClient', 'QtXcbQpa')},
                 other_lib_deps={
                         'win': ('d3dcompiler_47.dll', 'opengl32sw.dll')}),
         VersionedMetadata(lib_deps={'linux': ('QtWaylandClient', 'QtXcbQpa')},
@@ -150,7 +150,7 @@ _QT_METADATA = {
 
     'QtSensors':
         VersionedMetadata(version=(6, 2, 0),
-                lib_deps={'': ('QtSensorsQml', )},
+                lib_deps={'': ('QtSensorsQuick', )},
                 qml=True),
 
     'QtSerialPort':

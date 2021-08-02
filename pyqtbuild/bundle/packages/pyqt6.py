@@ -64,7 +64,7 @@ _QT_METADATA = {
 
     'QtGui': (
         VersionedMetadata(version=(6, 2, 0),
-                lib_deps={'linux': ('QtWaylandClient', 'QtXcbQpaPrivate')},
+                lib_deps={'linux': ('Qt6WaylandClient', 'Qt6XcbQpa')},
                 other_lib_deps={
                         'win': ('d3dcompiler_47.dll', 'opengl32sw.dll')}),
         VersionedMetadata(lib_deps={'linux': ('QtWaylandClient', 'QtXcbQpa')},
@@ -113,9 +113,11 @@ _QT_METADATA = {
     'QtQuick': (
         VersionedMetadata(version=(6, 2, 0),
                 lib_deps={'': ('QtQuickControls2', 'QtQuickControls2Impl',
-                        'QtQuickLayouts', 'QtQuickParticlesPrivate',
-                        'QtQuickShapesPrivate', 'QtQuickTemplates2',
-                        'QtQuickTest')},
+                        'QtQuickDialogs2', 'QtQuickDialogs2QuickImpl',
+                        'QtQuickDialogs2Utils', 'QtQuickLayouts',
+                        'QtQuickParticles', 'QtQuickShapes',
+                        'QtQuickTemplates2', 'QtQuickTest',
+                        'QtQuickTimeline')},
                 qml=True),
         VersionedMetadata(
                 lib_deps={'': ('QtQuickControls2', 'QtQuickControls2Impl',
@@ -126,9 +128,11 @@ _QT_METADATA = {
     'QtQuick3D': (
         VersionedMetadata(version=(6, 1, 0),
                 lib_deps={
-                        '': ('QtQuick3DAssetImport', 'QtQuick3DIblBaker',
-                        'QtQuick3DParticles', 'QtQuick3DRuntimeRender',
-                        'QtQuick3DUtils', 'QtShaderTools')},
+                        '': ('QtQuick3DAssetImport', 'QtQuick3DAssetUtils',
+                        'QtQuick3DEffects', 'QtQuick3DHelpers',
+                        'QtQuick3DIblBaker', 'QtQuick3DParticles',
+                        'QtQuick3DRuntimeRender', 'QtQuick3DUtils',
+                        'QtShaderTools')},
                 qml=True),
         VersionedMetadata(
                 lib_deps={

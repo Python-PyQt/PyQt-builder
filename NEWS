@@ -1,5 +1,6 @@
-v1.11.0 1st August 2021
+v1.11.0 25th August 2021
   - Added support for bundling Qt v6.2.
+  - Added support for PyQt6-WebEngine to pyqt-bundle.
 
 v1.10.3 4th July 2021
   - A bug fix release.

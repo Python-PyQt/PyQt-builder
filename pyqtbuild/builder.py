@@ -103,6 +103,8 @@ class QmakeBuilder(Builder):
                 py_platform = 'wasm'
             elif 'win32' in xspec:
                 py_platform = 'win32'
+            elif 'mingw-w64' in xspec:
+                py_platform = 'win32'
             else:
                 # Treat everything else as Linux.
                 py_platform = 'linux'
@@ -336,8 +338,8 @@ class QmakeBuilder(Builder):
         """ Return the name of a valid make program. """
 
         if self.project.py_platform == 'win32':
-            if self.spec == 'win32-g++':
-                make = 'mingw32-make'
+            if 'g++' in self.spec:
+                make = 'make'
             else:
                 make = 'nmake'
         else:

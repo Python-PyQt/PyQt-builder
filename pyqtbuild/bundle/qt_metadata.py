@@ -348,6 +348,8 @@ class VersionedMetadata:
             return name.endswith('_debug.dylib') or name.endswith('.dSYM')
 
         if arch == 'win':
-            # This is a bit flakely as we could have a non-debug DLL that ends
-            # with a 'd'.
+            # Special case known non-debug DLLs that end with a 'd'.
+            if name.endswith('backend.dll'):
+                return False
+
             return name.endswith('.pdb') or name.endswith('d.dll')

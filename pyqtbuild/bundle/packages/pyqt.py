@@ -48,6 +48,12 @@ class PyQt(AbstractPackage):
     def bundle_openssl(self, target_qt_dir, openssl_dir, arch):
         """ Bundle the OpenSSL DLLs. """
 
+        # Qt v6.2.0 and later include appropriate backends.
+        if self.qt_version >= (6, 2, 0):
+            verbose(
+                    "OpenSSL libraries are not required for Qt v6.2.0 and later")
+            return
+
         if openssl_dir:
             verbose(
                     "Bundling the OpenSSL libraries from '{0}'".format(

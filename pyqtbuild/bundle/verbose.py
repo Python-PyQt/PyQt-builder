@@ -1,4 +1,4 @@
-# Copyright (c) 2020, Riverbank Computing Limited
+# Copyright (c) 2021, Riverbank Computing Limited
 # All rights reserved.
 #
 # This copy of PyQt-builder is licensed for use under the terms of the SIP
@@ -24,6 +24,12 @@
 
 # Set if verbose error messages are enabled.
 _verbose = False
+
+
+def is_verbose():
+    """ Return True if verbose progress messages are enabled. """
+
+    return _verbose
 
 
 def set_verbose(verbose):

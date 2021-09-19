@@ -218,10 +218,12 @@ class VersionedMetadata:
         elif os.path.isfile(src):
             # See if it worth trying to remove the arm64 code.
             if arch == 'macos' and might_be_code and qt_version >= (6, 2, 0):
+                stderr = None if is_verbose() else subprocess.DEVNULL
+
                 try:
                     subprocess.run(
                             ['lipo', '-thin', 'x86_64', '-output', dst, src],
-                            capture_output=not is_verbose(), check=True)
+                            stderr=stderr, check=True)
                 except:
                     # If there is any sort of error then just copy it.
                     shutil.copy2(src, dst)

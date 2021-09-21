@@ -36,6 +36,9 @@ _QT_METADATA = {
                 'linux': ('libexec/QtWebEngineProcess', ),
                 'macos': ('lib/QtWebEngineCore.framework/Helpers/QtWebEngineProcess.app/Contents/MacOS/QtWebEngineProcess', ),
                 'win':   ('bin\\QtWebEngineProcess.exe', )},
+            files={
+                'win':  (('lib/Qt6Core.lib',
+                        "Enable QtWebEngineProcess to find it's resources.\n"), )},
             others={
                 'linux': ('resources', 'translations/qtwebengine_locales'),
                 'win':   ('resources', 'translations\\qtwebengine_locales')}),

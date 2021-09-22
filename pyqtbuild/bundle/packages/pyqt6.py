@@ -32,12 +32,8 @@ _QT_METADATA = {
     'QAxContainer':
         VersionedMetadata(dll=False),
 
-    #'QtBluetooth':
-    #    VersionedMetadata(
-    #        lib_deps={
-    #            'linux': ('QtConcurrent', ),
-    #            'macos': ('QtConcurrent', )},
-    #        qml=True),
+    'QtBluetooth':
+        VersionedMetadata(version=(6, 2, 0), qml=True),
 
     'QtCore': (
         VersionedMetadata(version=(6, 2, 0),
@@ -88,8 +84,8 @@ _QT_METADATA = {
     'QtNetwork':
         VersionedMetadata(),
 
-    #'QtNfc':
-    #    VersionedMetadata(qml=True),
+    'QtNfc':
+        VersionedMetadata(version=(6, 2, 0), qml=True),
 
     'QtOpenGL':
         VersionedMetadata(),

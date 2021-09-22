@@ -29,8 +29,8 @@ from .pyqt import PyQt
 
 # The Qt meta-data for this package.
 _QT_METADATA = {
-    #'QAxContainer':
-    #    VersionedMetadata(dll=False),
+    'QAxContainer':
+        VersionedMetadata(dll=False),
 
     #'QtBluetooth':
     #    VersionedMetadata(

@@ -129,6 +129,19 @@ class PyQtProject(Project):
         if self.py_pylib_shlib == '':
             self.py_pylib_shlib = pylib_shlib
 
+    def get_platform_tag(self):
+        """ Return the platform tag to use in a wheel name.  This calls the
+        default implementation and replaces 'universal2' with 'x86_64' for
+        versions of Qt that don't support Apple silicon.
+        """
+
+        platform_tag = super().get_platform_tag().split('_')
+
+        if platform_tag[-1] == 'universal2' and self.builder.qt_version < 0x060200:
+            platform_tag[-1] = 'x86_64'
+
+        return '_'.join(platform_tag)
+
     def get_options(self):
         """ Return the list of configurable options. """
 

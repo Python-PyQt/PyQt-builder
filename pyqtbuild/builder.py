@@ -1,4 +1,4 @@
-# Copyright (c) 2020, Riverbank Computing Limited
+# Copyright (c) 2021, Riverbank Computing Limited
 # All rights reserved.
 #
 # This copy of PyQt-builder is licensed for use under the terms of the SIP
@@ -24,6 +24,7 @@
 
 import os
 import sys
+import sysconfig
 
 from sipbuild import (Buildable, BuildableModule, Builder, Option, Project,
         PyProjectOptionException, UserException)
@@ -678,6 +679,13 @@ macx {
         """ Update a .pro file from a buildable. """
 
         buildable.make_names_relative()
+
+        # Handle the target architecture(s).  The way that Python handles
+        # 'universal2' seems broken as it is determined by what versions of
+        # macOS and the SDK the interpreter was built against rather than the
+        # versions that are being used now.
+        if self.project.get_platform_tag().endswith('_universal2'):
+            pro_lines.append('QMAKE_APPLE_DEVICE_ARCHS = x86_64 arm64')
 
         # Handle debugging.
         pro_lines.append(

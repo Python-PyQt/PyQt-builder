@@ -23,6 +23,7 @@
 
 
 from argparse import ArgumentParser
+import sys
 
 from sipbuild import handle_exception
 
@@ -44,6 +45,10 @@ def main():
 
     parser.add_argument('--verbose', default=False, action='store_true',
             help="enable verbose progress messages")
+
+    if sys.platform == 'darwin':
+        parser.add_argument('--arch', choices=('x86_64', 'arm64'),
+                help="the architecture to create the wheel for")
 
     parser.add_argument('--build-tag', metavar='TAG',
             help="use TAG as the build tag in the wheel name")
@@ -77,10 +82,15 @@ def main():
     try:
         set_verbose(args.verbose)
 
+        try:
+            arch = args.arch
+        except AttributeError:
+            arch = None
+
         qt_wheel(package=args.packages[0], qt_dir=args.qt_dir,
                 build_tag=args.build_tag, suffix=args.suffix,
                 msvc_runtime=args.msvc_runtime, openssl=args.openssl,
-                openssl_dir=args.openssl_dir, exclude=args.exclude)
+                openssl_dir=args.openssl_dir, exclude=args.exclude, arch=arch)
     except Exception as e:
         handle_exception(e)
 

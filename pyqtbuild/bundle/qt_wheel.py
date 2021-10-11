@@ -33,7 +33,7 @@ from .wheel import create_wheel, write_record_file
 
 
 def qt_wheel(package, qt_dir, build_tag, suffix, msvc_runtime, openssl,
-        openssl_dir, exclude):
+        openssl_dir, exclude, arch):
     """ Create a wheel containing the subset of a Qt installation required for
     a particular PyQt package.
     """
@@ -61,18 +61,29 @@ def qt_wheel(package, qt_dir, build_tag, suffix, msvc_runtime, openssl,
     # Construct the tag.
     qt_arch = os.path.basename(qt_dir)
     if qt_arch == 'gcc_64':
-        arch = 'manylinux{}_x86_64'.format(
+        platform_tag = 'manylinux{}_x86_64'.format(
                 '_2_28' if package.qt_version[0] == 6 else '2014')
     elif qt_arch in ('macos', 'clang_64'):
-        arch = 'macosx_{}_intel'.format(
-                '10_14' if package.qt_version[0] == 6 else '10_13')
+        if package.qt_version < (6, 2, 0):
+            if arch is not None:
+                raise UserException(
+                        "'--arch' may only be specified for Qt v6.2 and later")
+
+            subarch = 'x86_64'
+        elif arch is None:
+            subarch = 'universal2'
+        else:
+            subarch = arch
+
+        platform_tag = 'macosx_{}_{}'.format(
+                '10_14' if package.qt_version[0] == 6 else '10_13', subarch)
     elif qt_arch.startswith('msvc'):
-        arch = 'win_amd64' if qt_arch.endswith('_64') else 'win32'
+        platform_tag = 'win_amd64' if qt_arch.endswith('_64') else 'win32'
     else:
         raise UserException(
                 "Qt architecture '{0}' is unsupported".format(qt_arch))
 
-    tag_parts = ['py3', 'none', arch]
+    tag_parts = ['py3', 'none', platform_tag]
     tag = '-'.join(tag_parts)
 
     # Construct the name of the wheel.
@@ -98,17 +109,17 @@ def qt_wheel(package, qt_dir, build_tag, suffix, msvc_runtime, openssl,
 
     # Bundle the relevant parts of the Qt installation.
     target_qt_dir = package.get_target_qt_dir()
-    lgpl = package.bundle_qt(target_qt_dir, arch, exclude, ignore_missing=True,
-            bindings=False)
+    lgpl = package.bundle_qt(target_qt_dir, platform_tag, exclude,
+            ignore_missing=True, bindings=False)
 
-    if arch in ('win32', 'win_amd64'):
+    if platform_tag in ('win32', 'win_amd64'):
         # Bundle the MSVC runtime if required.
         if msvc_runtime:
-            package.bundle_msvc_runtime(target_qt_dir, arch)
+            package.bundle_msvc_runtime(target_qt_dir, platform_tag)
 
         # Bundle OpenSSL if required.
         if openssl:
-            package.bundle_openssl(target_qt_dir, openssl_dir, arch)
+            package.bundle_openssl(target_qt_dir, openssl_dir, platform_tag)
 
     # Create the .dist-info directory and populate it from the prototypes.
     os.mkdir(distinfo_dir)

@@ -62,34 +62,32 @@ class AbstractPackage(ABC):
         else:
             self._version = None
 
-    def bundle_msvc_runtime(self, target_qt_dir, arch):
+    def bundle_msvc_runtime(self, target_qt_dir, platform_tag):
         """ Bundle the MSVC runtime. """
 
         # This default implementation does nothing.
 
-    def bundle_openssl(self, target_qt_dir, openssl_dir, arch):
+    def bundle_openssl(self, target_qt_dir, openssl_dir, platform_tag):
         """ Bundle the OpenSSL DLLs. """
 
         # This default implementation does nothing.
 
-    def bundle_qt(self, target_qt_dir, arch, exclude, ignore_missing,
+    def bundle_qt(self, target_qt_dir, platform_tag, exclude, ignore_missing,
             bindings=True):
         """ Bundle the relevant parts of the Qt installation.  Returns True if
         the LGPL applies to all bundled parts.
         """
 
         # Architecture-specific values.
-        if arch.startswith('manylinux'):
-            metadata_arch = 'linux'
+        if platform_tag.startswith('manylinux'):
             module_extensions = ['.abi3.so', '.so']
-        elif arch.startswith('macosx'):
-            metadata_arch = 'macos'
+        elif platform_tag.startswith('macosx'):
             module_extensions = ['.abi3.so', '.so']
-        elif arch.startswith('win'):
-            metadata_arch = 'win'
+        elif platform_tag.startswith('win'):
             module_extensions = ['.pyd']
         else:
-            raise UserException("Unsupported platform tag '{0}'".format(arch))
+            raise UserException(
+                    "Unsupported platform tag '{0}'".format(platform_tag))
 
         package_dir = os.path.dirname(target_qt_dir)
         lgpl = True
@@ -123,9 +121,9 @@ class AbstractPackage(ABC):
                             # '--target-qt-dir' but we still have to handle
                             # older wheels (ie. using versions of Qt released
                             # before '--target-qt-dir' was added.
-                            if metadata_arch == 'linux':
+                            if platform_tag.startswith('manylinux'):
                                 self._fix_linux_rpath(bindings)
-                            elif metadata_arch == 'macos':
+                            elif platform_tag.startswith('macosx'):
                                 self._fix_macos_rpath(bindings)
 
                         break
@@ -140,7 +138,7 @@ class AbstractPackage(ABC):
 
             lgpl = lgpl and metadata.lgpl
 
-            metadata.bundle(name, target_qt_dir, self._qt_dir, metadata_arch,
+            metadata.bundle(name, target_qt_dir, self._qt_dir, platform_tag,
                     self.qt_version, ignore_missing)
 
         return lgpl
@@ -169,6 +167,18 @@ class AbstractPackage(ABC):
         return os.path.join('PyQt{}'.format(qt_major_version),
                 'Qt{}'.format(qt_major_version))
 
+    @staticmethod
+    def missing_executable(exe):
+        """ Return True if an executable cannot be found on PATH. """
+
+        for p in os.environ.get('PATH', '').split(os.pathsep):
+            exe_path = os.path.join(p, exe)
+
+            if os.access(exe_path, os.X_OK):
+                return False
+
+        return True
+
     @property
     def qt_version_str(self):
         """ The version number of the Qt installation as a string. """
@@ -179,7 +189,7 @@ class AbstractPackage(ABC):
     def _fix_linux_rpath(cls, bindings):
         """ Fix the rpath for Linux bindings. """
 
-        if cls._missing_executable('chrpath'):
+        if cls.missing_executable('chrpath'):
             raise UserException("'chrpath' must be installed on your system")
 
         subprocess.run(['chrpath', '--replace', '$ORIGIN/Qt/lib', bindings])
@@ -188,7 +198,7 @@ class AbstractPackage(ABC):
     def _fix_macos_rpath(cls, bindings):
         """ Fix the rpath for macOS bindings. """
 
-        if cls._missing_executable('otool') or cls._missing_executable('install_name_tool'):
+        if cls.missing_executable('otool') or cls.missing_executable('install_name_tool'):
             raise UserException(
                     "'otool' and 'install_name_tool' from Xcode must be "
                     "installed on your system")
@@ -228,18 +238,6 @@ class AbstractPackage(ABC):
             args.insert(0, 'install_name_tool')
             args.append(bindings)
             subprocess.run(args)
-
-    @staticmethod
-    def _missing_executable(exe):
-        """ Return True if an executable cannot be found on PATH. """
-
-        for p in os.environ.get('PATH', '').split(os.pathsep):
-            exe_path = os.path.join(p, exe)
-
-            if os.access(exe_path, os.X_OK):
-                return False
-
-        return True
 
     @staticmethod
     def _parse_version(version_str):

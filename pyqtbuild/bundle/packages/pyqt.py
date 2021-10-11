@@ -1,4 +1,4 @@
-# Copyright (c) 2020, Riverbank Computing Limited
+# Copyright (c) 2021, Riverbank Computing Limited
 # All rights reserved.
 #
 # This copy of PyQt-builder is licensed for use under the terms of the SIP
@@ -36,16 +36,16 @@ _DLLS_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'dlls')
 class PyQt(AbstractPackage):
     """ The base PyQt package. """
 
-    def bundle_msvc_runtime(self, target_qt_dir, arch):
+    def bundle_msvc_runtime(self, target_qt_dir, platform_tag):
         """ Bundle the MSVC runtime. """
 
         verbose("Bundling the MSVC runtime")
 
         self._bundle_dlls(target_qt_dir,
                 os.path.join(_DLLS_DIR,
-                        'msvc-64' if arch == 'win_amd64' else 'msvc-32'))
+                        'msvc-64' if platform_tag == 'win_amd64' else 'msvc-32'))
 
-    def bundle_openssl(self, target_qt_dir, openssl_dir, arch):
+    def bundle_openssl(self, target_qt_dir, openssl_dir, platform_tag):
         """ Bundle the OpenSSL DLLs. """
 
         # Qt v6.2.0 and later include appropriate backends.
@@ -62,7 +62,7 @@ class PyQt(AbstractPackage):
             verbose("Bundling the default OpenSSL libraries")
 
             openssl_dir = os.path.join(_DLLS_DIR,
-                    'openssl-64' if arch == 'win_amd64' else 'openssl-32')
+                    'openssl-64' if platform_tag == 'win_amd64' else 'openssl-32')
 
         self._bundle_dlls(target_qt_dir, openssl_dir)
 

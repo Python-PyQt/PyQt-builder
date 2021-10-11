@@ -59,7 +59,7 @@ class VersionedMetadata:
         self.lgpl = lgpl
         self.legacy = legacy
 
-    def bundle(self, name, target_qt_dir, qt_dir, arch, qt_version,
+    def bundle(self, name, target_qt_dir, qt_dir, platform_tag, qt_version,
             ignore_missing):
         """ Bundle part of Qt as defined by the meta-data. """
 
@@ -68,53 +68,68 @@ class VersionedMetadata:
         if self._name is None:
             self._name = name
 
+        # See if a particular macOS architecture has been specified but only
+        # for versions of Qt that support universal libraries.
+        macos_thin_arch = self._get_macos_thin_arch(platform_tag)
+        if qt_version < (6, 2, 0):
+            macos_thin_arch = None
+
+        if macos_thin_arch is not None:
+            from .abstract_package import AbstractPackage
+
+            if AbstractPackage.missing_executable('lipo'):
+                raise UserException(
+                        "'lipo' from Xcode must be installed on your system")
+
         # Bundle the Qt library that has been wrapped (if there is one).
         if self._dll:
-            self._bundle_qt_library(self._name, target_qt_dir, qt_dir, arch,
-                    qt_version, ignore_missing)
+            self._bundle_qt_library(self._name, target_qt_dir, qt_dir,
+                    qt_version, platform_tag, macos_thin_arch, ignore_missing)
 
         # Bundle any other dependent Qt libraries.
-        for lib_arch, libs in self._lib_deps.items():
-            if lib_arch == '' or lib_arch == arch:
+        for metadata_arch, libs in self._lib_deps.items():
+            if self._is_platform(metadata_arch, platform_tag):
                 for lib in libs:
-                    self._bundle_qt_library(lib, target_qt_dir, qt_dir, arch,
-                            qt_version, ignore_missing)
+                    self._bundle_qt_library(lib, target_qt_dir, qt_dir,
+                            qt_version, platform_tag, macos_thin_arch,
+                            ignore_missing)
 
         # Bundle any other libraries.
         lib_contents = None
 
-        for lib_arch, libs in self._other_lib_deps.items():
-            if lib_arch == '' or lib_arch == arch:
+        for metadata_arch, libs in self._other_lib_deps.items():
+            if self._is_platform(metadata_arch, platform_tag):
                 for lib in libs:
                     if '*' in lib:
                         # A wildcard implies the dependency is optional.  This
                         # is mainly to (historically) deal with ICU on Windows.
                         if lib_contents is None:
                             lib_contents = os.listdir(
-                                    self._get_qt_library_dir(qt_dir, arch))
+                                    self._get_qt_library_dir(qt_dir,
+                                            platform_tag))
 
                         for qt_lib in lib_contents:
                             if fnmatch.fnmatch(qt_lib, lib):
                                 self._bundle_library(qt_lib, target_qt_dir,
-                                        qt_dir, arch, qt_version,
+                                        qt_dir, platform_tag, macos_thin_arch,
                                         ignore_missing)
                     else:
-                        self._bundle_library(lib, target_qt_dir, qt_dir, arch,
-                                qt_version, ignore_missing)
+                        self._bundle_library(lib, target_qt_dir, qt_dir,
+                                platform_tag, macos_thin_arch, ignore_missing)
 
         # Bundle any executables.
-        for exe_arch, exes in self._exes.items():
-            if exe_arch == '' or exe_arch == arch:
+        for metadata_arch, exes in self._exes.items():
+            if self._is_platform(metadata_arch, platform_tag):
                 for exe in exes:
                     bundled_exe = self._bundle_file(exe, target_qt_dir, qt_dir,
-                            arch, qt_version, ignore_missing)
+                            platform_tag, macos_thin_arch, ignore_missing)
 
                     if bundled_exe is not None:
-                        if arch == 'linux':
+                        if self._is_platform('linux', platform_tag):
                             self._fix_linux_executable(bundled_exe, qt_version)
-                        elif arch == 'macos':
+                        elif self._is_platform('macos', platform_tag):
                             self._fix_macos_executable(bundled_exe, qt_version)
-                        elif arch == 'win':
+                        elif self._is_platform('win', platform_tag):
                             self._fix_win_executable(bundled_exe)
 
         # Bundle any QML files.
@@ -125,15 +140,16 @@ class VersionedMetadata:
 
             for qml_subdir in qml_names:
                 self._bundle_nondebug(os.path.join('qml', qml_subdir),
-                        target_qt_dir, qt_dir, arch, qt_version,
+                        target_qt_dir, qt_dir, platform_tag, macos_thin_arch,
                         ignore_missing)
 
         # Bundle any plugins.  We haven't done the analysis of which plugins
         # belong to which package so we assume that only the QtCore package
         # will specify any to exclude and we bundle all of them with that.
         if self._excluded_plugins is not None:
-            self._bundle_nondebug('plugins', target_qt_dir, qt_dir, arch,
-                    qt_version, ignore_missing, exclude=self._excluded_plugins)
+            self._bundle_nondebug('plugins', target_qt_dir, qt_dir,
+                    platform_tag, macos_thin_arch, ignore_missing,
+                    exclude=self._excluded_plugins)
 
         # Bundle any translations:
         if self._translations:
@@ -144,13 +160,14 @@ class VersionedMetadata:
                 if qm.endswith('.qm'):
                     for prefix in self._translations:
                         if qm.startswith(prefix):
-                            self._bundle_file(qm, target_tr_dir, tr_dir, arch,
-                                    qt_version, ignore_missing,
+                            self._bundle_file(qm, target_tr_dir, tr_dir,
+                                    platform_tag, macos_thin_arch,
+                                    ignore_missing,
                                     might_be_code=False)
 
         # Bundle any dynamically created files.
-        for files_arch, files in self._files.items():
-            if files_arch == '' or files_arch == arch:
+        for metadata_arch, files in self._files.items():
+            if self._is_platform(metadata_arch, platform_tag):
                 for fn, content in files:
                     fn = os.path.join(target_qt_dir, fn)
                     os.makedirs(os.path.dirname(fn), exist_ok=True)
@@ -159,11 +176,11 @@ class VersionedMetadata:
                         f.write(content)
 
         # Bundle anything else.
-        for oth_arch, others in self._others.items():
-            if oth_arch == '' or oth_arch == arch:
+        for metadata_arch, others in self._others.items():
+            if self._is_platform(metadata_arch, platform_tag):
                 for oth in others:
                     self._bundle_file(oth, target_qt_dir, qt_dir,
-                            arch, qt_version, ignore_missing,
+                            platform_tag, macos_thin_arch, ignore_missing,
                             might_be_code=False)
 
     def is_applicable(self, qt_version):
@@ -174,8 +191,8 @@ class VersionedMetadata:
         return self._version is None or qt_version >= self._version
 
     @classmethod
-    def _bundle_nondebug(cls, src_dir, target_qt_dir, qt_dir, arch, qt_version,
-            ignore_missing, exclude=None):
+    def _bundle_nondebug(cls, src_dir, target_qt_dir, qt_dir, platform_tag,
+            macos_thin_arch, ignore_missing, exclude=None):
         """ Bundle the non-debug contents of a directory. """
 
         if exclude is None:
@@ -189,20 +206,20 @@ class VersionedMetadata:
                     pass
 
             for name in list(dirnames):
-                if cls._is_debug(name, arch):
+                if cls._is_debug(name, platform_tag):
                     dirnames.remove(name)
 
             for name in filenames:
-                if cls._is_debug(name, arch):
+                if cls._is_debug(name, platform_tag):
                     continue
 
                 cls._bundle_file(
                         os.path.relpath(os.path.join(dirpath, name), qt_dir),
-                        target_qt_dir, qt_dir, arch, qt_version,
+                        target_qt_dir, qt_dir, platform_tag, macos_thin_arch,
                         ignore_missing)
 
     @staticmethod
-    def _bundle_file(name, target_dir, src_dir, arch, qt_version,
+    def _bundle_file(name, target_dir, src_dir, platform_tag, macos_thin_arch,
             ignore_missing, ignore=None, might_be_code=True):
         """ Bundle a file (or directory) and return the name of the installed
         file (or directory) or None if it was missing.
@@ -216,13 +233,13 @@ class VersionedMetadata:
         if os.path.isdir(src):
             shutil.copytree(src, dst, ignore=ignore)
         elif os.path.isfile(src):
-            # See if it worth trying to remove the arm64 code.
-            if arch == 'macos' and might_be_code and qt_version >= (6, 2, 0):
+            if macos_thin_arch is not None and might_be_code:
                 stderr = None if is_verbose() else subprocess.DEVNULL
 
                 try:
                     subprocess.run(
-                            ['lipo', '-thin', 'x86_64', '-output', dst, src],
+                            ['lipo', '-thin', macos_thin_arch, '-output', dst,
+                                    src],
                             stderr=stderr, check=True)
                 except:
                     # If there is any sort of error then just copy it.
@@ -239,27 +256,31 @@ class VersionedMetadata:
         return dst
 
     @classmethod
-    def _bundle_library(cls, name, target_qt_dir, qt_dir, arch, qt_version,
-            ignore_missing, ignore=None):
+    def _bundle_library(cls, name, target_qt_dir, qt_dir, platform_tag,
+            macos_thin_arch, ignore_missing, ignore=None):
         """ Bundle a library. """
 
         cls._bundle_file(name,
-                os.path.join(target_qt_dir, cls._get_qt_library_subdir(arch)),
-                cls._get_qt_library_dir(qt_dir, arch), arch, qt_version,
-                ignore_missing, ignore=ignore)
+                os.path.join(target_qt_dir,
+                        cls._get_qt_library_subdir(platform_tag)),
+                cls._get_qt_library_dir(qt_dir, platform_tag), platform_tag,
+                macos_thin_arch, ignore_missing, ignore=ignore)
 
     @classmethod
-    def _bundle_qt_library(cls, name, target_qt_dir, qt_dir, arch, qt_version,
-            ignore_missing):
+    def _bundle_qt_library(cls, name, target_qt_dir, qt_dir, qt_version,
+            platform_tag, macos_thin_arch, ignore_missing):
         """ Bundle a Qt library. """
 
-        cls._bundle_library(cls._impl_from_library(name, arch, qt_version),
-                target_qt_dir, qt_dir, arch, qt_version, ignore_missing)
+        cls._bundle_library(
+                cls._impl_from_library(name, platform_tag, qt_version),
+                target_qt_dir, qt_dir, platform_tag, macos_thin_arch,
+                ignore_missing)
 
-        if arch == 'macos':
+        if cls._is_platform('macos', platform_tag):
             # Copy the Resources directory without the unnecessary .prl files.
             cls._bundle_library('{}.framework/Resources'.format(name),
-                    target_qt_dir, qt_dir, arch, qt_version, ignore_missing,
+                    target_qt_dir, qt_dir, platform_tag, macos_thin_arch,
+                    ignore_missing,
                     ignore=lambda d, c: [f for f in c if f.endswith('.prl')])
 
     @staticmethod
@@ -323,51 +344,85 @@ class VersionedMetadata:
         cls._create_qt_conf(exe)
 
     @classmethod
-    def _get_qt_library_dir(cls, qt_dir, arch):
+    def _get_macos_thin_arch(cls, platform_tag):
+        """ Return the single macOS architecture, or None if the platform is
+        not macOS or is universal.
+        """
+
+        if cls._is_platform('macos', platform_tag):
+            if platform_tag.endswith('_intel') or platform_tag.endswith('_x86_64'):
+                return 'x86_64'
+
+            if platform_tag.endswith('_arm64'):
+                return 'arm64'
+
+        return None
+
+    @classmethod
+    def _get_qt_library_dir(cls, qt_dir, platform_tag):
         """ Return the name of the directory in the Qt installation containing
         the libraries.
         """
 
-        return os.path.join(qt_dir, cls._get_qt_library_subdir(arch))
+        return os.path.join(qt_dir, cls._get_qt_library_subdir(platform_tag))
 
-    @staticmethod
-    def _get_qt_library_subdir(arch):
+    @classmethod
+    def _get_qt_library_subdir(cls, platform_tag):
         """ Return the name of the sub-directory in the Qt installation
         containing the libraries.
         """
 
-        return 'bin' if arch == 'win' else 'lib'
+        return 'bin' if cls._is_platform('win', platform_tag) else 'lib'
 
-    @staticmethod
-    def _impl_from_library(name, arch, qt_version):
+    @classmethod
+    def _impl_from_library(cls, name, platform_tag, qt_version):
         """ Return the architecture-specific name of a Qt library. """
 
         qt_major = qt_version[0]
 
-        if arch == 'linux':
+        if cls._is_platform('linux', platform_tag):
             return 'libQt{}{}.so.{}'.format(qt_major, name[2:], qt_major)
 
-        if arch == 'macos':
+        if cls._is_platform('macos', platform_tag):
             framework = '5' if qt_major == 5 else 'A'
 
             return '{}.framework/Versions/{}/{}'.format(name, framework, name)
 
-        if arch == 'win':
+        if cls._is_platform('win', platform_tag):
             return 'Qt{}{}.dll'.format(qt_major, name[2:])
 
-    @staticmethod
-    def _is_debug(name, arch):
+    @classmethod
+    def _is_debug(cls, name, platform_tag):
         """ Return True if a name implies a debug version. """
 
-        if arch == 'linux':
+        if cls._is_platform('linux', platform_tag):
             return name.endswith('.debug')
 
-        if arch == 'macos':
+        if cls._is_platform('macos', platform_tag):
             return name.endswith('_debug.dylib') or name.endswith('.dSYM')
 
-        if arch == 'win':
+        if cls._is_platform('win', platform_tag):
             # Special case known non-debug DLLs that end with a 'd'.
             if name.endswith('backend.dll'):
                 return False
 
             return name.endswith('.pdb') or name.endswith('d.dll')
+
+    @staticmethod
+    def _is_platform(metadata_arch, platform_tag):
+        """ Return True if a metadata archtitecture matches a platform tag. """
+
+        # See if it applies to all architectures.
+        if metadata_arch == '':
+            return True
+
+        if metadata_arch == 'linux' and platform_tag.startswith('manylinux'):
+            return True
+
+        if metadata_arch == 'macos' and platform_tag.startswith('macosx'):
+            return True
+
+        if metadata_arch == 'win' and platform_tag.startswith('win'):
+            return True
+
+        return False

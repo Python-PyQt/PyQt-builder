@@ -1,4 +1,4 @@
-# Copyright (c) 2020, Riverbank Computing Limited
+# Copyright (c) 2021, Riverbank Computing Limited
 # All rights reserved.
 #
 # This copy of PyQt-builder is licensed for use under the terms of the SIP
@@ -23,6 +23,7 @@
 
 
 from argparse import ArgumentParser
+import sys
 
 from sipbuild import handle_exception
 
@@ -44,6 +45,10 @@ def main():
 
     parser.add_argument('--verbose', default=False, action='store_true',
             help="enable verbose progress messages")
+
+    if sys.platform == 'darwin':
+        parser.add_argument('--arch', choices=('x86_64', 'arm64'),
+                help="the architecture to bundle")
 
     parser.add_argument('--build-tag-suffix', metavar='SUFFIX',
             help="append SUFFIX to the build tag in the wheel name")
@@ -77,11 +82,16 @@ def main():
     try:
         set_verbose(args.verbose)
 
+        try:
+            arch = args.arch
+        except AttributeError:
+            arch = None
+
         bundle(wheel_path=args.wheels[0], qt_dir=args.qt_dir,
                 build_tag_suffix=args.build_tag_suffix,
                 msvc_runtime=args.msvc_runtime, openssl=args.openssl,
                 openssl_dir=args.openssl_dir, exclude=args.exclude,
-                ignore_missing=args.ignore_missing)
+                ignore_missing=args.ignore_missing, arch=arch)
     except Exception as e:
         handle_exception(e)
 

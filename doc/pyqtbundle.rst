@@ -66,6 +66,11 @@ The full set of command line options is:
     ``SUFFIX`` is appended to the build tag in the name of the updated wheel.
     The build tag is the version number of the copy of Qt being bundled.
 
+.. option:: --arch ARCH
+
+    On macOS, when bundling Qt v6.2 or later, support for the ``ARCH``
+    architecture (either ``x86_64`` or ``arm64``) only is included.
+
 .. option:: --exclude NAME
 
     The ``NAME`` bindings are excluded from the wheel.  This option may be

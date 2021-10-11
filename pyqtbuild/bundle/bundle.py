@@ -34,7 +34,7 @@ from .wheel import create_wheel, unpack_wheel, write_record_file
 
 
 def bundle(wheel_path, qt_dir, build_tag_suffix, msvc_runtime, openssl,
-        openssl_dir, exclude, ignore_missing):
+        openssl_dir, exclude, ignore_missing, arch):
     """ Bundle a Qt installation with a PyQt wheel. """
 
     wheel_path = os.path.abspath(wheel_path)
@@ -57,6 +57,16 @@ def bundle(wheel_path, qt_dir, build_tag_suffix, msvc_runtime, openssl,
     elif len(parts) != max_nr_parts - 1:
         raise UserException(
                 "Unable to recognise '{0}' as a wheel name".format(wheel_name))
+
+    # If an architecture is specified then it must be supported by the wheel.
+    if arch:
+        if arch in parts[-1]:
+            pass
+        elif 'universal2' in parts[-1]:
+            parts[-1] = parts[-1].replace('universal2', arch)
+        else:
+            raise UserException(
+                    "'{0}' is not supported by {1}".format(arch, wheel_name)
 
     # Get the package object.
     sub_parts = parts[0].split('_')
@@ -89,7 +99,7 @@ def bundle(wheel_path, qt_dir, build_tag_suffix, msvc_runtime, openssl,
         if bundled_wheel_dir.endswith(tail):
             bundled_wheel_dir = bundled_wheel_dir[:-len(tail)]
 
-    arch = bundled_wheel_dir.split('-')[-1]
+    platform_tag = bundled_wheel_dir.split('-')[-1]
 
     # Create the directory to contain the existing wheel contents.
     shutil.rmtree(bundled_wheel_dir, ignore_errors=True)
@@ -114,16 +124,16 @@ def bundle(wheel_path, qt_dir, build_tag_suffix, msvc_runtime, openssl,
                         ignore_errors=True)
 
     # Bundle the relevant parts of the Qt installation.
-    package.bundle_qt(target_qt_dir, arch, exclude, ignore_missing)
+    package.bundle_qt(target_qt_dir, platform_tag, exclude, ignore_missing)
 
-    if arch in ('win32', 'win_amd64'):
+    if platform_tag in ('win32', 'win_amd64'):
         # Bundle the MSVC runtime if required.
         if msvc_runtime:
-            package.bundle_msvc_runtime(target_qt_dir, arch)
+            package.bundle_msvc_runtime(target_qt_dir, platform_tag)
 
         # Bundle OpenSSL if required.
         if openssl:
-            package.bundle_openssl(target_qt_dir, openssl_dir, arch)
+            package.bundle_openssl(target_qt_dir, openssl_dir, platform_tag)
 
     # Find the .dist-info directory.
     for distinfo_dir in os.listdir('.'):

@@ -63,7 +63,7 @@ _QT_METADATA = {
                 lib_deps={
                         'linux': ('QtWaylandClient',
                                 'QtWaylandEglClientHwIntegration',
-                                'QtXcbQpa')},
+                                'QtWlShellIntegration', 'QtXcbQpa')},
                 other_lib_deps={
                         'win': ('d3dcompiler_47.dll', 'opengl32sw.dll')}),
         VersionedMetadata(lib_deps={'linux': ('QtWaylandClient', 'QtXcbQpa')},

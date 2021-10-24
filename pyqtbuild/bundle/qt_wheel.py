@@ -75,8 +75,14 @@ def qt_wheel(package, qt_dir, build_tag, suffix, msvc_runtime, openssl,
         else:
             subarch = arch
 
-        platform_tag = 'macosx_{}_{}'.format(
-                '10_14' if package.qt_version[0] == 6 else '10_13', subarch)
+        if package.qt_version[0] == 5:
+            sdk_version = '10_13'
+        elif subarch == 'arm64':
+            sdk_version = '11_0'
+        else:
+            sdk_version = '10_14'
+
+        platform_tag = 'macosx_{}_{}'.format(sdk_version, subarch)
     elif qt_arch.startswith('msvc'):
         platform_tag = 'win_amd64' if qt_arch.endswith('_64') else 'win32'
     else:

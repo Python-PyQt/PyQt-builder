@@ -121,13 +121,8 @@ class VersionedMetadata:
         for metadata_arch, exes in self._exes.items():
             if self._is_platform(metadata_arch, platform_tag):
                 for exe in exes:
-                    # We don't try and strip out redundant architectures from
-                    # macOS executables as (on arm64) this seems to require
-                    # codesign to be run on the result.  For the moment we try
-                    # and keep it simple.
                     bundled_exe = self._bundle_file(exe, target_qt_dir, qt_dir,
-                            platform_tag, macos_thin_arch, ignore_missing,
-                            might_be_code=False)
+                            platform_tag, macos_thin_arch, ignore_missing)
 
                     if bundled_exe is not None:
                         if self._is_platform('linux', platform_tag):

@@ -327,10 +327,18 @@ class VersionedMetadata:
         else:
             # pip doesn't support symbolic links in wheels so the executable
             # will be installed in its 'logical' location so adjust rpath so
-            # that it can still find the Qt libraries.
-            subprocess.run(['install_name_tool', '-change',
-                    '@loader_path/../../../../../../../',
-                    '@loader_path/../../../../../', exe])
+            # that it can still find the Qt libraries.  The required change is
+            # simple so we just patch the binary rather than require
+            # install_name_tool.  Note that install_name_tool is now always
+            # needed anyway.
+            with open(exe, 'rb') as f:
+                contents = f.read()
+
+            contents = contents.replace(b'@loader_path/../../../../../../../',
+                    b'@loader_path/../../../../../\0\0\0\0\0\0')
+
+            with open(exe, 'wb') as f:
+                f.write(contents)
 
             if macos_thin_arch == 'arm64':
                 subprocess.run(['codesign', '-s', '-', exe])

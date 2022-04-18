@@ -81,6 +81,10 @@ class VersionedMetadata:
                 raise UserException(
                         "'lipo' from Xcode must be installed on your system")
 
+            if macos_thin_arch == 'arm64' and AbstractPackage.missing_executable('codesign'):
+                raise UserException(
+                        "'codesign' from Xcode must be installed on your system")
+
         # Bundle the Qt library that has been wrapped (if there is one).
         if self._dll:
             self._bundle_qt_library(self._name, target_qt_dir, qt_dir,
@@ -128,7 +132,8 @@ class VersionedMetadata:
                         if self._is_platform('linux', platform_tag):
                             self._fix_linux_executable(bundled_exe, qt_version)
                         elif self._is_platform('macos', platform_tag):
-                            self._fix_macos_executable(bundled_exe, qt_version)
+                            self._fix_macos_executable(bundled_exe, qt_version,
+                                    macos_thin_arch)
                         elif self._is_platform('win', platform_tag):
                             self._fix_win_executable(bundled_exe)
 
@@ -305,7 +310,7 @@ class VersionedMetadata:
         cls._create_qt_conf(exe)
 
     @classmethod
-    def _fix_macos_executable(cls, exe, qt_version):
+    def _fix_macos_executable(cls, exe, qt_version, macos_thin_arch):
         """ Fix a macOS executable. """
 
         # Note that this assumes the executable is QtWebEngineProcess.
@@ -334,6 +339,9 @@ class VersionedMetadata:
 
             with open(exe, 'wb') as f:
                 f.write(contents)
+
+            if macos_thin_arch == 'arm64':
+                subprocess.run(['codesign', '-s', '-', exe])
 
     @classmethod
     def _fix_win_executable(cls, exe):

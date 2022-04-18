@@ -1,4 +1,4 @@
-# Copyright (c) 2021, Riverbank Computing Limited
+# Copyright (c) 2022, Riverbank Computing Limited
 # All rights reserved.
 #
 # This copy of PyQt-builder is licensed for use under the terms of the SIP
@@ -48,7 +48,7 @@ setup(
         name='PyQt-builder',
         version=version,
         license='SIP',
-        python_requires='>=3.5',
+        python_requires='>=3.7',
         install_requires=['packaging', 'sip >=6.3, <7'],
         packages=find_packages(),
         package_data={

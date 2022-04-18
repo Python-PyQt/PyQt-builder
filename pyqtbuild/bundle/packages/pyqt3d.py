@@ -1,4 +1,4 @@
-# Copyright (c) 2020, Riverbank Computing Limited
+# Copyright (c) 2022, Riverbank Computing Limited
 # All rights reserved.
 #
 # This copy of PyQt-builder is licensed for use under the terms of the SIP
@@ -28,33 +28,29 @@ from ..qt_metadata import VersionedMetadata
 
 # The Qt meta-data for this package.
 _QT_METADATA = {
-    # Although Qt3D was actually added in Qt v5.6 it wasn't supported by PyQt
-    # until v5.7.
     'Qt3DAnimation':
-        VersionedMetadata(version=(5, 10, 0),
+        VersionedMetadata(
             lib_deps={'': ('Qt3DQuickAnimation', )}),
 
     'Qt3DCore':
-        VersionedMetadata(version=(5, 7, 0),
+        VersionedMetadata(
             lib_deps={'': ('Qt3DQuick', )},
             qml=True,
             qml_names=('Qt3D', )),
 
     'Qt3DExtras':
-        VersionedMetadata(version=(5, 7, 0),
+        VersionedMetadata(
             lib_deps={'': ('Qt3DQuickExtras', )}),
 
-    'Qt3DInput': (
-        VersionedMetadata(version=(5, 7, 1),
+    'Qt3DInput':
+        VersionedMetadata(
             lib_deps={'': ('Qt3DQuickInput', 'QtGamepad')}),
-        VersionedMetadata(version=(5, 7, 0),
-            lib_deps={'': ('Qt3DQuickInput', )})),
 
     'Qt3DLogic':
-        VersionedMetadata(version=(5, 7, 0)),
+        VersionedMetadata(),
 
     'Qt3DRender':
-        VersionedMetadata(version=(5, 7, 0),
+        VersionedMetadata(
             lib_deps={
                 'win': ('QtConcurrent', ),
                 '': ('Qt3DQuickRender', 'Qt3DQuickScene2D')}),

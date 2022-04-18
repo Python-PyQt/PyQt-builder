@@ -1,4 +1,4 @@
-# Copyright (c) 2021, Riverbank Computing Limited
+# Copyright (c) 2022, Riverbank Computing Limited
 # All rights reserved.
 #
 # This copy of PyQt-builder is licensed for use under the terms of the SIP
@@ -41,15 +41,12 @@ _QT_METADATA = {
     'QtAndroidExtras':
         VersionedMetadata(),
 
-    'QtBluetooth': (
-        VersionedMetadata(version=(5, 7, 1),
+    'QtBluetooth':
+        VersionedMetadata(
             lib_deps={
                 'linux': ('QtConcurrent', ),
                 'macos': ('QtConcurrent', )},
             qml=True),
-        VersionedMetadata(
-            lib_deps={'macos': ('QtConcurrent', )},
-            qml=True)),
 
     'QtCore':
         VersionedMetadata(
@@ -70,29 +67,27 @@ _QT_METADATA = {
         VersionedMetadata(),
 
     'QtGui':
-        VersionedMetadata(lib_deps={'linux': ('QtWaylandClient', 'QtXcbQpa')},
-                other_lib_deps={
-                        'win': ('d3dcompiler_47.dll', 'libEGL.dll',
-                                'libGLESv2.dll', 'opengl32sw.dll')}),
+        VersionedMetadata(
+            lib_deps={'linux': ('QtWaylandClient', 'QtXcbQpa')},
+            other_lib_deps={
+                'win': ('d3dcompiler_47.dll', 'libEGL.dll', 'libGLESv2.dll',
+                        'opengl32sw.dll')}),
 
-    'QtHelp': (
-        VersionedMetadata(version=(5, 9, 0)),
-        VersionedMetadata(lib_deps={'': ('QtCLucene', )})),
+    'QtHelp':
+        VersionedMetadata(),
 
-    'QtLocation': (
-        VersionedMetadata(version=(5, 11, 0), qml=True,
-                lib_deps={'': ('QtPositioningQuick', )}),
-        VersionedMetadata(qml=True)),
+    'QtLocation':
+        VersionedMetadata(
+            lib_deps={'': ('QtPositioningQuick', )}
+            qml=True),
 
     'QtMacExtras':
         VersionedMetadata(),
 
-    'QtMultimedia': (
-        VersionedMetadata(version=(5, 10, 0),
-                lib_deps={'linux': ('QtMultimediaGstTools', )},
-                qml=True, qml_names=('QtAudioEngine', 'QtMultimedia')),
-        VersionedMetadata(lib_deps={'win': ('QtMultimediaQuick_p', )},
-                qml=True, qml_names=('QtAudioEngine', 'QtMultimedia'))),
+    'QtMultimedia':
+        VersionedMetadata(
+            lib_deps={'linux': ('QtMultimediaGstTools', )},
+            qml=True, qml_names=('QtAudioEngine', 'QtMultimedia')),
 
     'QtMultimediaWidgets':
         VersionedMetadata(),
@@ -101,7 +96,7 @@ _QT_METADATA = {
         VersionedMetadata(),
 
     'QtNetworkAuth':
-        VersionedMetadata(version=(5, 10, 0), legacy=True),
+        VersionedMetadata(legacy=True),
 
     'QtNfc':
         VersionedMetadata(qml=True),
@@ -115,32 +110,31 @@ _QT_METADATA = {
     'QtPrintSupport':
         VersionedMetadata(),
 
-    'QtQml': (
-        VersionedMetadata(version=(5, 14, 0),
-                lib_deps={'': ('QtQmlModels', 'QtQmlWorkerScript')},
-                qml=True),
-        VersionedMetadata(qml=True)),
+    'QtQml':
+        VersionedMetadata(
+            lib_deps={'': ('QtQmlModels', 'QtQmlWorkerScript')},
+            qml=True),
 
     'QtQuick':
         VersionedMetadata(
-                lib_deps={'': ('QtQuickControls2', 'QtQuickParticles',
-                        'QtQuickShapes', 'QtQuickTemplates2', 'QtQuickTest')},
-                qml=True,
-                qml_names=('QtCanvas3D', 'QtGraphicalEffects', 'QtQuick',
-                        'QtQuick.2')),
+            lib_deps={'': ('QtQuickControls2', 'QtQuickParticles',
+                    'QtQuickShapes', 'QtQuickTemplates2', 'QtQuickTest')},
+            qml=True,
+            qml_names=('QtCanvas3D', 'QtGraphicalEffects', 'QtQuick',
+                    'QtQuick.2')),
 
     'QtQuick3D':
-        VersionedMetadata(version=(5, 15, 0),
-                lib_deps={
-                        '': ('QtQuick3DAssetImport', 'QtQuick3DRender',
-                                'QtQuick3DRuntimeRender', 'QtQuick3DUtils')},
-                qml=True),
+        VersionedMetadata(
+            lib_deps={
+                    '': ('QtQuick3DAssetImport', 'QtQuick3DRender',
+                            'QtQuick3DRuntimeRender', 'QtQuick3DUtils')},
+            qml=True),
 
     'QtQuickWidgets':
         VersionedMetadata(),
 
     'QtRemoteObjects':
-        VersionedMetadata(version=(5, 12, 0), qml=True),
+        VersionedMetadata(qml=True),
 
     'QtSensors':
         VersionedMetadata(qml=True),
@@ -158,7 +152,7 @@ _QT_METADATA = {
         VersionedMetadata(qml=True),
 
     'QtTextToSpeech':
-        VersionedMetadata(version=(5, 15, 0)),
+        VersionedMetadata(),
 
     'QtWebChannel':
         VersionedMetadata(qml=True),

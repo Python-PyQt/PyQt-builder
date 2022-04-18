@@ -1,4 +1,4 @@
-# Copyright (c) 2021, Riverbank Computing Limited
+# Copyright (c) 2022, Riverbank Computing Limited
 # All rights reserved.
 #
 # This copy of PyQt-builder is licensed for use under the terms of the SIP
@@ -25,7 +25,6 @@
 from abc import ABC, abstractmethod
 import os
 import packaging
-import subprocess
 
 from sipbuild import UserException
 
@@ -44,6 +43,11 @@ class AbstractPackage(ABC):
         # Get the Qt version.
         self.qt_version = self._parse_version(
                 os.path.basename(os.path.dirname(self._qt_dir)))
+
+        # We don't support anything older that the current LTS release.
+        if self.qt_version < (5, 15, 0):
+            raise UserException(
+                    "Version of Qt older than v5.15 are not supported")
 
         # Parse any package version string.
         if version_str:
@@ -114,18 +118,7 @@ class AbstractPackage(ABC):
             if bindings:
                 # Find the bindings.
                 for ext in module_extensions:
-                    bindings = os.path.join(package_dir, name + ext)
-                    if os.path.isfile(bindings):
-                        if self.qt_version < (5, 15, 0):
-                            # This isn't necessary for newer wheels built with
-                            # '--target-qt-dir' but we still have to handle
-                            # older wheels (ie. using versions of Qt released
-                            # before '--target-qt-dir' was added.
-                            if platform_tag.startswith('manylinux'):
-                                self._fix_linux_rpath(bindings)
-                            elif platform_tag.startswith('macosx'):
-                                self._fix_macos_rpath(bindings)
-
+                    if os.path.isfile(os.path.join(package_dir, name + ext)):
                         break
                 else:
                     verbose(
@@ -184,60 +177,6 @@ class AbstractPackage(ABC):
         """ The version number of the Qt installation as a string. """
 
         return '.'.join([str(v) for v in self.qt_version])
-
-    @classmethod
-    def _fix_linux_rpath(cls, bindings):
-        """ Fix the rpath for Linux bindings. """
-
-        if cls.missing_executable('chrpath'):
-            raise UserException("'chrpath' must be installed on your system")
-
-        subprocess.run(['chrpath', '--replace', '$ORIGIN/Qt/lib', bindings])
-
-    @classmethod
-    def _fix_macos_rpath(cls, bindings):
-        """ Fix the rpath for macOS bindings. """
-
-        if cls.missing_executable('otool') or cls.missing_executable('install_name_tool'):
-            raise UserException(
-                    "'otool' and 'install_name_tool' from Xcode must be "
-                    "installed on your system")
-
-        # Use otool to get all current rpaths.
-        pipe = subprocess.Popen('otool -l {}'.format(bindings), shell=True,
-                stdout=subprocess.PIPE, universal_newlines=True)
-
-        # Delete any existing rpaths.
-        args = []
-        new_rpath = '@loader_path/Qt/lib'
-        add_new_rpath = True
-
-        for line in pipe.stdout:
-            parts = line.split()
-
-            if len(parts) >= 2 and parts[0] == 'path':
-                rpath = parts[1]
-
-                if rpath == new_rpath:
-                    add_new_rpath = False
-                else:
-                    args.append('-delete_rpath')
-                    args.append(rpath)
-
-        rc = pipe.wait()
-        if rc != 0:
-            raise UserException("otool returned a non-zero exit status")
-
-        # Add an rpath for the bundled Qt installation if it is not already
-        # there.
-        if add_new_rpath:
-            args.append('-add_rpath')
-            args.append('@loader_path/Qt/lib')
-
-        if args:
-            args.insert(0, 'install_name_tool')
-            args.append(bindings)
-            subprocess.run(args)
 
     @staticmethod
     def _parse_version(version_str):

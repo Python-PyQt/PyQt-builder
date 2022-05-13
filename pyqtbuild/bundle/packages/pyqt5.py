@@ -78,7 +78,7 @@ _QT_METADATA = {
 
     'QtLocation':
         VersionedMetadata(
-            lib_deps={'': ('QtPositioningQuick', )}
+            lib_deps={'': ('QtPositioningQuick', )},
             qml=True),
 
     'QtMacExtras':

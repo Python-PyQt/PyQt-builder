@@ -1,4 +1,4 @@
-v1.13.0 18th April 2022
+v1.13.0 13th May 2022
   - Removed support for bundling version of Qt older than v5.15.
   - Removed support for Python v3.6.
 

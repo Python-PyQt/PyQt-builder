@@ -1,4 +1,4 @@
-# Copyright (c) 2021, Riverbank Computing Limited
+# Copyright (c) 2022, Riverbank Computing Limited
 # All rights reserved.
 #
 # This copy of PyQt-builder is licensed for use under the terms of the SIP
@@ -30,6 +30,7 @@ from ..qt_metadata import VersionedMetadata
 _QT_METADATA = {
     'QtWebEngineCore':
         VersionedMetadata(version=(6, 2, 0),
+            translations=('qtwebengine', ),
             other_lib_deps={
                 'macos': ('QtWebEngineCore.framework/Helpers/QtWebEngineProcess.app/Contents/Info.plist', )},
             exes={

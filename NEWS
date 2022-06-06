@@ -1,4 +1,4 @@
-v1.13.0 17th May 2022
+v1.13.0 6th June 2022
   - The default ABI versions are now v12.11 and v13.4 so that wrapped classes
     can be used by sip.array.
   - Removed support for bundling version of Qt older than v5.15.

@@ -55,9 +55,10 @@ class QmakeBuilder(Builder):
             # it.  However for our own frontends we want to use the version
             # corresponding to the frontend (and, anyway, the frontend may not
             # be on PATH).
-            if tool != 'pep517':
-                self._sip_distinfo = os.path.join(
-                        os.path.abspath(os.path.dirname(sys.argv[0])),
+            exe_dir, exe_name = os.path.split(sys.argv[0])
+
+            if exe_name.startswith('sip-'):
+                self._sip_distinfo = os.path.join(os.path.abspath(exe_dir),
                         self._sip_distinfo)
 
             # Check we have a qmake.
@@ -80,8 +81,8 @@ class QmakeBuilder(Builder):
             if self.spec is None:
                 self.spec = self.qt_configuration['QMAKE_SPEC']
 
-                # The binary OS/X Qt installer used to default to XCode.  If so
-                # then use macx-clang.
+                # The Qt installer used to default to XCode.  If so then use
+                # macx-clang.
                 if self.spec == 'macx-xcode':
                     # This will exist (and we can't check anyway).
                     self.spec = 'macx-clang'

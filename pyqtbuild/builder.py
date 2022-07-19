@@ -30,6 +30,7 @@ from sipbuild import (Buildable, BuildableModule, Builder, Option, Project,
         PyProjectOptionException, UserException)
 
 from .installable import QmakeTargetInstallable
+from .version import PYQTBUILD_VERSION_STR
 
 
 class QmakeBuilder(Builder):
@@ -229,7 +230,8 @@ class QmakeBuilder(Builder):
             inventory.close()
 
             args = project.get_sip_distinfo_command_line(self._sip_distinfo,
-                    inventory_fn, generator=os.path.basename(sys.argv[0]),
+                    inventory_fn, generator='pyqtbuild',
+                    generator_version=PYQTBUILD_VERSION_STR,
                     wheel_tag=wheel_tag)
             args.append(self.qmake_quote(project.get_distinfo_dir(target_dir)))
 

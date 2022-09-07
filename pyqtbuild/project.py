@@ -93,11 +93,11 @@ class PyQtProject(Project):
                     self.py_minor_version, abi)
             pylib_dir = pylib_shlib = ''
 
-            # Use distutils to get the additional configuration.
-            from distutils import sysconfig
+            # Get the additional configuration.
             from glob import glob
+            from sysconfig import get_config_vars
 
-            ducfg = sysconfig.get_config_vars()
+            ducfg = get_config_vars()
 
             config_args = ducfg.get('CONFIG_ARGS', '')
 

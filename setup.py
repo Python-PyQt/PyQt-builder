@@ -49,7 +49,7 @@ setup(
         version=version,
         license='SIP',
         python_requires='>=3.7',
-        install_requires=['packaging', 'sip >=6.3, <7'],
+        install_requires=['packaging', 'sip >=6.7, <7'],
         packages=find_packages(),
         package_data={
             'pyqtbuild.bundle': ['dlls/*/*', 'qt_wheel_distinfo/*'],

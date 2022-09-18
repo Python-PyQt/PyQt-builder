@@ -1,4 +1,4 @@
-# Copyright (c) 2021, Riverbank Computing Limited
+# Copyright (c) 2022, Riverbank Computing Limited
 # All rights reserved.
 #
 # This copy of PyQt-builder is licensed for use under the terms of the SIP
@@ -75,7 +75,7 @@ def main():
             help="append SUFFIX to the Qt version number")
 
     parser.add_argument(dest='packages', nargs=1, help="the PyQt package",
-            metavar="package")
+            metavar="PACKAGE")
 
     args = parser.parse_args()
 

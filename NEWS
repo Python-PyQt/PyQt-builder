@@ -1,3 +1,7 @@
+v1.13.1 7th September 2022
+  - SIP v6.7 is now required.
+  - A bug fix release.
+
 v1.13.0 6th June 2022
   - The default ABI versions are now v12.11 and v13.4 so that wrapped classes
     can be used by sip.array.

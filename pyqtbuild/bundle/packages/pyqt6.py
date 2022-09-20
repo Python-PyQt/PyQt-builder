@@ -96,6 +96,10 @@ _QT_METADATA = {
     'QtOpenGLWidgets':
         VersionedMetadata(),
 
+    'QtPdf':
+        VersionedMetadata(version=(6, 4, 0),
+                lib_deps={'': ('QtPdfQuick', )}),
+
     'QtPositioning':
         VersionedMetadata(version=(6, 2, 0),
                 lib_deps={'': ('QtPositioningQuick', )},
@@ -168,7 +172,7 @@ _QT_METADATA = {
         VersionedMetadata(qml=True),
 
     'QtTextToSpeech':
-        VersionedMetadata(version=(6, 4, 0)),
+        VersionedMetadata(version=(6, 4, 0), qml=True),
 
     'QtWebChannel':
         VersionedMetadata(version=(6, 2, 0), qml=True),

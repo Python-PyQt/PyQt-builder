@@ -1,5 +1,5 @@
 v1.14.0 20th September 2022
-  - Added support for QtPdf and QtTextToSpeech for PyQt6.
+  - Added support for QtPdf, QtPdfWidgets and QtTextToSpeech for PyQt6.
   - SIP v6.7 is now required.
 
 v1.13.0 6th June 2022

@@ -100,6 +100,9 @@ _QT_METADATA = {
         VersionedMetadata(version=(6, 4, 0),
                 lib_deps={'': ('QtPdfQuick', )}),
 
+    'QtPdfWidgets':
+        VersionedMetadata(version=(6, 4, 0)),
+
     'QtPositioning':
         VersionedMetadata(version=(6, 2, 0),
                 lib_deps={'': ('QtPositioningQuick', )},

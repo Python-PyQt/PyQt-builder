@@ -1,4 +1,4 @@
-# Copyright (c) 2021, Riverbank Computing Limited
+# Copyright (c) 2022, Riverbank Computing Limited
 # All rights reserved.
 #
 # This copy of PyQt-builder is licensed for use under the terms of the SIP
@@ -167,8 +167,8 @@ _QT_METADATA = {
     'QtTest':
         VersionedMetadata(qml=True),
 
-    #'QtTextToSpeech':
-    #    VersionedMetadata(),
+    'QtTextToSpeech':
+        VersionedMetadata(version=(6, 4, 0)),
 
     'QtWebChannel':
         VersionedMetadata(version=(6, 2, 0), qml=True),

@@ -132,6 +132,14 @@ _QT_METADATA = {
                 qml=True)),
 
     'QtQuick3D': (
+        VersionedMetadata(version=(6, 4, 0),
+                lib_deps={
+                        '': ('QtConcurrent', 'QtQuick3DAssetImport',
+                        'QtQuick3DAssetUtils', 'QtQuick3DEffects',
+                        'QtQuick3DHelpers', 'QtQuick3DIblBaker',
+                        'QtQuick3DParticles', 'QtQuick3DRuntimeRender',
+                        'QtQuick3DUtils', 'QtShaderTools')},
+                qml=True),
         VersionedMetadata(version=(6, 1, 0),
                 lib_deps={
                         '': ('QtQuick3DAssetImport', 'QtQuick3DAssetUtils',

@@ -530,11 +530,15 @@ macx {
         patch = self.qt_version & 0xff
 
         # Qt v5.12.4 was the last release where we updated for a patch version.
-        if (major, minor) >= (5, 13):
+        # This should be safe to do (given Qt's supposed use of semantic
+        # versioning) and removes the need to add new patch versions for old
+        # (ie. LTS) versions.  However Qt v5.15 breaks semantic versioning so
+        # we need the patch version, but as it is the very last minor version
+        # of Qt5 we don't need to worry about old versions.
+        if (5, 13) <= (major, minor) < (5, 15) or major >= 6:
             patch = 0
-        elif (major, minor) == (5, 12):
-            if patch > 4:
-                patch = 4
+        elif (5, 12, 4) <= (major, minor, patch) < (5, 13, 0):
+            patch = 4
 
         self.qt_version_tag = '{}_{}_{}'.format(major, minor, patch)
 

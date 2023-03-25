@@ -11,7 +11,7 @@ PyQt-builder also includes the :program:`pyqt-bundle` command line tool used to
 bundle a copy of Qt with a PyQt wheel.  This is separate from the build system
 and described in :ref:`ref-pyqt-bundle`.
 
-PyQt-builder is actually an extension of the `PEP 384
+PyQt-builder is actually an extension of the `PEP 517
 <https://www.python.org/dev/peps/pep-0517/>`__-compliant
 `SIP <https://www.riverbankcomputing.com/software/sip/>`__ bindings generator
 and build system.  In the simplest cases all that is needed is a

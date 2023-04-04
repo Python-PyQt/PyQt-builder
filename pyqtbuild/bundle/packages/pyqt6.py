@@ -1,4 +1,4 @@
-# Copyright (c) 2022, Riverbank Computing Limited
+# Copyright (c) 2023, Riverbank Computing Limited
 # All rights reserved.
 #
 # This copy of PyQt-builder is licensed for use under the terms of the SIP
@@ -169,6 +169,10 @@ _QT_METADATA = {
 
     'QtSerialPort':
         VersionedMetadata(version=(6, 2, 0)),
+
+    'QtSpatialAudio':
+        VersionedMetadata(version=(6, 5, 0),
+                lib_deps={'': ('QtQuick3DSpatialAudio', )}),
 
     'QtSql':
         VersionedMetadata(),

@@ -111,10 +111,16 @@ _QT_METADATA = {
     'QtPrintSupport':
         VersionedMetadata(),
 
-    'QtQml':
+    'QtQml': (
+        VersionedMetadata(version=(6, 5, 0),
+                lib_deps={'': ('QtQmlModels', 'QtQmlWorkerScript',
+                        'QtLabsAnimation', 'QtLabsFolderListModel',
+                        'QtLabsQmlModels', 'QtLabsSettings',
+                        'QtLabsSharedImage', 'QtLabsWavefrontMesh')},
+                qml=True),
         VersionedMetadata(
                 lib_deps={'': ('QtQmlModels', 'QtQmlWorkerScript')},
-                qml=True),
+                qml=True)),
 
     'QtQuick': (
         VersionedMetadata(version=(6, 2, 0),

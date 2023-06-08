@@ -114,7 +114,11 @@ class QmakeBuilder(Builder):
 
             project.py_platform = py_platform
 
-            # Set the default minimum GLIBC version.
+            # Set the default minimum GLIBC version.  This is actually a
+            # function of the build platform and it should really be determined
+            # by inspecting the compiled extension module.  These defaults
+            # reflect the minimum versions provided by the supported Qt
+            # platforms at any particular time.
             if not project.minimum_glibc_version:
                 if self.qt_version >= 0x060000:
                     project.minimum_glibc_version = '2.28'

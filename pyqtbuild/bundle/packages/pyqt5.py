@@ -1,4 +1,4 @@
-# Copyright (c) 2022, Riverbank Computing Limited
+# Copyright (c) 2023, Riverbank Computing Limited
 # All rights reserved.
 #
 # This copy of PyQt-builder is licensed for use under the terms of the SIP
@@ -56,7 +56,7 @@ _QT_METADATA = {
                 'win': ('icudt*.dll', 'icuin*.dll', 'icuuc*.dll')},
             translations=('qt_help', 'qtbase', 'qtconnectivity',
                 'qtdeclarative', 'qtlocation', 'qtmultimedia',
-                'qtquickcontrols', 'qtserialport', 'qtwebsockets',
+                'qtquickcontrols', 'qtscript', 'qtserialport', 'qtwebsockets',
                 'qtxmlpatterns', 'qt_', 'xcbglintegrations'),
             excluded_plugins=('canbus', 'designer', 'qmltooling')),
 

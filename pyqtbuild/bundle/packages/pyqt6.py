@@ -40,9 +40,9 @@ _QT_METADATA = {
             other_lib_deps={
                 'linux': ('libicui18n.so.56', 'libicuuc.so.56',
                           'libicudata.so.56')},
-            translations=('qt_', 'qt_help', 'qtbase', 'qtdeclarative', 
-                'qtlocation', 'qtmultimedia', 'qtquickcontrols2',
-                'qtserialport', 'qtwebsockets'),
+            translations=('qt_', 'qt_help', 'qtbase', 'qtconnectivity',
+                'qtdeclarative', 'qtlocation', 'qtmultimedia',
+                'qtquickcontrols2', 'qtserialport', 'qtwebsockets'),
             excluded_plugins=('designer', 'qmltooling')),
         VersionedMetadata(
             other_lib_deps={

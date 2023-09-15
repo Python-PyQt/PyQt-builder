@@ -1,4 +1,4 @@
-# Copyright (c) 2021, Riverbank Computing Limited
+# Copyright (c) 2023, Riverbank Computing Limited
 # All rights reserved.
 #
 # This copy of PyQt-builder is licensed for use under the terms of the SIP
@@ -137,8 +137,11 @@ class PyQtProject(Project):
 
         platform_tag = super().get_platform_tag().split('_')
 
-        if platform_tag[-1] == 'universal2' and self.builder.qt_version < 0x060200:
-            platform_tag[-1] = 'x86_64'
+        if platform_tag[-1] == 'universal2':
+            qt_version = self.builder.qt_version
+
+            if qt_version < 0x050f0a or 0x060000 <= qt_version < 0x060200:
+                platform_tag[-1] = 'x86_64'
 
         return '_'.join(platform_tag)
 

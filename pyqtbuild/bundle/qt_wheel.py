@@ -1,4 +1,4 @@
-# Copyright (c) 2021, Riverbank Computing Limited
+# Copyright (c) 2023, Riverbank Computing Limited
 # All rights reserved.
 #
 # This copy of PyQt-builder is licensed for use under the terms of the SIP
@@ -64,10 +64,10 @@ def qt_wheel(package, qt_dir, build_tag, suffix, msvc_runtime, openssl,
         platform_tag = 'manylinux{}_x86_64'.format(
                 '_2_28' if package.qt_version[0] == 6 else '2014')
     elif qt_arch in ('macos', 'clang_64'):
-        if package.qt_version < (6, 2, 0):
+        if package.qt_version < (5, 15, 10) or (6, 0, 0) <= package.qt_version < (6, 2, 0):
             if arch is not None:
                 raise UserException(
-                        "'--arch' may only be specified for Qt v6.2 and later")
+                        "'--arch' may only be specified for Qt v5.15.10 and later or Qt v6.2 and later")
 
             subarch = 'x86_64'
         elif arch is None:

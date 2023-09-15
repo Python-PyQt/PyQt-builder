@@ -71,7 +71,7 @@ class VersionedMetadata:
         # See if a particular macOS architecture has been specified but only
         # for versions of Qt that support universal libraries.
         macos_thin_arch = self._get_macos_thin_arch(platform_tag)
-        if qt_version < (6, 2, 0):
+        if qt_version < (5, 15, 10) or (6, 0, 0) <= qt_version < (6, 2, 0):
             macos_thin_arch = None
 
         if macos_thin_arch is not None:

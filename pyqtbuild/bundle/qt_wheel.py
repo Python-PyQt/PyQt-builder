@@ -75,10 +75,10 @@ def qt_wheel(package, qt_dir, build_tag, suffix, msvc_runtime, openssl,
         else:
             subarch = arch
 
-        if package.qt_version[0] == 5:
-            sdk_version = '10_13'
-        elif subarch == 'arm64':
+        if subarch == 'arm64':
             sdk_version = '11_0'
+        elif package.qt_version[0] == 5:
+            sdk_version = '10_13'
         else:
             sdk_version = '10_14'
 

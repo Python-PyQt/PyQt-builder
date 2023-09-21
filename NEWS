@@ -1,4 +1,4 @@
-v1.15.3 15th September 2023
+v1.15.3 21st September 2023
   - Added support for Apple silicon when building against Qt v5.15.10 and
     later.
 

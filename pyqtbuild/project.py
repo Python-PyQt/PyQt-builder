@@ -139,7 +139,8 @@ class PyQtProject(Project):
         if sys.platform == 'darwin':
             parts = platform_tag.split('_')
 
-            if len(parts) == 3:
+            # We assume the format is 'macosx_major_minor_arch'.
+            if len(parts) == 4:
                 if self.apple_universal2:
                     arch = 'universal2'
                 else:
@@ -149,15 +150,11 @@ class PyQtProject(Project):
 
                     # For arm64 binaries enforce a valid minimum macOS version.
                     if arch == 'arm64':
-                        version_parts = parts[1].split('.')
-                        if len(version_parts) == 2:
-                            if int(version_parts[0]) < 11:
-                                version_parts[0] = '11'
-                                version_parts[1] = '0'
+                        if int(parts[1]) < 11:
+                            parts[1] = '11'
+                            parts[2] = '0'
 
-                                parts[1] = '.'.join(version_parts)
-
-                parts[2] = arch
+                parts[3] = arch
                 platform_tag = '_'.join(parts)
 
         return platform_tag

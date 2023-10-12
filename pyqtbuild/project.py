@@ -131,19 +131,36 @@ class PyQtProject(Project):
 
     def get_platform_tag(self):
         """ Return the platform tag to use in a wheel name.  This calls the
-        default implementation and replaces 'universal2' with 'x86_64' for
-        versions of Qt that don't support Apple silicon.
+        default implementation and applied the target Apple build type.
         """
 
-        platform_tag = super().get_platform_tag().split('_')
+        platform_tag = super().get_platform_tag()
 
-        if platform_tag[-1] == 'universal2':
-            qt_version = self.builder.qt_version
+        if sys.platform == 'darwin':
+            parts = platform_tag.split('_')
 
-            if qt_version < 0x050f0a or 0x060000 <= qt_version < 0x060200:
-                platform_tag[-1] = 'x86_64'
+            if len(parts) == 3:
+                if self.apple_universal2:
+                    arch = 'universal2'
+                else:
+                    from platform import machine
 
-        return '_'.join(platform_tag)
+                    arch = machine()
+
+                    # For arm64 binaries enforce a valid minimum macOS version.
+                    if arch == 'arm64':
+                        version_parts = parts[1].split('.')
+                        if len(version_parts) == 2:
+                            if int(version_parts[0]) < 11:
+                                version_parts[0] = '11'
+                                version_parts[1] = '0'
+
+                                parts[1] = '.'.join(version_parts)
+
+                parts[2] = arch
+                platform_tag = '_'.join(parts)
+
+        return platform_tag
 
     def get_options(self):
         """ Return the list of configurable options. """
@@ -174,11 +191,9 @@ class PyQtProject(Project):
                 Option('android_abis', option_type=list,
                         help="the target Android ABI", metavar="ABI"))
 
-        if sys.platform == 'darwin':
-            options.append(
-                    Option('arch', choices=('x86_64', 'arm64'),
-                            help="the target architecture (for Apple "
-                                "universal builds of Python)"))
+        options.append(
+                Option('apple_universal2', option_type=bool,
+                        help="build a universal2 project"))
 
         options.append(
                 Option('link_full_dll', option_type=bool,

@@ -1,9 +1,6 @@
 v1.15.3 12th October 2023
-  - Added support for Apple silicon when building against Qt v5.15.10 and
-    later.
-  - Added the '--arch' command line option to the build tools to specify a
-    particular architecture (x86_64 or arm64) to target on macOS when Python is
-    a universal build.
+  - Added the '--apple-universal2' command line option to the build tools to
+    specify a universal build on macOS.
 
 v1.15.2 4th July 2023
   - A bug fix release.

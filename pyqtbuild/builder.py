@@ -686,16 +686,8 @@ macx {
 
         buildable.make_names_relative()
 
-        # Handle the target architecture(s).  The way that Python handles
-        # 'universal2' seems broken as it is determined by what versions of
-        # macOS and the SDK the interpreter was built against rather than the
-        # versions that are being used now.
-        if self.project.get_platform_tag().endswith('_universal2'):
-            archs = self.project.arch
-            if archs is None:
-                archs = 'x86_64 arm64'
-
-            pro_lines.append('QMAKE_APPLE_DEVICE_ARCHS = ' + archs)
+        if sys.platform == 'darwin' and self.project.apple_universal2:
+            pro_lines.append('QMAKE_APPLE_DEVICE_ARCHS = x86_64 arm64')
 
         # Handle debugging.
         pro_lines.append(

@@ -53,13 +53,11 @@ list options may contain environment markers as defined in `PEP 508
     The value is a list of target Android ABIs (e.g. armeabi-v7a, arm64-v8a).
     There is also a corresponding command line option.
 
-**arch** {x86_64, arm64}
-
-    The value is a list of target architectures (e.g. x86_64, arm64).  If
-    Python is an Apple universal build then this specifies a specific a target
-    architecture.  It is normally used when the Qt installation is not a
-    universal build.  The default is to build a universal project supporting
-    both architectures.  There is also a corresponding command line option.
+**universal2**
+    The boolean value specifies that the project is built as an Apple universal
+    package supporting both x86_64 and arm64 architectures.  The default is to
+    build for the native architecture.  There is also a corresponding command
+    line option.
 
 **link-full-dll**
     The boolean value specifies if, on Windows, the full Python DLL should be

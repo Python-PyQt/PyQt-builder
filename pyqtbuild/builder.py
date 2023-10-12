@@ -691,7 +691,11 @@ macx {
         # macOS and the SDK the interpreter was built against rather than the
         # versions that are being used now.
         if self.project.get_platform_tag().endswith('_universal2'):
-            pro_lines.append('QMAKE_APPLE_DEVICE_ARCHS = x86_64 arm64')
+            archs = self.project.arch
+            if archs is None:
+                archs = 'x86_64 arm64'
+
+            pro_lines.append('QMAKE_APPLE_DEVICE_ARCHS = ' + archs)
 
         # Handle debugging.
         pro_lines.append(

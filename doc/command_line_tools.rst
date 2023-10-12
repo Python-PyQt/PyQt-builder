@@ -13,6 +13,13 @@ Unless stated otherwise, each option is added to all of the build tools.
 
     The target Android ABI.  This option may be given any number of times.
 
+.. option:: --arch {x86_64, arm64}
+
+    If Python is an Apple universal build then this specifies a specific a
+    target architecture.  It is normally used when the Qt installation is not a
+    universal build.  The default is to build a universal project supporting
+    both architectures.
+
 .. option:: --jobs N
 
     On Linux and macOS N make jobs will be run in parallel.

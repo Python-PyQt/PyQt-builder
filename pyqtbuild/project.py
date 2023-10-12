@@ -174,6 +174,12 @@ class PyQtProject(Project):
                 Option('android_abis', option_type=list,
                         help="the target Android ABI", metavar="ABI"))
 
+        if sys.platform == 'darwin':
+            options.append(
+                    Option('arch', choices=('x86_64', 'arm64'),
+                            help="the target architecture (for Apple "
+                                "universal builds of Python)"))
+
         options.append(
                 Option('link_full_dll', option_type=bool,
                         help="on Windows link against the full Python DLL "

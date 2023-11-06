@@ -195,8 +195,12 @@ _QT_METADATA = {
     'QtTextToSpeech':
         VersionedMetadata(version=(6, 4, 0), qml=True),
 
-    'QtWebChannel':
-        VersionedMetadata(version=(6, 2, 0), qml=True),
+    'QtWebChannel': (
+        # The quick library may have been present from the start.
+        VersionedMetadata(version=(6, 6, 0),
+                lib_deps={'': ('QtWebChannelQuick', )},
+                qml=True),
+        VersionedMetadata(version=(6, 2, 0), qml=True)),
 
     'QtWebSockets':
         VersionedMetadata(version=(6, 2, 0), qml=True),

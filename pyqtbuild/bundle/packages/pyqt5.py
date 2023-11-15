@@ -58,8 +58,9 @@ _QT_METADATA = {
                 'qtdeclarative', 'qtlocation', 'qtmultimedia',
                 'qtquickcontrols', 'qtscript', 'qtserialport', 'qtwebsockets',
                 'qtxmlpatterns', 'qt_', 'xcbglintegrations'),
-            excluded_plugins=('canbus', 'designer', 'qmltooling',
-                    'virtualkeyboard')),
+            excluded_plugins=('canbus', 'designer', 'egldeviceintegrations',
+                    'gamepads', 'qmltooling', 'virtualkeyboard',
+                    'wayland-graphics-integration-server')),
 
     'QtDBus':
         VersionedMetadata(),

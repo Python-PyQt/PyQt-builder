@@ -88,7 +88,10 @@ _QT_METADATA = {
 
     'QtMultimedia':
         VersionedMetadata(
-            lib_deps={'linux': ('QtMultimediaGstTools', )},
+            lib_deps={
+                '': ('QtMultimediaQuick', ),
+                'linux': ('QtMultimediaGstTools', )
+            },
             qml=True, qml_names=('QtAudioEngine', 'QtMultimedia')),
 
     'QtMultimediaWidgets':

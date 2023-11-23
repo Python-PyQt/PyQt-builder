@@ -53,7 +53,7 @@ list options may contain environment markers as defined in `PEP 508
     The value is a list of target Android ABIs (e.g. armeabi-v7a, arm64-v8a).
     There is also a corresponding command line option.
 
-**universal2**
+**apple-universal2**
     The boolean value specifies that the project is built as an Apple universal
     package supporting both x86_64 and arm64 architectures.  The default is to
     build for the native architecture.  There is also a corresponding command

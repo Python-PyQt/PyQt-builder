@@ -1,5 +1,5 @@
-v1.15.5 2nd January 2024
-  - An administrative release.
+v1.15.5 7th February 2024
+  - The default ABI versions are now v12.13 and v13.6.
 
 v1.15.4 23rd November 2023
   - A bug fix release.

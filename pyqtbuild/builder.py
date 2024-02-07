@@ -146,13 +146,13 @@ class QmakeBuilder(Builder):
 
             # Set the default ABI version of the sip module.
             if not project.abi_version:
-                # These are the minimum recommended versions.  They usually
-                # correspond to specific functionality that users would expect
-                # to be enabled.
+                # These are the minimum recommended versions.  They correspond
+                # to the most up to date code that the current version of SIP
+                # will generate.
                 if project.sip_module == 'PyQt5.sip':
-                    project.abi_version = '12.11'
+                    project.abi_version = '12.13'
                 elif project.sip_module == 'PyQt6.sip':
-                    project.abi_version = '13.4'
+                    project.abi_version = '13.6'
 
         super().apply_user_defaults(tool)
 

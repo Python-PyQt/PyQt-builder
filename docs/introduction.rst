@@ -13,11 +13,10 @@ and described in :ref:`ref-pyqt-bundle`.
 
 PyQt-builder is actually an extension of the `PEP 517
 <https://www.python.org/dev/peps/pep-0517/>`__-compliant
-`SIP <https://www.riverbankcomputing.com/software/sip/>`__ bindings generator
-and build system.  In the simplest cases all that is needed is a
-:file:`pyproject.toml` file that specifies how the bindings are to be
-generated.  More complicated cases require additional code, typically
-implemented in a :file:`project.py` file.
+`SIP <https://pypi.org/project/sip/>`__ bindings generator and build system.
+In the simplest cases all that is needed is a :file:`pyproject.toml` file that
+specifies how the bindings are to be generated.  More complicated cases require
+additional code, typically implemented in a :file:`project.py` file.
 
 SIP provides a number of task-orientated command line tools and a
 :py:mod:`sipbuild` module which can be used to extend the build system.  The
@@ -34,10 +33,10 @@ can be used by a project's :file:`project.py` file.
 This documentation assumes you are already familiar with the `SIP documentation
 <https://www.riverbankcomputing.com/static/Docs/sip/>`__.
 
+PyQt-builder is hosted at
+`GitHub <https://github.com/Python-PyQt/PyQt-builder>`__.
 
-Installation
-------------
+The documentation is hosted at
+`Read the Docs <https://PyQt-builder.readthedocs.io>`__.
 
-To install PyQt-builder from PyPI, run::
-
-    pip install PyQt-builder
+PyQt-builder is licensed under the BSD 2 clause license.

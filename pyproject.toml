@@ -1,2 +1,26 @@
+# The project configuration for sip.
+
 [build-system]
-requires = ["setuptools >=30.3", "wheel"]
+requires = ["setuptools>=64", "setuptools_scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+version_file = "pyqtbuild/_version.py"
+
+[project]
+name = "PyQt-builder"
+description = "The PyQt build system"
+readme = "README.md"
+urls.homepage = "https://github.com/Python-PyQt/PyQt-builder"
+dependencies = ["packaging", "sip >=6.7, <7"]
+requires-python = ">=3.8"
+classifiers = ["License :: OSI Approved :: BSD License"]
+dynamic = ["version"]
+
+[[project.authors]]
+name = "Phil Thompson"
+email = "phil@riverbankcomputing.com"
+
+[project.scripts]
+pyqt-bundle = "pyqtbuild.bundle.bundle_main:main"
+pyqt-qt-wheel = "pyqtbuild.bundle.qt_wheel_main:main"

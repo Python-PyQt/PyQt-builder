@@ -1,8 +1,9 @@
-Reference Guide
-===============
+PyQt-builder Documentation
+==========================
 
 .. toctree::
     :maxdepth: 2
+    :caption: Contents
 
     introduction
     command_line_tools
@@ -10,3 +11,4 @@ Reference Guide
     pyqtbuild_api
     example
     pyqtbundle
+    releases

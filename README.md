@@ -1,8 +1,6 @@
-PyQt-builder - The PEP 517 Compliant PyQt Build System
-======================================================
+# PyQt-builder - The PEP 517 Compliant PyQt Build System
 
-What is PyQt-builder?
----------------------
+## What is PyQt-builder?
 
 PyQt-builder is the PEP 517 compliant build system for PyQt and projects that
 extend PyQt.  It extends the SIP build system and uses Qt's ``qmake`` to
@@ -14,8 +12,7 @@ example ``sip-install`` or ``pip`` can then be used to build and install the
 project.
 
 
-Author
-------
+## Author
 
 PyQt-builder is copyright (c) Riverbank Computing Limited.  Its homepage is
 https://www.riverbankcomputing.com/software/pyqt-builder/.
@@ -24,14 +21,12 @@ Support may be obtained from the PyQt mailing list at
 https://www.riverbankcomputing.com/mailman/listinfo/pyqt/.
 
 
-License
--------
+## License
 
 PyQt-builder is released under the same licenses as SIP.
 
 
-Installation
-------------
+## Installation
 
 PyQt-builder can be installed from PyPI::
 
@@ -41,8 +36,7 @@ However you do not normally need to explicitly install it.  It will be
 installed automatically when it is needed.
 
 
-Documentation
--------------
+## Documentation
 
 The documentation for the latest release can be found
 `here <https://www.riverbankcomputing.com/static/Docs/PyQt-builder/>`__.

@@ -9,6 +9,6 @@ TODO
 
 ### ABI versions
 
-The default ABI versions are now v12.13 and v13.6.
+The default ABI versions are now v12.15 and v13.8.
 
 Resolves #1

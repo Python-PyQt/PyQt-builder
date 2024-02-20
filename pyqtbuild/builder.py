@@ -131,9 +131,9 @@ class QmakeBuilder(Builder):
                 # to the most up to date code that the current version of SIP
                 # will generate.
                 if project.sip_module == 'PyQt5.sip':
-                    project.abi_version = '12.13'
+                    project.abi_version = '12.15'
                 elif project.sip_module == 'PyQt6.sip':
-                    project.abi_version = '13.6'
+                    project.abi_version = '13.8'
 
         super().apply_user_defaults(tool)
 

@@ -58,7 +58,7 @@ _PYQT6_SIP_API_H_CODE = '''/*
  */
 typedef int (*pyqt6EmitFn)(void *, PyObject *);
 
-typedef struct _pyqt6QtSignal {
+typedef struct _pyqt6QtSignalDef {
     /* The normalised C++ name and signature of the signal. */
     const char *signature;
 
@@ -76,7 +76,7 @@ typedef struct _pyqt6QtSignal {
      * emit() for the signal.
      */
     pyqt6EmitFn emitter;
-} pyqt6QtSignal;
+} pyqt6QtSignalDef;
 
 
 /*

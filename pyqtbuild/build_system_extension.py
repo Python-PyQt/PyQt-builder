@@ -4,6 +4,7 @@
 
 
 from dataclasses import dataclass
+from typing import List, Optional
 
 from sipbuild import BuildSystemExtension
 
@@ -30,25 +31,75 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
         code.append(
                 _PYQT6_SIP_API_H_CODE if self.project.builder.qt_version >= 0x060000 else _PYQT5_SIP_API_H_CODE)
 
-    def parse_mapped_type_annotations(self, extendable, annotations):
+    def parse_class_annotations(self, extendable, annotations, location):
+        """ Parse any class annotations.  Any annotations dealt with should be
+        removed from the dict.
+        """
+
+        if self.project.builder.qt_version >= 0x060000:
+            flags = 0
+            flags_enums = None
+        else:
+            flags = self.parse_integer_annotation('PyQtFlag', annotations,
+                    location)
+            flags_enums = self.parse_string_list_annotation('PyQtFlagsEnums',
+                    annotations, location)
+
+            if flags_enums:
+                flags |= 1
+
+        interface = self.parse_string_annotation('PyQtInterface', annotations,
+                location)
+        no_qmetaobject = self.parse_boolean_annotation('PyQtNoQMetaObject',
+                annotations, location)
+
+        if any(flags, flags_enums, interface, no_qmetaobject):
+            class_extensions = self.get_extension_data(extendable,
+                    _ClassExtensions)
+            class_extensions.flags = flags
+            class_extensions.flags_enums = flags_enums
+            class_extensions.interface = interface
+            class_extensions.no_qmetaobject = no_qmetaobject
+
+    def parse_mapped_type_annotations(self, extendable, annotations, location):
         """ Parse any mapped type annotations.  Any annotations dealt with
         should be removed from the dict.
         """
 
         # This will only ever be called for PyQt6.
 
-        flags = annotations.pop('PyQtFlags', 0)
+        flags = self.parse_integer_annotation('PyQtFlag', annotations,
+                location)
+
         if flags:
             mapped_type_extensions = self.get_extension_data(extendable,
-                    _PyQt6MappedTypeExtensions)
+                    _MappedTypeExtensions)
             mapped_type_extensions.flags = flags
 
 
 @dataclass
-class _PyQt6MappedTypeExtensions:
-    """ The additional PyQt6-specific data held for a mapped type. """
+class _ClassExtensions:
+    """ The additional data held for a class. """
 
-    # Non-zero if /PyQtFlags/ was specified.
+    # Non-zero if /PyQtFlags/ was specified.  Also implied if /PyQtFlagsEnums/
+    # was specified.  PyQt5 only.
+    flags: int = 0
+
+    # The list of enum names from /PyQtFlagsEnums/.  PyQt5 only.
+    flags_enums: Optional[List[str]] = None
+
+    # The interface name specified by /PyQtInterface/.
+    interface: Optional[str] = None
+
+    # Set if /PyQtNoQMetaObject/ was specified.
+    no_qmetaobject: bool = False
+
+
+@dataclass
+class _MappedTypeExtensions:
+    """ The additional data held for a mapped type. """
+
+    # Non-zero if /PyQtFlags/ was specified.  PyQt6 only.
     flags: int = 0
 
 

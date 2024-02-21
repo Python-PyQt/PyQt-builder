@@ -19,9 +19,9 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
 
         # This will only ever be called for PyQt6.
 
-        mapped_type_extensions = self.get_extension_data(extendable)
-        if mapped_type_extensions is not None and mapped_type_extensions.flags:
-                code.append(f'static pyqt6MappedTypeExtensionDef {name} = {{{mapped_type_extensions.flags}}};\n')
+        mapped_type_extension = self.get_extension_data(extendable)
+        if mapped_type_extension is not None and mapped_type_extension.flags:
+                code.append(f'static pyqt6MappedTypeExtensionDef {name} = {{{mapped_type_extension.flags}}};\n')
 
     def append_sip_api_h_code(self, code):
         """ Append code fragments to be included in all generated sipAPI*.h
@@ -54,31 +54,42 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
                 annotations, location)
 
         if any(flags, flags_enums, interface, no_qmetaobject):
-            class_extensions = self.get_extension_data(extendable,
-                    _ClassExtensions)
-            class_extensions.flags = flags
-            class_extensions.flags_enums = flags_enums
-            class_extensions.interface = interface
-            class_extensions.no_qmetaobject = no_qmetaobject
+            class_extension = self.get_extension_data(extendable,
+                    _ClassExtension)
+            class_extension.flags = flags
+            class_extension.flags_enums = flags_enums
+            class_extension.interface = interface
+            class_extension.no_qmetaobject = no_qmetaobject
 
     def parse_mapped_type_annotations(self, extendable, annotations, location):
         """ Parse any mapped type annotations.  Any annotations dealt with
         should be removed from the dict.
         """
 
-        # This will only ever be called for PyQt6.
-
         flags = self.parse_integer_annotation('PyQtFlag', annotations,
                 location)
 
         if flags:
-            mapped_type_extensions = self.get_extension_data(extendable,
-                    _MappedTypeExtensions)
-            mapped_type_extensions.flags = flags
+            mapped_type_extension = self.get_extension_data(extendable,
+                    _MappedTypeExtension)
+            mapped_type_extension.flags = flags
+
+    def parse_namespace_annotations(self, extendable, annotations, location):
+        """ Parse any namespace annotations.  Any annotations dealt with should
+        be removed from the dict.
+        """
+
+        no_qmetaobject = self.parse_boolean_annotation('PyQtNoQMetaObject',
+                annotations, location)
+
+        if no_qmetaobject:
+            namespace_extension = self.get_extension_data(extendable,
+                    _NamespaceExtension)
+            namespace_extension.no_qmetaobject = no_qmetaobject
 
 
 @dataclass
-class _ClassExtensions:
+class _ClassExtension:
     """ The additional data held for a class. """
 
     # Non-zero if /PyQtFlags/ was specified.  Also implied if /PyQtFlagsEnums/
@@ -96,11 +107,19 @@ class _ClassExtensions:
 
 
 @dataclass
-class _MappedTypeExtensions:
+class _MappedTypeExtension:
     """ The additional data held for a mapped type. """
 
     # Non-zero if /PyQtFlags/ was specified.  PyQt6 only.
     flags: int = 0
+
+
+@dataclass
+class _NamespaceExtension:
+    """ The additional data held for a namespace. """
+
+    # Set if /PyQtNoQMetaObject/ was specified.
+    no_qmetaobject: bool = False
 
 
 # The code to include in sipAPI*.h for PyQt6.

@@ -8,18 +8,9 @@ import sys
 
 from sipbuild import Option, Project, UserException
 
-from .build_system_extension import PyQtBuildSystemExtension
-
 
 class PyQtProject(Project):
     """ Encapsulate a PyQt based project. """
-
-    def __init__(self, **kwargs):
-        """ Initialise the project. """
-
-        super().__init__(**kwargs)
-
-        self.register_build_system_extension('PyQt', PyQtBuildSystemExtension)
 
     def apply_nonuser_defaults(self, tool):
         """ Set default values for non-user options that haven't been set yet.

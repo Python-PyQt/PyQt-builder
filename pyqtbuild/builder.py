@@ -10,6 +10,7 @@ import sysconfig
 from sipbuild import (Buildable, BuildableModule, Builder, Option, Project,
         PyProjectOptionException, UserException)
 
+from .build_system_extension import PyQtBuildSystemExtension
 from .installable import QmakeTargetInstallable
 from .version import PYQTBUILD_VERSION_STR
 
@@ -72,6 +73,10 @@ class QmakeBuilder(Builder):
             # The remaining options influenced by the Qt configuration are
             # project options.
             project = self.project
+
+            project.register_build_system_extension(
+                    'PyQt' + str(self._qt_version >> 16),
+                    PyQtBuildSystemExtension)
 
             # Determine the target platform, ignoring any current value.
             xspec = self.qt_configuration['QMAKE_XSPEC']

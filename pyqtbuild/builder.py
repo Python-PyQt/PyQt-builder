@@ -75,7 +75,7 @@ class QmakeBuilder(Builder):
             project = self.project
 
             project.register_build_system_extension(
-                    'PyQt' + str(self._qt_version >> 16),
+                    'PyQt' + str(self.qt_version >> 16),
                     PyQtBuildSystemExtension)
 
             # Determine the target platform, ignoring any current value.

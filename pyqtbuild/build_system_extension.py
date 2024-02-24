@@ -31,7 +31,7 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
         code.append('    SIP_NULLPTR, // XXX static_metaobject')
         code.append('    SIP_NULLPTR, // XXX qt_signals')
 
-        qt_interface = f'"{extension.qt_interface}"' if extension.qt_interface is not None else 'SIP_NULLPTR'
+        qt_interface = f'"{extension.interface}"' if extension.interface is not None else 'SIP_NULLPTR'
         code.append(f'    {qt_interface},')
 
         code.append('};')

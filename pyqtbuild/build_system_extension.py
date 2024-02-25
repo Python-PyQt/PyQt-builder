@@ -4,6 +4,7 @@
 
 
 from dataclasses import dataclass
+from enum import auto, Enum
 from typing import List, Optional
 
 from sipbuild import BuildSystemExtension
@@ -74,10 +75,13 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
             extension = self.get_extension_data(extendable, _ClassExtension)
             extension.is_qobject = True
 
+    def get_parser_keywords(self):
+        """ Return a sequence of keywords to be recognised by the parser. """
+
+        return ('Q_SIGNAL', 'Q_SLOT')
+
     def parse_class_annotation(self, extendable, name, raw_value, location):
         """ Parse a class annotation.  Return True if it was parsed. """
-
-        parsed = False
 
         if self.project.builder.qt_version < 0x060000:
             if name == 'PyQtFlag':
@@ -85,35 +89,48 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
                         _ClassExtension)
                 extension.flags = self.parse_integer_annotation(name,
                         raw_value, location)
-                parsed = True
+                return True
 
-            elif name == 'PyQtFlagsEnums':
+            if name == 'PyQtFlagsEnums':
                 extension = self.get_extension_data(extendable,
                         _ClassExtension)
                 extension.flags_enums = self.parse_string_list_annotation(name,
                         raw_value, location)
                 extension.flags |= 1
-                parsed = True
+                return True
 
         if name == 'PyQtInterface':
             extension = self.get_extension_data(extendable, _ClassExtension)
             extension.interface = self.parse_string_annotation(name, raw_value,
                     location)
-            parsed = True
+            return True
 
-        elif name == 'PyQtNoQMetaObject':
+        if name == 'PyQtNoQMetaObject':
             extension = self.get_extension_data(extendable, _ClassExtension)
             extension.no_qmetaobject = self.parse_boolean_annotation(name,
                     raw_value, location)
-            parsed = True
+            return True
 
-        return parsed
+        return False
+
+    def parse_function_keyword(self, extendable, keyword):
+        """ Parse a function keyword.  Return True if it was parsed. """
+
+        if keyword == 'Q_SIGNAL':
+            extension = self.get_extension_data(extendable, _FunctionExtension)
+            extension.type = FunctionType.SIGNAL
+            return True
+
+        if keyword == 'Q_SLOT':
+            extension = self.get_extension_data(extendable, _FunctionExtension)
+            extension.type = FunctionType.SLOT
+            return True
+
+        return False
 
     def parse_mapped_type_annotation(self, extendable, name, raw_value,
             location):
         """ Parse a mapped type annotation.  Return True if it was parsed. """
-
-        parsed = False
 
         if self.project.builder.qt_version >= 0x060000:
             if name == 'PyQtFlag':
@@ -121,24 +138,32 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
                         _MappedTypeExtension)
                 extension.flags = self.parse_integer_annotation(name,
                         raw_value, location)
-                parsed = True
+                return True
 
-        return parsed
+        return False
 
     def parse_namespace_annotation(self, extendable, name, raw_value,
             location):
         """ Parse a namespace annotation.  Return True if it was parsed. """
-
-        parsed = False
 
         if name == 'PyQtNoQMetaObject':
             extension = self.get_extension_data(extendable,
                     _NamespaceExtension)
             extension.no_qmetaobject = self.parse_boolean_annotation(name,
                     raw_value, location)
-            parsed = True
+            return True
 
-        return parsed
+        return False
+
+
+class FunctionType(Enum):
+    """ The PyQt-specific function type. """
+
+    # A signal.
+    SIGNAL = auto()
+
+    # A slot.
+    SLOT = ()
 
 
 @dataclass
@@ -162,6 +187,14 @@ class _ClassExtension:
 
     # Set if /PyQtNoQMetaObject/ was specified.
     no_qmetaobject: bool = False
+
+
+@dataclass
+class _FunctionExtension:
+    """ The additional data held for a function. """
+
+    # The PyQt-specific function type.
+    type: Optional[FunctionType] = None
 
 
 @dataclass

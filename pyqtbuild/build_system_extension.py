@@ -28,7 +28,14 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
         if qt_major == 5:
             code.append(f'    {extension.flags},')
 
-        code.append('    SIP_NULLPTR, // XXX static_metaobject')
+        if extension.is_qobject and not extension.no_qmetaobject:
+            cpp_name = self.query_class_cpp_name(extendable)
+            static_metaobject = f'&{cpp_name}::staticMetaObject'
+        else:
+            static_metaobject = 'SIP_NULLPTR'
+
+        code.append(f'    {static_metaobject},')
+
         code.append('    SIP_NULLPTR, // XXX qt_signals')
 
         qt_interface = f'"{extension.interface}"' if extension.interface is not None else 'SIP_NULLPTR'
@@ -56,6 +63,16 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
 
         code.append(
                 _PYQT6_SIP_API_H_CODE if self.project.builder.qt_version >= 0x060000 else _PYQT5_SIP_API_H_CODE)
+
+    def complete_class(self, extendable):
+        """ Complete the definition of a class. """
+
+        qt_major = self.project.builder.qt_version >> 16
+        module = f'PyQt{qt_major}.QtCore'
+
+        if self.query_class_is_subclass(extendable, module, 'QObject'):
+            extension = self.get_extension_data(extendable, _ClassExtension)
+            extension.is_qobject = True
 
     def parse_class_annotation(self, extendable, name, raw_value, location):
         """ Parse a class annotation.  Return True if it was parsed. """
@@ -139,6 +156,9 @@ class _ClassExtension:
 
     # The interface name specified by /PyQtInterface/.
     interface: Optional[str] = None
+
+    # Set if the class is QObject or a sub-class.
+    is_qobject: bool = False
 
     # Set if /PyQtNoQMetaObject/ was specified.
     no_qmetaobject: bool = False

@@ -75,12 +75,45 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
             extension = self.get_extension_data(extendable, _ClassExtension)
             extension.is_qobject = True
 
+    def get_class_access_specifier_keywords(self):
+        """ Return a sequence of class action specifier keywords to be
+        recognised by the parser.
+        """
+
+        return ('signals', 'Q_SIGNALS', 'slots', 'Q_SLOTS')
+
     def get_function_keywords(self):
         """ Return a sequence of function keywords to be recognised by the
         parser.
         """
 
         return ('Q_SIGNAL', 'Q_SLOT')
+
+    def parse_class_access_specifier(self, extendable, primary, secondary):
+        """ Parse a primary and optional secondary class access specifier.  If
+        it was parsed return the C++ standard access specifier (ie. 'public',
+        'protected' or 'private') to use, otherwise return None.
+        """
+
+        if primary in ('public', 'protected', 'private'):
+            if secondary is None:
+                # It's a standard C++ access specifier.
+                function_type = None
+            elif secondary in ('slots', 'Q_SLOTS'):
+                function_type = FunctionType.SLOT
+            else:
+                return None
+        elif primary in ('signals', 'Q_SIGNALS'):
+            if secondary is not None:
+                return None
+
+            function_type = FunctionType.SIGNAL
+            primary = 'public'
+
+        extension = self.get_extension_data(extendable, _ClassExtension)
+        extension.current_function_type = function_type
+
+        return primary
 
     def parse_class_annotation(self, extendable, name, raw_value, location):
         """ Parse a class annotation.  Return True if it was parsed. """
@@ -171,6 +204,9 @@ class FunctionType(Enum):
 @dataclass
 class _ClassExtension:
     """ The additional data held for a class. """
+
+    # The current function type.
+    current_function_type: Optional[FunctionType] = None
 
     # Non-zero if /PyQtFlags/ was specified.  Also implied if /PyQtFlagsEnums/
     # was specified.  PyQt5 only.

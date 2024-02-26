@@ -75,8 +75,10 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
             extension = self.get_extension_data(extendable, _ClassExtension)
             extension.is_qobject = True
 
-    def get_parser_keywords(self):
-        """ Return a sequence of keywords to be recognised by the parser. """
+    def get_function_keywords(self):
+        """ Return a sequence of function keywords to be recognised by the
+        parser.
+        """
 
         return ('Q_SIGNAL', 'Q_SLOT')
 

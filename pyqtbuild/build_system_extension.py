@@ -13,19 +13,19 @@ from sipbuild import BuildSystemExtension
 class PyQtBuildSystemExtension(BuildSystemExtension):
     """ This class implements the PyQt builder extension. """
 
-    def append_class_extension_code(self, extendable, name, code):
+    def append_class_extension_code(self, klass, name, code):
         """ Append code fragments that implements a class extension data
         structure.
         """
 
-        extension = self.get_extension_data(extendable)
+        extension = self.get_extension_data(klass)
         if extension is None:
             return
 
         qt_major = self.project.builder.qt_version >> 16
 
         signals_name = name + '_signals'
-        if self._pyqt_append_class_signals_table(extendable, qt_major, signals_name, code):
+        if self._pyqt_append_class_signals_table(klass, qt_major, signals_name, code):
             qt_signals = f'&{signals_name}'
         else:
             qt_signals = 'SIP_NULLPTR'
@@ -36,7 +36,7 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
             code.append(f'    {extension.flags},')
 
         if extension.is_qobject and not extension.no_qmetaobject:
-            cpp_name = self.query_class_cpp_name(extendable)
+            cpp_name = self.query_class_cpp_name(klass)
             static_metaobject = f'&{cpp_name}::staticMetaObject'
         else:
             static_metaobject = 'SIP_NULLPTR'
@@ -50,14 +50,14 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
 
         code.append('};')
 
-    def append_mapped_type_extension_code(self, extendable, name, code):
+    def append_mapped_type_extension_code(self, mapped_type, name, code):
         """ Append code fragments that implements a mapped type extension data
         structure.
         """
 
         # This will only ever be called for PyQt6.
 
-        extension = self.get_extension_data(extendable)
+        extension = self.get_extension_data(mapped_type)
         if extension is None:
             return
 
@@ -71,29 +71,29 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
         code.append(
                 _PYQT6_SIP_API_H_CODE if self.project.builder.qt_version >= 0x060000 else _PYQT5_SIP_API_H_CODE)
 
-    def complete_class_definition(self, extendable):
+    def complete_class_definition(self, klass):
         """ Complete the definition of a class. """
 
         qt_major = self.project.builder.qt_version >> 16
         module = f'PyQt{qt_major}.QtCore'
 
-        if self.query_class_is_subclass(extendable, module, 'QObject'):
-            extension = self.get_extension_data(extendable, _ClassExtension)
+        if self.query_class_is_subclass(klass, module, 'QObject'):
+            extension = self.get_extension_data(klass, _ClassExtension)
             extension.is_qobject = True
 
-    def complete_function_parse(self, extendable, extendable_scope):
+    def complete_function_parse(self, function, scope):
         """ Complete the parsing of a (possibly scoped) function. """
 
         # We are only interested in class functions.
-        if extendable_scope is None:
+        if scope is None:
             return
 
         # Ignore if we are not in a signal or slot section.
-        class_extension = self.get_extension_data(extendable_scope)
+        class_extension = self.get_extension_data(scope)
         if class_extension is None or class_extension.current_function_type is None:
             return None
 
-        extension = self.get_extension_data(extendable, _FunctionExtension)
+        extension = self.get_extension_data(function, _FunctionExtension)
         extension.type = class_extension.current_function_type
 
     def get_class_access_specifier_keywords(self):
@@ -110,7 +110,7 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
 
         return ('Q_SIGNAL', 'Q_SLOT')
 
-    def parse_argument_annotation(self, extendable, name, raw_value, location):
+    def parse_argument_annotation(self, argument, name, raw_value, location):
         """ Parse an argument annotation.  Return True if it was parsed. """
 
         if name == 'ScopesStripped':
@@ -121,7 +121,7 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
                 self.parsing_error("/ScopesStripped/ must be greater than 0",
                         location)
             else:
-                extension = self.get_extension_data(extendable,
+                extension = self.get_extension_data(argument,
                         _ArgumentExtension)
                 extension.scopes_stripped = scopes_stripped
 
@@ -129,7 +129,7 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
 
         return False
 
-    def parse_class_access_specifier(self, extendable, primary, secondary):
+    def parse_class_access_specifier(self, klass, primary, secondary):
         """ Parse a primary and optional secondary class access specifier.  If
         it was parsed return the C++ standard access specifier (ie. 'public',
         'protected' or 'private') to use, otherwise return None.
@@ -150,66 +150,64 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
             function_type = FunctionType.SIGNAL
             primary = 'public'
 
-        extension = self.get_extension_data(extendable, _ClassExtension)
+        extension = self.get_extension_data(klass, _ClassExtension)
         extension.current_function_type = function_type
 
         return primary
 
-    def parse_class_annotation(self, extendable, name, raw_value, location):
+    def parse_class_annotation(self, klass, name, raw_value, location):
         """ Parse a class annotation.  Return True if it was parsed. """
 
         if self.project.builder.qt_version < 0x060000:
             if name == 'PyQtFlag':
-                extension = self.get_extension_data(extendable,
-                        _ClassExtension)
+                extension = self.get_extension_data(klass, _ClassExtension)
                 extension.flags = self.parse_integer_annotation(name,
                         raw_value, location)
                 return True
 
             if name == 'PyQtFlagsEnums':
-                extension = self.get_extension_data(extendable,
-                        _ClassExtension)
+                extension = self.get_extension_data(klass, _ClassExtension)
                 extension.flags_enums = self.parse_string_list_annotation(name,
                         raw_value, location)
                 extension.flags |= 1
                 return True
 
         if name == 'PyQtInterface':
-            extension = self.get_extension_data(extendable, _ClassExtension)
+            extension = self.get_extension_data(klass, _ClassExtension)
             extension.interface = self.parse_string_annotation(name, raw_value,
                     location)
             return True
 
         if name == 'PyQtNoQMetaObject':
-            extension = self.get_extension_data(extendable, _ClassExtension)
+            extension = self.get_extension_data(klass, _ClassExtension)
             extension.no_qmetaobject = self.parse_boolean_annotation(name,
                     raw_value, location)
             return True
 
         return False
 
-    def parse_function_keyword(self, extendable, keyword):
+    def parse_function_keyword(self, function, keyword):
         """ Parse a function keyword.  Return True if it was parsed. """
 
         if keyword == 'Q_SIGNAL':
-            extension = self.get_extension_data(extendable, _FunctionExtension)
+            extension = self.get_extension_data(function, _FunctionExtension)
             extension.type = FunctionType.SIGNAL
             return True
 
         if keyword == 'Q_SLOT':
-            extension = self.get_extension_data(extendable, _FunctionExtension)
+            extension = self.get_extension_data(function, _FunctionExtension)
             extension.type = FunctionType.SLOT
             return True
 
         return False
 
-    def parse_mapped_type_annotation(self, extendable, name, raw_value,
+    def parse_mapped_type_annotation(self, mapped_type, name, raw_value,
             location):
         """ Parse a mapped type annotation.  Return True if it was parsed. """
 
         if self.project.builder.qt_version >= 0x060000:
             if name == 'PyQtFlag':
-                extension = self.get_extension_data(extendable,
+                extension = self.get_extension_data(mapped_type,
                         _MappedTypeExtension)
                 extension.flags = self.parse_integer_annotation(name,
                         raw_value, location)
@@ -217,12 +215,12 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
 
         return False
 
-    def parse_namespace_annotation(self, extendable, name, raw_value,
+    def parse_namespace_annotation(self, namespace, name, raw_value,
             location):
         """ Parse a namespace annotation.  Return True if it was parsed. """
 
         if name == 'PyQtNoQMetaObject':
-            extension = self.get_extension_data(extendable,
+            extension = self.get_extension_data(namespace,
                     _NamespaceExtension)
             extension.no_qmetaobject = self.parse_boolean_annotation(name,
                     raw_value, location)

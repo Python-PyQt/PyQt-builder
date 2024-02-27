@@ -24,6 +24,12 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
 
         qt_major = self.project.builder.qt_version >> 16
 
+        signals_name = name + '_signals'
+        if self._pyqt_append_class_signals_table(extendable, qt_major, signals_name, code):
+            qt_signals = f'&{signals_name}'
+        else:
+            qt_signals = 'SIP_NULLPTR'
+
         code.append(f'static pyqt{qt_major}ClassExtensionDef {name} = {{')
 
         if qt_major == 5:
@@ -37,7 +43,7 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
 
         code.append(f'    {static_metaobject},')
 
-        code.append('    SIP_NULLPTR, // XXX qt_signals')
+        code.append(f'    {qt_signals},')
 
         qt_interface = f'"{extension.interface}"' if extension.interface is not None else 'SIP_NULLPTR'
         code.append(f'    {qt_interface},')
@@ -65,7 +71,7 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
         code.append(
                 _PYQT6_SIP_API_H_CODE if self.project.builder.qt_version >= 0x060000 else _PYQT5_SIP_API_H_CODE)
 
-    def complete_class(self, extendable):
+    def complete_class_definition(self, extendable):
         """ Complete the definition of a class. """
 
         qt_major = self.project.builder.qt_version >> 16
@@ -74,6 +80,21 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
         if self.query_class_is_subclass(extendable, module, 'QObject'):
             extension = self.get_extension_data(extendable, _ClassExtension)
             extension.is_qobject = True
+
+    def complete_function_parse(self, extendable, extendable_scope):
+        """ Complete the parsing of a (possibly scoped) function. """
+
+        # We are only interested in class functions.
+        if extendable_scope is None:
+            return
+
+        # Ignore if we are not in a signal or slot section.
+        class_extension = self.get_extension_data(extendable_scope)
+        if class_extension is None or class_extension.current_function_type is None:
+            return None
+
+        extension = self.get_extension_data(extendable, _FunctionExtension)
+        extension.type = class_extension.current_function_type
 
     def get_class_access_specifier_keywords(self):
         """ Return a sequence of class action specifier keywords to be
@@ -88,6 +109,25 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
         """
 
         return ('Q_SIGNAL', 'Q_SLOT')
+
+    def parse_argument_annotation(self, extendable, name, raw_value, location):
+        """ Parse an argument annotation.  Return True if it was parsed. """
+
+        if name == 'ScopesStripped':
+            scopes_stripped = self.parse_integer_annotation(name, raw_value,
+                    location)
+
+            if scopes_stripped <= 0:
+                self.parsing_error("/ScopesStripped/ must be greater than 0",
+                        location)
+            else:
+                extension = self.get_extension_data(extendable,
+                        _ArgumentExtension)
+                extension.scopes_stripped = scopes_stripped
+
+            return True
+
+        return False
 
     def parse_class_access_specifier(self, extendable, primary, secondary):
         """ Parse a primary and optional secondary class access specifier.  If
@@ -190,6 +230,132 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
 
         return False
 
+    def _pyqt_append_class_emitters(self, klass, code):
+        """ Append the code for each signal emitter of a class. """
+
+        # XXX
+
+    def _pyqt_append_class_signals_table(self, klass, qt_major, table_name,
+            code):
+        """ Append the code to generate any signals table for a class.  Return
+        True if a table was generated.
+        """
+
+        is_table = False
+
+        for group_nr, group in enumerate(self.query_class_function_groups(klass)):
+            signals = []
+            non_signals = False
+
+            for function in group:
+                function_extension = self.get_extension_data(function)
+                if function_extension is not None and function_extension.type is FunctionType.SIGNAL:
+                    signals.append(function)
+                else:
+                    non_signals = True
+
+            if not signals:
+                continue
+
+            if not non_signals:
+                # No non-signals to handle.
+                group_nr = -1
+
+            if not is_table:
+                is_table = True
+
+                self._pyqt_append_class_emitters(klass, code)
+
+                code.append(f'static const pyqt{qt_major}QtSignal {table_name}[] = {{')
+
+            self._pyqt_append_signal_table_entry(function, klass, group_nr,
+                    code)
+
+            # Only handle non-signals in the first overload.
+            group_nr = -1
+
+        if is_table:
+            code.append('    {SIP_NULLPTR, SIP_NULLPTR, SIP_NULLPTR, SIP_NULLPTR}\n};')
+
+        return is_table
+
+    def _pyqt_append_signal_table_entry(self, function, klass, group_nr, code):
+        """ Append the code for a single signal in the signal table. """
+
+        klass_name = self.query_class_cpp_name(klass).replace('::', '_')
+        signal_name = self.query_function_cpp_name(function)
+
+        # Build the normalised signature.
+        stripped = []
+        unstripped = []
+        need_unstripped = False
+        has_optional_args = False
+
+        for arg in self.query_function_arguments(function):
+            const, type_name, derefs, reference, default_value = self.query_argument_cpp_decl(argument)
+
+            if default_value is not None:
+                has_optional_args = True
+
+            # Strip any global scope.
+            if type_name.startswith('::'):
+                type_name = type_name[2:]
+
+            # Save the declaration in its original state in case an argument
+            # had scopes stripped.
+            unstripped.append((const, type_name, derefs, reference))
+
+            # Do some signal argument normalisation so that Qt doesn't have to.
+            if const and (reference or derefs == ''):
+                const = reference = False
+
+            # See if /ScopesStripped/ was specified for the argument.
+            extension = self.get_extension_data(arg)
+            if extension is not None:
+                need_unstripped = True
+                type_name = '::'.join(
+                        type_name.split('::')[extension.scopes_stripped:])
+
+            stripped.append((const, type_name, derefs, reference))
+
+        stripped_args = ','.join([self._pyqt_arg_decl(*a) for a in stripped])
+        unstripped_args = ('|(' + ','.join([self._pyqt_arg_decl(*a) for a in unstripped]) + ')') if need_unstripped else ''
+
+        # Get the docstring.
+        # TODO - build system extensions need to be bindings specific
+        docstring = 'SIP_NULLPTR'
+
+        # Get the reference to a PyMethodDef structure that implements the
+        # non-signal overloads.
+        if group_nr >= 0:
+            pymethoddef = self.query_class_function_group_pymethoddef_reference(
+                    klass, group_nr)
+        else:
+            pymethoddef = 'SIP_NULLPTR'
+
+        # We enable a hack that supplies any missing optional arguments.  We
+        # only include the version with all arguments and provide an emitter
+        # function which handles the optional arguments.
+        emitter = f'emit_{klass_name}_{signal_name}' if has_optional_args else 'SIP_NULLPTR'
+
+        code.append(f'    {{"{signal_name}({stripped_args}){unstripped_args}", {docstring}, {pymethoddef}, {emitter}}},')
+
+    @staticmethod
+    def _pyqt_arg_decl(const, type_name, derefs, reference):
+        """ Return an argument declaration from it's components. """
+
+        decl = 'const ' if const else ''
+        decl += type_name
+
+        if nr_derefs:
+            decl += ' '
+            decl += derefs
+
+        if reference:
+            decl += '&'
+
+        return decl
+
 
 class FunctionType(Enum):
     """ The PyQt-specific function type. """
@@ -199,6 +365,14 @@ class FunctionType(Enum):
 
     # A slot.
     SLOT = ()
+
+
+@dataclass
+class _ArgumentExtension:
+    """ The additional data held for an argument. """
+
+    # The value of /ScopesStripped/.
+    scopes_stripped: int = 0
 
 
 @dataclass

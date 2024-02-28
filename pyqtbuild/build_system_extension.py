@@ -327,8 +327,29 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
             unstripped_args = ''
 
         # Get the docstring.
-        # TODO - build system extensions need to be bindings specific
-        docstring = 'SIP_NULLPTR'
+        if self.bindings.docstrings:
+            docstring = '"'
+
+            default_docstring = self.query_function_default_docstring(function)
+            explicit_docstring = self.query_function_docstring(function)
+
+            if explicit_docstring is None:
+                docstring += '\\1'
+                docstring += default_docstring
+            else:
+                if self.query_function_default_docstring_is_prepended(function):
+                    docstring += default_docstring
+                    docstring += '\\n'
+
+                docstring += explicit_docstring
+
+                if self.query_function_default_docstring_is_appended(function):
+                    docstring += '\\n'
+                    docstring += default_docstring
+
+            docstring += '"'
+        else:
+            docstring = 'SIP_NULLPTR'
 
         # Get the reference to a PyMethodDef structure that implements the
         # non-signal overloads.

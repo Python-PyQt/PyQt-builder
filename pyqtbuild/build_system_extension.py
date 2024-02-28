@@ -22,17 +22,17 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
         if extension is None:
             return
 
-        qt_major = self.project.builder.qt_version >> 16
+        pyqt_major = self._pyqt_major_version
 
         signals_name = name + '_signals'
-        if self._pyqt_append_class_signals_table(klass, qt_major, signals_name, code):
+        if self._pyqt_append_class_signals_table(klass, pyqt_major, signals_name, code):
             qt_signals = f'&{signals_name}'
         else:
             qt_signals = 'SIP_NULLPTR'
 
-        code.append(f'static pyqt{qt_major}ClassExtensionDef {name} = {{')
+        code.append(f'static pyqt{pyqt_major}ClassExtensionDef {name} = {{')
 
-        if qt_major == 5:
+        if pyqt_major == 5:
             code.append(f'    {extension.flags},')
 
         if extension.is_qobject and not extension.no_qmetaobject:
@@ -69,13 +69,12 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
         """
 
         code.append(
-                _PYQT6_SIP_API_H_CODE if self.project.builder.qt_version >= 0x060000 else _PYQT5_SIP_API_H_CODE)
+                _PYQT6_SIP_API_H_CODE if self._pyqt_major_version == 6 else _PYQT5_SIP_API_H_CODE)
 
     def complete_class_definition(self, klass):
         """ Complete the definition of a class. """
 
-        qt_major = self.project.builder.qt_version >> 16
-        module = f'PyQt{qt_major}.QtCore'
+        module = f'PyQt{self._pyqt_major_version}.QtCore'
 
         if self.query_class_is_subclass(klass, module, 'QObject'):
             extension = self.get_extension_data(klass, _ClassExtension)
@@ -158,7 +157,7 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
     def parse_class_annotation(self, klass, name, raw_value, location):
         """ Parse a class annotation.  Return True if it was parsed. """
 
-        if self.project.builder.qt_version < 0x060000:
+        if self._pyqt_major_version == 5:
             if name == 'PyQtFlag':
                 extension = self.get_extension_data(klass, _ClassExtension)
                 extension.flags = self.parse_integer_annotation(name,
@@ -205,7 +204,7 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
             location):
         """ Parse a mapped type annotation.  Return True if it was parsed. """
 
-        if self.project.builder.qt_version >= 0x060000:
+        if self._pyqt_major_version == 6:
             if name == 'PyQtFlag':
                 extension = self.get_extension_data(mapped_type,
                         _MappedTypeExtension)
@@ -233,7 +232,7 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
 
         # XXX
 
-    def _pyqt_append_class_signals_table(self, klass, qt_major, table_name,
+    def _pyqt_append_class_signals_table(self, klass, pyqt_major, table_name,
             code):
         """ Append the code to generate any signals table for a class.  Return
         True if a table was generated.
@@ -264,7 +263,7 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
 
                 self._pyqt_append_class_emitters(klass, code)
 
-                code.append(f'static const pyqt{qt_major}QtSignal {table_name}[] = {{')
+                code.append(f'static const pyqt{pyqt_major}QtSignal {table_name}[] = {{')
 
             self._pyqt_append_signal_table_entry(function, klass, group_nr,
                     code)
@@ -353,6 +352,12 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
             decl += '&'
 
         return decl
+
+    @property
+    def _pyqt_major_version(self):
+        """ The PyQt (and Qt) major version number. """
+
+        return self.bindings.project.builder.qt_version >> 16
 
 
 class FunctionType(Enum):

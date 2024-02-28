@@ -283,40 +283,48 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
         signal_name = self.query_function_cpp_name(function)
 
         # Build the normalised signature.
-        stripped = []
-        unstripped = []
         need_unstripped = False
         has_optional_args = False
 
-        for arg in self.query_function_arguments(function):
-            const, type_name, derefs, reference, default_value = self.query_argument_cpp_decl(argument)
+        stripped = []
 
-            if default_value is not None:
+        for arg in self.query_function_cpp_arguments(function):
+            if self.query_argument_is_optional(arg):
                 has_optional_args = True
-
-            # Strip any global scope.
-            if type_name.startswith('::'):
-                type_name = type_name[2:]
-
-            # Save the declaration in its original state in case an argument
-            # had scopes stripped.
-            unstripped.append((const, type_name, derefs, reference))
-
-            # Do some signal argument normalisation so that Qt doesn't have to.
-            if const and (reference or derefs == ''):
-                const = reference = False
 
             # See if /ScopesStripped/ was specified for the argument.
             extension = self.get_extension_data(arg)
             if extension is not None:
                 need_unstripped = True
-                type_name = '::'.join(
-                        type_name.split('::')[extension.scopes_stripped:])
+                strip = extension.scopes_stripped
+            else:
+                strip = -1
 
-            stripped.append((const, type_name, derefs, reference))
+            arg_decl = self.query_argument_cpp_decl(arg, klass, strip=strip)
 
-        stripped_args = ','.join([self._pyqt_arg_decl(*a) for a in stripped])
-        unstripped_args = ('|(' + ','.join([self._pyqt_arg_decl(*a) for a in unstripped]) + ')') if need_unstripped else ''
+            # Do some signal argument normalisation so that Qt doesn't have to.
+            # Note that this is too simplistic in the (highly unlikely) event
+            # that the argument is a function pointer.
+            if arg_decl.startswith('const ') and (arg_decl.endswith('&') or '*' not in arg_decl):
+                arg_decl = arg_decl[6:]
+
+                if arg_decl.endswith('&'):
+                    arg_decl = arg_decl[:-1]
+
+            stripped.append(arg_decl)
+
+        stripped_args = ','.join(stripped)
+
+        if need_unstripped:
+            unstripped = []
+
+            for arg in self.query_function_cpp_arguments(function):
+                unstripped.append(
+                        self.query_argument_cpp_decl(arg, klass, strip=-1))
+
+            unstripped_args = '|(' + ','.join(unstripped) + ')'
+        else:
+            unstripped_args = ''
 
         # Get the docstring.
         # TODO - build system extensions need to be bindings specific
@@ -336,22 +344,6 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
         emitter = f'emit_{klass_name}_{signal_name}' if has_optional_args else 'SIP_NULLPTR'
 
         code.append(f'    {{"{signal_name}({stripped_args}){unstripped_args}", {docstring}, {pymethoddef}, {emitter}}},')
-
-    @staticmethod
-    def _pyqt_arg_decl(const, type_name, derefs, reference):
-        """ Return an argument declaration from it's components. """
-
-        decl = 'const ' if const else ''
-        decl += type_name
-
-        if nr_derefs:
-            decl += ' '
-            decl += derefs
-
-        if reference:
-            decl += '&'
-
-        return decl
 
     @property
     def _pyqt_major_version(self):

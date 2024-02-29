@@ -13,64 +13,6 @@ from sipbuild import BuildSystemExtension
 class PyQtBuildSystemExtension(BuildSystemExtension):
     """ This class implements the PyQt builder extension. """
 
-    def append_class_extension_code(self, klass, name, code):
-        """ Append code fragments that implements a class extension data
-        structure.
-        """
-
-        extension = self.get_extension_data(klass)
-        if extension is None:
-            return
-
-        pyqt_major = self._pyqt_major_version
-
-        signals_name = name + '_signals'
-        if self._pyqt_append_class_signals_table(klass, pyqt_major, signals_name, code):
-            qt_signals = f'&{signals_name}'
-        else:
-            qt_signals = 'SIP_NULLPTR'
-
-        code.append(f'static pyqt{pyqt_major}ClassExtensionDef {name} = {{')
-
-        if pyqt_major == 5:
-            code.append(f'    {extension.flags},')
-
-        if extension.is_qobject and not extension.no_qmetaobject:
-            cpp_name = self.query_class_cpp_name(klass)
-            static_metaobject = f'&{cpp_name}::staticMetaObject'
-        else:
-            static_metaobject = 'SIP_NULLPTR'
-
-        code.append(f'    {static_metaobject},')
-
-        code.append(f'    {qt_signals},')
-
-        qt_interface = f'"{extension.interface}"' if extension.interface is not None else 'SIP_NULLPTR'
-        code.append(f'    {qt_interface},')
-
-        code.append('};')
-
-    def append_mapped_type_extension_code(self, mapped_type, name, code):
-        """ Append code fragments that implements a mapped type extension data
-        structure.
-        """
-
-        # This will only ever be called for PyQt6.
-
-        extension = self.get_extension_data(mapped_type)
-        if extension is None:
-            return
-
-        code.append(f'static pyqt6MappedTypeExtensionDef {name} = {{{extension.flags}}};\n')
-
-    def append_sip_api_h_code(self, code):
-        """ Append code fragments to be included in all generated sipAPI*.h
-        files.
-        """
-
-        code.append(
-                _PYQT6_SIP_API_H_CODE if self._pyqt_major_version == 6 else _PYQT5_SIP_API_H_CODE)
-
     def complete_class_definition(self, klass):
         """ Complete the definition of a class. """
 
@@ -227,14 +169,80 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
 
         return False
 
-    def _pyqt_append_class_emitters(self, klass, code):
-        """ Append the code for each signal emitter of a class. """
+    def write_class_extension_code(self, output, klass, name):
+        """ Write code that implements a class extension data structure.
+        Return True if something was written.
+        """
+
+        extension = self.get_extension_data(klass)
+        if extension is None:
+            return False
+
+        pyqt_major = self._pyqt_major_version
+
+        signals_name = name + '_signals'
+        if self._pyqt_write_class_signals_table(output, klass, pyqt_major, signals_name):
+            qt_signals = f'&{signals_name}'
+        else:
+            qt_signals = 'SIP_NULLPTR'
+
+        output.write(f'\nstatic pyqt{pyqt_major}ClassExtensionDef {name} = {{\n')
+
+        if pyqt_major == 5:
+            output.write(f'    {extension.flags},')
+
+        if extension.is_qobject and not extension.no_qmetaobject:
+            cpp_name = self.query_class_cpp_name(klass)
+            static_metaobject = f'&{cpp_name}::staticMetaObject'
+        else:
+            static_metaobject = 'SIP_NULLPTR'
+
+        output.write(f'    {static_metaobject},')
+
+        output.write(f'    {qt_signals},')
+
+        qt_interface = f'"{extension.interface}"' if extension.interface is not None else 'SIP_NULLPTR'
+        output.write(f'    {qt_interface},')
+
+        output.write('};\n')
+
+        return True
+
+    def write_mapped_type_extension_code(self, output, mapped_type, name):
+        """ Write code that implements a mapped type extension data structure.
+        Return True if something was written.
+        """
+
+        # This will only ever be called for PyQt6.
+
+        extension = self.get_extension_data(mapped_type)
+        if extension is None:
+            return False
+
+        output.write(f'\nstatic pyqt6MappedTypeExtensionDef {name} = {{{extension.flags}}};\n')
+
+        return True
+
+    def write_sip_api_h_code(self, output):
+        """ Write code to be included in all generated sipAPI*.h files. """
+
+        output.write(
+                _PYQT6_SIP_API_H_CODE if self._pyqt_major_version == 6 else _PYQT5_SIP_API_H_CODE)
+
+    @property
+    def _pyqt_major_version(self):
+        """ The PyQt (and Qt) major version number. """
+
+        return self.bindings.project.builder.qt_version >> 16
+
+    def _pyqt_write_class_emitters(self, output, klass):
+        """ Write the code for each signal emitter of a class. """
 
         # XXX
 
-    def _pyqt_append_class_signals_table(self, klass, pyqt_major, table_name,
-            code):
-        """ Append the code to generate any signals table for a class.  Return
+    def _pyqt_write_class_signals_table(self, output, klass, pyqt_major,
+            table_name):
+        """ Write the code to generate any signals table for a class.  Return
         True if a table was generated.
         """
 
@@ -261,23 +269,24 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
             if not is_table:
                 is_table = True
 
-                self._pyqt_append_class_emitters(klass, code)
+                self._pyqt_write_class_emitters(output, klass)
 
-                code.append(f'static const pyqt{pyqt_major}QtSignal {table_name}[] = {{')
+                output.write(f'\nstatic const pyqt{pyqt_major}QtSignal {table_name}[] = {{\n')
 
-            self._pyqt_append_signal_table_entry(function, klass, group_nr,
-                    code)
+            self._pyqt_write_signal_table_entry(output, function, klass,
+                    group_nr)
 
             # Only handle non-signals in the first overload.
             group_nr = -1
 
         if is_table:
-            code.append('    {SIP_NULLPTR, SIP_NULLPTR, SIP_NULLPTR, SIP_NULLPTR}\n};')
+            output.write('    {SIP_NULLPTR, SIP_NULLPTR, SIP_NULLPTR, SIP_NULLPTR}\n};\n')
 
         return is_table
 
-    def _pyqt_append_signal_table_entry(self, function, klass, group_nr, code):
-        """ Append the code for a single signal in the signal table. """
+    def _pyqt_write_signal_table_entry(self, output, function, klass,
+            group_nr):
+        """ Write the code for a single signal in the signal table. """
 
         klass_name = self.query_class_cpp_name(klass).replace('::', '_')
         signal_name = self.query_function_cpp_name(function)
@@ -364,13 +373,7 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
         # function which handles the optional arguments.
         emitter = f'emit_{klass_name}_{signal_name}' if has_optional_args else 'SIP_NULLPTR'
 
-        code.append(f'    {{"{signal_name}({stripped_args}){unstripped_args}", {docstring}, {pymethoddef}, {emitter}}},')
-
-    @property
-    def _pyqt_major_version(self):
-        """ The PyQt (and Qt) major version number. """
-
-        return self.bindings.project.builder.qt_version >> 16
+        output.write(f'    {{"{signal_name}({stripped_args}){unstripped_args}", {docstring}, {pymethoddef}, {emitter}}},\n')
 
 
 class FunctionType(Enum):
@@ -442,7 +445,8 @@ class _NamespaceExtension:
 
 
 # The code to include in sipAPI*.h for PyQt6.
-_PYQT6_SIP_API_H_CODE = '''/*
+_PYQT6_SIP_API_H_CODE = '''
+/*
  * The description of a Qt signal for PyQt6.
  */
 typedef int (*pyqt6EmitFn)(void *, PyObject *);
@@ -500,7 +504,8 @@ typedef struct _pyqt6MappedTypeExtensionDef {
 
 
 # The code to include in sipAPI*.h for PyQt5.
-_PYQT5_SIP_API_H_CODE = '''/*
+_PYQT5_SIP_API_H_CODE = '''
+/*
  * The description of a Qt signal for PyQt5.
  */
 typedef int (*pyqt5EmitFn)(void *, PyObject *);

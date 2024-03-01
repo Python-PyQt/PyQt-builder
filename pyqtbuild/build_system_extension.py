@@ -29,13 +29,11 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
         if scope is None:
             return
 
-        # Ignore if we are not in a signal or slot section.
+        # Ignore if we are not in a signal section.
         class_extension = self.get_extension_data(scope)
-        if class_extension is None or class_extension.current_function_type is None:
-            return None
-
-        extension = self.get_extension_data(function, _FunctionExtension)
-        extension.type = class_extension.current_function_type
+        if class_extension is not None and class_extension.functions_are_signals:
+            extension = self.get_extension_data(function, _FunctionExtension)
+            extension.is_signal = True
 
     def get_class_access_specifier_keywords(self):
         """ Return a sequence of class action specifier keywords to be
@@ -77,22 +75,20 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
         """
 
         if primary in ('public', 'protected', 'private'):
-            if secondary is None:
-                # It's a standard C++ access specifier.
-                function_type = None
-            elif secondary in ('slots', 'Q_SLOTS'):
-                function_type = FunctionType.SLOT
-            else:
+            if secondary is not None and secondary not in ('slots', 'Q_SLOTS'):
                 return None
+
+            is_signal = False
+
         elif primary in ('signals', 'Q_SIGNALS'):
             if secondary is not None:
                 return None
 
-            function_type = FunctionType.SIGNAL
+            is_signal = True
             primary = 'public'
 
         extension = self.get_extension_data(klass, _ClassExtension)
-        extension.current_function_type = function_type
+        extension.functions_are_signals = is_signal
 
         return primary
 
@@ -132,12 +128,10 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
 
         if keyword == 'Q_SIGNAL':
             extension = self.get_extension_data(function, _FunctionExtension)
-            extension.type = FunctionType.SIGNAL
+            extension.is_signal = True
             return True
 
         if keyword == 'Q_SLOT':
-            extension = self.get_extension_data(function, _FunctionExtension)
-            extension.type = FunctionType.SLOT
             return True
 
         return False
@@ -254,7 +248,7 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
 
             for function in group:
                 function_extension = self.get_extension_data(function)
-                if function_extension is not None and function_extension.type is FunctionType.SIGNAL:
+                if function_extension is not None and function_extension.is_signal:
                     signals.append(function)
                 else:
                     non_signals = True
@@ -398,8 +392,8 @@ class _ArgumentExtension:
 class _ClassExtension:
     """ The additional data held for a class. """
 
-    # The current function type.
-    current_function_type: Optional[FunctionType] = None
+    # True if functions are currently signals.
+    functions_are_signals: bool = False
 
     # Non-zero if /PyQtFlags/ was specified.  Also implied if /PyQtFlagsEnums/
     # was specified.  PyQt5 only.
@@ -424,8 +418,8 @@ class _ClassExtension:
 class _FunctionExtension:
     """ The additional data held for a function. """
 
-    # The PyQt-specific function type.
-    type: Optional[FunctionType] = None
+    # True if the function is a signal.
+    is_signal: bool = False
 
 
 @dataclass

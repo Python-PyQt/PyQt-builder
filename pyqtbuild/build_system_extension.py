@@ -5,7 +5,7 @@
 
 from dataclasses import dataclass
 from enum import auto, Enum
-from typing import List, Optional
+from typing import Any, Dict, List, Optional, Set
 
 from sipbuild import BuildSystemExtension
 
@@ -13,43 +13,7 @@ from sipbuild import BuildSystemExtension
 class PyQtBuildSystemExtension(BuildSystemExtension):
     """ This class implements the PyQt builder extension. """
 
-    def complete_class_definition(self, klass):
-        """ Complete the definition of a class. """
-
-        module = f'PyQt{self._pyqt_major_version}.QtCore'
-
-        if self.query_class_is_subclass(klass, module, 'QObject'):
-            extension = self.get_extension_data(klass, _ClassExtension)
-            extension.is_qobject = True
-
-    def complete_function_parse(self, function, scope):
-        """ Complete the parsing of a (possibly scoped) function. """
-
-        # We are only interested in class functions.
-        if scope is None:
-            return
-
-        # Ignore if we are not in a signal section.
-        class_extension = self.get_extension_data(scope)
-        if class_extension is not None and class_extension.functions_are_signals:
-            extension = self.get_extension_data(function, _FunctionExtension)
-            extension.is_signal = True
-
-    def get_class_access_specifier_keywords(self):
-        """ Return a sequence of class action specifier keywords to be
-        recognised by the parser.
-        """
-
-        return ('signals', 'Q_SIGNALS', 'slots', 'Q_SLOTS')
-
-    def get_function_keywords(self):
-        """ Return a sequence of function keywords to be recognised by the
-        parser.
-        """
-
-        return ('Q_SIGNAL', 'Q_SLOT')
-
-    def parse_argument_annotation(self, argument, name, raw_value, location):
+    def argument_parse_annotation(self, argument, name, raw_value, location):
         """ Parse an argument annotation.  Return True if it was parsed. """
 
         if name == 'ScopesStripped':
@@ -68,7 +32,23 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
 
         return False
 
-    def parse_class_access_specifier(self, klass, primary, secondary):
+    def class_complete_definition(self, klass):
+        """ Complete the definition of a class. """
+
+        module = f'PyQt{self._pyqt_major_version}.QtCore'
+
+        if self.query_class_is_subclass(klass, module, 'QObject'):
+            extension = self.get_extension_data(klass, _ClassExtension)
+            extension.is_qobject = True
+
+    def class_get_access_specifier_keywords(self):
+        """ Return a sequence of class action specifier keywords to be
+        recognised by the parser.
+        """
+
+        return ('signals', 'Q_SIGNALS', 'slots', 'Q_SLOTS')
+
+    def class_parse_access_specifier(self, klass, primary, secondary):
         """ Parse a primary and optional secondary class access specifier.  If
         it was parsed return the C++ standard access specifier (ie. 'public',
         'protected' or 'private') to use, otherwise return None.
@@ -92,7 +72,7 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
 
         return primary
 
-    def parse_class_annotation(self, klass, name, raw_value, location):
+    def class_parse_annotation(self, klass, name, raw_value, location):
         """ Parse a class annotation.  Return True if it was parsed. """
 
         if self._pyqt_major_version == 5:
@@ -123,48 +103,8 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
 
         return False
 
-    def parse_function_keyword(self, function, keyword):
-        """ Parse a function keyword.  Return True if it was parsed. """
-
-        if keyword == 'Q_SIGNAL':
-            extension = self.get_extension_data(function, _FunctionExtension)
-            extension.is_signal = True
-            return True
-
-        if keyword == 'Q_SLOT':
-            return True
-
-        return False
-
-    def parse_mapped_type_annotation(self, mapped_type, name, raw_value,
-            location):
-        """ Parse a mapped type annotation.  Return True if it was parsed. """
-
-        if self._pyqt_major_version == 6:
-            if name == 'PyQtFlag':
-                extension = self.get_extension_data(mapped_type,
-                        _MappedTypeExtension)
-                extension.flags = self.parse_integer_annotation(name,
-                        raw_value, location)
-                return True
-
-        return False
-
-    def parse_namespace_annotation(self, namespace, name, raw_value,
-            location):
-        """ Parse a namespace annotation.  Return True if it was parsed. """
-
-        if name == 'PyQtNoQMetaObject':
-            extension = self.get_extension_data(namespace,
-                    _NamespaceExtension)
-            extension.no_qmetaobject = self.parse_boolean_annotation(name,
-                    raw_value, location)
-            return True
-
-        return False
-
-    def write_class_extension_code(self, output, klass, name):
-        """ Write code that implements a class extension data structure.
+    def class_write_extension_structure(self, klass, output, structure_name):
+        """ Write the code that implements a class extension data structure.
         Return True if something was written.
         """
 
@@ -174,19 +114,19 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
 
         pyqt_major = self._pyqt_major_version
 
-        signals_name = name + '_signals'
-        if self._pyqt_write_class_signals_table(output, klass, pyqt_major, signals_name):
-            qt_signals = f'&{signals_name}'
+        if extension.signal_groups is not None:
+            qt_signals = self._pyqt_write_class_signals_table(output, klass,
+                    extension, pyqt_major, structure_name)
         else:
             qt_signals = 'SIP_NULLPTR'
 
-        output.write(f'\nstatic pyqt{pyqt_major}ClassExtensionDef {name} = {{\n')
+        output.write(f'\nstatic pyqt{pyqt_major}ClassExtensionDef {structure_name} = {{\n')
 
         if pyqt_major == 5:
             output.write(f'    {extension.flags},')
 
         if extension.is_qobject and not extension.no_qmetaobject:
-            cpp_name = self.query_class_cpp_name(klass)
+            cpp_name = self.get_class_cpp_name(klass)
             static_metaobject = f'&{cpp_name}::staticMetaObject'
         else:
             static_metaobject = 'SIP_NULLPTR'
@@ -202,9 +142,95 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
 
         return True
 
-    def write_mapped_type_extension_code(self, output, mapped_type, name):
-        """ Write code that implements a mapped type extension data structure.
-        Return True if something was written.
+    def function_complete_parse(self, function, scope):
+        """ Complete the parsing of a function. """
+
+        if self.query_scope_is_class(scope):
+            # Ignore if we are not in a signal section.
+            class_extension = self.get_extension_data(scope)
+            if class_extension is not None and class_extension.functions_are_signals:
+                extension = self.get_extension_data(function, _FunctionExtension)
+                extension.is_signal = True
+
+                # Signals have an implied /ReleaseGIL/.
+                self.set_function_release_gil(function)
+
+    def function_get_keywords(self):
+        """ Return a sequence of function keywords to be recognised by the
+        parser.
+        """
+
+        return ('Q_SIGNAL', 'Q_SLOT')
+
+    def function_parse_keyword(self, function, keyword):
+        """ Parse a function keyword.  Return True if it was parsed. """
+
+        if keyword == 'Q_SIGNAL':
+            extension = self.get_extension_data(function, _FunctionExtension)
+            extension.is_signal = True
+            return True
+
+        if keyword == 'Q_SLOT':
+            return True
+
+        return False
+
+    def function_group_complete_definition(self, function_group, scope):
+        """ Update a function group after it has been defined. """
+
+        if not self.query_scope_is_class(scope):
+            return
+
+        # Organise the class's signals into groups of overloads.
+        # XXX - at the moment the function group is a list of all functions in
+        # the scope. Change this once overloads are stored in the common member
+        # rather than the scope.
+        signal_groups = {}
+        non_signal_group_names = set()
+
+        for function in function_group:
+            function_name = self.get_function_cpp_name(function)
+
+            function_extension = self.get_extension_data(function)
+            if function_extension is not None and function_extension.is_signal:
+                signals = signal_groups.setdefault(function_name, [])
+                signals.append(function)
+            else:
+                non_signal_group_names.add(function_name)
+
+        if signal_groups:
+            # Save the signal groups.
+            extension = self.get_extension_data(scope, _ClassExtension)
+            extension.signal_groups = signal_groups
+            extension.non_signal_group_names = set()
+
+            # Remove the signals from the original list and remember the names
+            # of any signal groups that have non-signal overloads.
+            for signal_name, signal_group in signal_groups.items():
+                if signal_name in non_signal_group_names:
+                    extension.non_signal_group_names.add(signal_name)
+
+                for signal in signal_group:
+                    function_group.remove(signal)
+
+    def mapped_type_parse_annotation(self, mapped_type, name, raw_value,
+            location):
+        """ Parse a mapped type annotation.  Return True if it was parsed. """
+
+        if self._pyqt_major_version == 6:
+            if name == 'PyQtFlag':
+                extension = self.get_extension_data(mapped_type,
+                        _MappedTypeExtension)
+                extension.flags = self.parse_integer_annotation(name,
+                        raw_value, location)
+                return True
+
+        return False
+
+    def mapped_type_write_extension_structure(self, mapped_type, output,
+            structure_name):
+        """ Write the code that implements a mapped type extension data
+        structure.  Return True if something was written.
         """
 
         # This will only ever be called for PyQt6.
@@ -213,9 +239,21 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
         if extension is None:
             return False
 
-        output.write(f'\nstatic pyqt6MappedTypeExtensionDef {name} = {{{extension.flags}}};\n')
+        output.write(f'\nstatic pyqt6MappedTypeExtensionDef {structure_name} = {{{extension.flags}}};\n')
 
         return True
+
+    def namespace_parse_annotation(self, namespace, name, raw_value, location):
+        """ Parse a namespace annotation.  Return True if it was parsed. """
+
+        if name == 'PyQtNoQMetaObject':
+            extension = self.get_extension_data(namespace,
+                    _NamespaceExtension)
+            extension.no_qmetaobject = self.parse_boolean_annotation(name,
+                    raw_value, location)
+            return True
+
+        return False
 
     def write_sip_api_h_code(self, output):
         """ Write code to be included in all generated sipAPI*.h files. """
@@ -229,72 +267,73 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
 
         return self.bindings.project.builder.qt_version >> 16
 
-    def _pyqt_write_class_emitters(self, output, klass):
-        """ Write the code for each signal emitter of a class. """
-
-        # XXX
-
-    def _pyqt_write_class_signals_table(self, output, klass, pyqt_major,
-            table_name):
-        """ Write the code to generate any signals table for a class.  Return
-        True if a table was generated.
+    def _pyqt_write_class_signals_table(self, output, klass, extension,
+            pyqt_major, name):
+        """ Write the code to generate the signals table for a class.  Return a
+        C++ reference to the table.
         """
 
-        is_table = False
+        # The prefix to make sure our generated code doesn't conflict with the
+        # standard generated code.
+        prefix = 'pyqt_signal_'
 
-        for group_nr, group in enumerate(self.query_class_function_groups(klass)):
-            signals = []
-            non_signals = False
+        # An emitter helper is generated for any signal overload with an
+        # optional argument.
+        emitter_helpers = []
 
-            for function in group:
-                function_extension = self.get_extension_data(function)
-                if function_extension is not None and function_extension.is_signal:
-                    signals.append(function)
+        for signal_group in extension.signal_groups.values():
+            for signal in signal_group:
+                for arg in self.get_function_cpp_arguments(signal):
+                    if self.query_argument_is_optional(arg):
+                        call_ref = self.write_function_group_bindings(
+                                signal_group, klass, output, prefix=prefix)
+                        break
                 else:
-                    non_signals = True
+                    call_ref = 'SIP_NULLPTR'
 
-            if not signals:
-                continue
+                emitter_helpers.append(call_ref)
 
-            if not non_signals:
-                # No non-signals to handle.
-                group_nr = -1
+        # XXX - better to be prefix + klass_name?
+        table_name = prefix + name
 
-            if not is_table:
-                is_table = True
+        output.write(f'\nstatic const pyqt{pyqt_major}QtSignal {table_name}[] = {{\n')
 
-                self._pyqt_write_class_emitters(output, klass)
+        signal_nr = 0
 
-                output.write(f'\nstatic const pyqt{pyqt_major}QtSignal {table_name}[] = {{\n')
+        for signal_name, signal_group in extension.signal_groups.items():
+            docstring = self.write_function_group_docstring(signal_group,
+                    klass, output, prefix=prefix)
 
-            self._pyqt_write_signal_table_entry(output, function, klass,
-                    group_nr)
+            if signal_name in extension.non_signal_group_names:
+                non_signal_pymethoddef = 'ZZZ'
+            else:
+                non_signal_pymethoddef = 'SIP_NULLPTR'
 
-            # Only handle non-signals in the first overload.
-            group_nr = -1
+            for signal_nr, signal in enumerate(signal_group):
+                self._pyqt_write_signal_table_entry(output, signal, signal_name,
+                        klass, docstring, non_signal_pymethoddef,
+                        emitter_helpers[signal_nr])
 
-        if is_table:
-            output.write('    {SIP_NULLPTR, SIP_NULLPTR, SIP_NULLPTR, SIP_NULLPTR}\n};\n')
+                docstring = non_signal_pymethoddef = 'SIP_NULLPTR'
 
-        return is_table
+            signal_nr += 1
 
-    def _pyqt_write_signal_table_entry(self, output, function, klass,
-            group_nr):
+        output.write('    {SIP_NULLPTR, SIP_NULLPTR, SIP_NULLPTR, SIP_NULLPTR}\n};\n')
+
+        return '&' + table_name
+
+    def _pyqt_write_signal_table_entry(self, output, signal, signal_name,
+            klass, docstring, pymethoddef, emitter_helper):
         """ Write the code for a single signal in the signal table. """
 
-        klass_name = self.query_class_cpp_name(klass).replace('::', '_')
-        signal_name = self.query_function_cpp_name(function)
+        klass_name = self.get_class_cpp_name(klass).replace('::', '_')
 
         # Build the normalised signature.
         need_unstripped = False
-        has_optional_args = False
 
         stripped = []
 
-        for arg in self.query_function_cpp_arguments(function):
-            if self.query_argument_is_optional(arg):
-                has_optional_args = True
-
+        for arg in self.get_function_cpp_arguments(signal):
             # See if /ScopesStripped/ was specified for the argument.
             extension = self.get_extension_data(arg)
             if extension is not None:
@@ -303,7 +342,7 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
             else:
                 strip = -1
 
-            arg_decl = self.query_argument_cpp_decl(arg, klass, strip=strip)
+            arg_decl = self.get_argument_cpp_decl(arg, klass, strip=strip)
 
             # Do some signal argument normalisation so that Qt doesn't have to.
             # Note that this is too simplistic in the (highly unlikely) event
@@ -321,63 +360,15 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
         if need_unstripped:
             unstripped = []
 
-            for arg in self.query_function_cpp_arguments(function):
+            for arg in self.get_function_cpp_arguments(signal):
                 unstripped.append(
-                        self.query_argument_cpp_decl(arg, klass, strip=-1))
+                        self.get_argument_cpp_decl(arg, klass, strip=-1))
 
             unstripped_args = '|(' + ','.join(unstripped) + ')'
         else:
             unstripped_args = ''
 
-        # Get the docstring.
-        if self.bindings.docstrings:
-            docstring = '"'
-
-            default_docstring = self.query_function_default_docstring(function)
-            explicit_docstring = self.query_function_docstring(function)
-
-            if explicit_docstring is None:
-                docstring += '\\1'
-                docstring += default_docstring
-            else:
-                if self.query_function_default_docstring_is_prepended(function):
-                    docstring += default_docstring
-                    docstring += '\\n'
-
-                docstring += explicit_docstring
-
-                if self.query_function_default_docstring_is_appended(function):
-                    docstring += '\\n'
-                    docstring += default_docstring
-
-            docstring += '"'
-        else:
-            docstring = 'SIP_NULLPTR'
-
-        # Get the reference to a PyMethodDef structure that implements the
-        # non-signal overloads.
-        if group_nr >= 0:
-            pymethoddef = self.query_class_function_group_pymethoddef_reference(
-                    klass, group_nr)
-        else:
-            pymethoddef = 'SIP_NULLPTR'
-
-        # We enable a hack that supplies any missing optional arguments.  We
-        # only include the version with all arguments and provide an emitter
-        # function which handles the optional arguments.
-        emitter = f'emit_{klass_name}_{signal_name}' if has_optional_args else 'SIP_NULLPTR'
-
-        output.write(f'    {{"{signal_name}({stripped_args}){unstripped_args}", {docstring}, {pymethoddef}, {emitter}}},\n')
-
-
-class FunctionType(Enum):
-    """ The PyQt-specific function type. """
-
-    # A signal.
-    SIGNAL = auto()
-
-    # A slot.
-    SLOT = ()
+        output.write(f'    {{"{signal_name}({stripped_args}){unstripped_args}", {docstring}, {pymethoddef}, {emitter_helper}}},\n')
 
 
 @dataclass
@@ -412,6 +403,12 @@ class _ClassExtension:
 
     # Set if /PyQtNoQMetaObject/ was specified.
     no_qmetaobject: bool = False
+
+    # The set of signal group names that have a non-signal in the group.
+    non_signal_group_names: Optional[Set[str]] = None
+
+    # The dict of signal groups.
+    signal_groups: Optional[Dict[str, List[Any]]] = None
 
 
 @dataclass

@@ -5,7 +5,7 @@
 
 from dataclasses import dataclass
 from enum import auto, Enum
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Tuple
 
 from sipbuild import BuildSystemExtension
 
@@ -114,8 +114,8 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
 
         pyqt_major = self._pyqt_major_version
 
-        if extension.signal_groups is not None:
-            qt_signals = self._pyqt_write_class_signals_table(output, klass,
+        if extension.signal_data is not None:
+            qt_signals = self._pyqt_class_write_signals_table(output, klass,
                     extension, pyqt_major, structure_name)
         else:
             qt_signals = 'SIP_NULLPTR'
@@ -175,43 +175,35 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
 
         return False
 
-    def function_group_complete_definition(self, function_group, scope):
+    def function_group_complete_definition(self, function_group, scope,
+            function_group_name):
         """ Update a function group after it has been defined. """
 
         if not self.query_scope_is_class(scope):
             return
 
-        # Organise the class's signals into groups of overloads.
-        # XXX - at the moment the function group is a list of all functions in
-        # the scope. Change this once overloads are stored in the common member
-        # rather than the scope.
-        signal_groups = {}
-        non_signal_group_names = set()
+        # Get the signals.
+        signal_group = []
+        has_non_signals = False
 
         for function in function_group:
-            function_name = self.get_function_cpp_name(function)
-
             function_extension = self.get_extension_data(function)
             if function_extension is not None and function_extension.is_signal:
-                signals = signal_groups.setdefault(function_name, [])
-                signals.append(function)
+                signal_group.append(function)
             else:
-                non_signal_group_names.add(function_name)
+                has_non_signals = True
 
-        if signal_groups:
-            # Save the signal groups.
+        if signal_group:
             extension = self.get_extension_data(scope, _ClassExtension)
-            extension.signal_groups = signal_groups
-            extension.non_signal_group_names = set()
 
-            # Remove the signals from the original list and remember the names
-            # of any signal groups that have non-signal overloads.
-            for signal_name, signal_group in signal_groups.items():
-                if signal_name in non_signal_group_names:
-                    extension.non_signal_group_names.add(signal_name)
+            if extension.signal_data is None:
+                extension.signal_data = {}
 
-                for signal in signal_group:
-                    function_group.remove(signal)
+            extension.signal_data[function_group_name] = (signal_group, has_non_signals)
+
+            # Remove the signals from the original list:
+            for signal in signal_group:
+                function_group.remove(signal)
 
     def mapped_type_parse_annotation(self, mapped_type, name, raw_value,
             location):
@@ -267,7 +259,7 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
 
         return self.bindings.project.builder.qt_version >> 16
 
-    def _pyqt_write_class_signals_table(self, output, klass, extension,
+    def _pyqt_class_write_signals_table(self, output, klass, extension,
             pyqt_major, name):
         """ Write the code to generate the signals table for a class.  Return a
         C++ reference to the table.
@@ -281,7 +273,7 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
         # optional argument.
         emitter_helpers = []
 
-        for signal_group in extension.signal_groups.values():
+        for signal_group, _ in extension.signal_data.values():
             for signal in signal_group:
                 for arg in self.get_function_cpp_arguments(signal):
                     if self.query_argument_is_optional(arg):
@@ -300,18 +292,18 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
 
         signal_nr = 0
 
-        for signal_name, signal_group in extension.signal_groups.items():
+        for signal_group_name, (signal_group, has_non_signals) in extension.signal_data.items():
             docstring = self.write_function_group_docstring(signal_group,
                     klass, output, prefix=prefix)
 
-            if signal_name in extension.non_signal_group_names:
-                non_signal_pymethoddef = 'ZZZ'
+            if has_non_signals:
+                non_signal_pymethoddef = 'ZZZ(signal_group_name)'
             else:
                 non_signal_pymethoddef = 'SIP_NULLPTR'
 
             for signal_nr, signal in enumerate(signal_group):
-                self._pyqt_write_signal_table_entry(output, signal, signal_name,
-                        klass, docstring, non_signal_pymethoddef,
+                self._pyqt_write_signal_table_entry(output, signal, klass,
+                        docstring, non_signal_pymethoddef,
                         emitter_helpers[signal_nr])
 
                 docstring = non_signal_pymethoddef = 'SIP_NULLPTR'
@@ -322,11 +314,11 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
 
         return '&' + table_name
 
-    def _pyqt_write_signal_table_entry(self, output, signal, signal_name,
-            klass, docstring, pymethoddef, emitter_helper):
+    def _pyqt_write_signal_table_entry(self, output, signal, klass, docstring,
+            pymethoddef, emitter_helper):
         """ Write the code for a single signal in the signal table. """
 
-        klass_name = self.get_class_cpp_name(klass).replace('::', '_')
+        signal_name = self.get_function_cpp_name(signal)
 
         # Build the normalised signature.
         need_unstripped = False
@@ -404,11 +396,10 @@ class _ClassExtension:
     # Set if /PyQtNoQMetaObject/ was specified.
     no_qmetaobject: bool = False
 
-    # The set of signal group names that have a non-signal in the group.
-    non_signal_group_names: Optional[Set[str]] = None
-
-    # The dict of signal groups.
-    signal_groups: Optional[Dict[str, List[Any]]] = None
+    # The dict of signal data keyed by the group name.  Each value is a 2-tuple
+    # of the signal group and a bool that is set if there were non-signal
+    # overloads.
+    signal_data: Optional[Dict[str, Tuple[Any, bool]]] = None
 
 
 @dataclass

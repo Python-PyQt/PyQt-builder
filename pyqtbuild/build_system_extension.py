@@ -270,16 +270,24 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
         prefix = 'pyqt_signal_'
 
         # An emitter helper is generated for any signal overload with an
-        # optional argument.
+        # optional argument or %MethodCode.
         emitter_helpers = []
 
         for signal_group, _ in extension.signal_data.values():
             for signal in signal_group:
-                for arg in self.get_function_cpp_arguments(signal):
-                    if self.query_argument_is_optional(arg):
-                        call_ref = self.write_function_group_bindings(
-                                signal_group, klass, output, prefix=prefix)
-                        break
+                if self.query_function_has_method_code(signal):
+                    need_emitter_helper = True
+                else:
+                    for arg in self.get_function_cpp_arguments(signal):
+                        if self.query_argument_is_optional(arg):
+                            need_emitter_helper = True
+                            break
+                    else:
+                        need_emitter_helper = False
+
+                if need_emitter_helper:
+                    call_ref = self.write_function_group_bindings(signal_group,
+                            klass, output, prefix=prefix)
                 else:
                     call_ref = 'SIP_NULLPTR'
 

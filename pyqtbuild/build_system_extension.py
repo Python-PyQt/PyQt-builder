@@ -116,7 +116,7 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
 
         if extension.signal_data is not None:
             qt_signals = self._pyqt_class_write_signals_table(output, klass,
-                    extension, pyqt_major, structure_name)
+                    extension, pyqt_major)
         else:
             qt_signals = 'SIP_NULLPTR'
 
@@ -126,8 +126,8 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
             output.write(f'    {extension.flags},')
 
         if extension.is_qobject and not extension.no_qmetaobject:
-            cpp_name = self.get_class_cpp_name(klass)
-            static_metaobject = f'&{cpp_name}::staticMetaObject'
+            fq_cpp_name = self.get_class_fq_cpp_name(klass)
+            static_metaobject = f'&{fq_cpp_name}::staticMetaObject'
         else:
             static_metaobject = 'SIP_NULLPTR'
 
@@ -260,14 +260,14 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
         return self.bindings.project.builder.qt_version >> 16
 
     def _pyqt_class_write_signals_table(self, output, klass, extension,
-            pyqt_major, name):
+            pyqt_major):
         """ Write the code to generate the signals table for a class.  Return a
         C++ reference to the table.
         """
 
         # The prefix to make sure our generated code doesn't conflict with the
         # standard generated code.
-        prefix = 'pyqt_signal_'
+        prefix = 'pyqt_signals_'
 
         # An emitter helper is generated for any signal overload with an
         # optional argument or %MethodCode.
@@ -293,8 +293,8 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
 
                 emitter_helpers.append(call_ref)
 
-        # XXX - better to be prefix + klass_name?
-        table_name = prefix + name
+        table_name = prefix + self.get_class_fq_cpp_name(klass).replace(
+                '::', '_')
 
         output.write(f'\nstatic const pyqt{pyqt_major}QtSignal {table_name}[] = {{\n')
 
@@ -305,7 +305,8 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
                     klass, output, prefix=prefix)
 
             if has_non_signals:
-                non_signal_pymethoddef = 'ZZZ(signal_group_name)'
+                non_signal_pymethoddef = self.get_function_group_bindings(
+                        signal_group_name, klass)
             else:
                 non_signal_pymethoddef = 'SIP_NULLPTR'
 
@@ -325,8 +326,6 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
     def _pyqt_write_signal_table_entry(self, output, signal, klass, docstring,
             pymethoddef, emitter_helper):
         """ Write the code for a single signal in the signal table. """
-
-        signal_name = self.get_function_cpp_name(signal)
 
         # Build the normalised signature.
         need_unstripped = False
@@ -367,6 +366,8 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
             unstripped_args = '|(' + ','.join(unstripped) + ')'
         else:
             unstripped_args = ''
+
+        signal_name = self.get_function_cpp_name(signal)
 
         output.write(f'    {{"{signal_name}({stripped_args}){unstripped_args}", {docstring}, {pymethoddef}, {emitter_helper}}},\n')
 

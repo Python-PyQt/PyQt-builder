@@ -123,7 +123,7 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
         output.write(f'\nstatic pyqt{pyqt_major}ClassExtensionDef {structure_name} = {{\n')
 
         if pyqt_major == 5:
-            output.write(f'    {extension.flags},')
+            output.write(f'    {extension.flags},\n')
 
         if extension.is_qobject and not extension.no_qmetaobject:
             fq_cpp_name = self.get_class_fq_cpp_name(klass)
@@ -131,12 +131,12 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
         else:
             static_metaobject = 'SIP_NULLPTR'
 
-        output.write(f'    {static_metaobject},')
+        output.write(f'    {static_metaobject},\n')
 
-        output.write(f'    {qt_signals},')
+        output.write(f'    {qt_signals},\n')
 
         qt_interface = f'"{extension.interface}"' if extension.interface is not None else 'SIP_NULLPTR'
-        output.write(f'    {qt_interface},')
+        output.write(f'    {qt_interface},\n')
 
         output.write('};\n')
 
@@ -175,8 +175,7 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
 
         return False
 
-    def function_group_complete_definition(self, function_group, scope,
-            function_group_name):
+    def function_group_complete_definition(self, function_group, scope):
         """ Update a function group after it has been defined. """
 
         if not self.query_scope_is_class(scope):
@@ -197,9 +196,9 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
             extension = self.get_extension_data(scope, _ClassExtension)
 
             if extension.signal_data is None:
-                extension.signal_data = {}
+                extension.signal_data = []
 
-            extension.signal_data[function_group_name] = (signal_group, has_non_signals)
+            extension.signal_data.append((signal_group, has_non_signals))
 
             # Remove the signals from the original list:
             for signal in signal_group:
@@ -273,7 +272,10 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
         # optional argument or %MethodCode.
         emitter_helpers = []
 
-        for signal_group, _ in extension.signal_data.values():
+        # There is a docstring for each signal group.
+        docstrings = []
+
+        for signal_group, _ in extension.signal_data:
             for signal in signal_group:
                 if self.query_function_has_method_code(signal):
                     need_emitter_helper = True
@@ -293,38 +295,46 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
 
                 emitter_helpers.append(call_ref)
 
+            docstrings.append(
+                    self.write_function_group_docstring(signal_group, klass,
+                            output, prefix=prefix))
+
         table_name = prefix + self.get_class_fq_cpp_name(klass).replace(
                 '::', '_')
 
-        output.write(f'\nstatic const pyqt{pyqt_major}QtSignal {table_name}[] = {{\n')
+        output.write(f'\nstatic const pyqt{pyqt_major}QtSignalDef {table_name}[] = {{\n')
 
+        signal_group_nr = 0
         signal_nr = 0
 
-        for signal_group_name, (signal_group, has_non_signals) in extension.signal_data.items():
-            docstring = self.write_function_group_docstring(signal_group,
-                    klass, output, prefix=prefix)
+        for signal_group, has_non_signals in extension.signal_data:
+            docstring_ref, auto_docstring = docstrings[signal_group_nr]
 
             if has_non_signals:
                 non_signal_pymethoddef = self.get_function_group_bindings(
-                        signal_group_name, klass)
+                        signal_group, klass)
             else:
                 non_signal_pymethoddef = 'SIP_NULLPTR'
 
-            for signal_nr, signal in enumerate(signal_group):
+            for signal in signal_group:
                 self._pyqt_write_signal_table_entry(output, signal, klass,
-                        docstring, non_signal_pymethoddef,
+                        docstring_ref, auto_docstring, non_signal_pymethoddef,
                         emitter_helpers[signal_nr])
 
-                docstring = non_signal_pymethoddef = 'SIP_NULLPTR'
+                # These are only set for the first (ie. default) overload.
+                docstring_ref = non_signal_pymethoddef = 'SIP_NULLPTR'
+                auto_docstring = 0
 
-            signal_nr += 1
+                signal_nr += 1
 
-        output.write('    {SIP_NULLPTR, SIP_NULLPTR, SIP_NULLPTR, SIP_NULLPTR}\n};\n')
+            signal_group_nr += 1
+
+        output.write('    {SIP_NULLPTR, SIP_NULLPTR, 0, SIP_NULLPTR, SIP_NULLPTR}\n};\n')
 
         return '&' + table_name
 
-    def _pyqt_write_signal_table_entry(self, output, signal, klass, docstring,
-            pymethoddef, emitter_helper):
+    def _pyqt_write_signal_table_entry(self, output, signal, klass,
+            docstring_ref, auto_docstring, pymethoddef, emitter_helper):
         """ Write the code for a single signal in the signal table. """
 
         # Build the normalised signature.
@@ -369,7 +379,7 @@ class PyQtBuildSystemExtension(BuildSystemExtension):
 
         signal_name = self.get_function_cpp_name(signal)
 
-        output.write(f'    {{"{signal_name}({stripped_args}){unstripped_args}", {docstring}, {pymethoddef}, {emitter_helper}}},\n')
+        output.write(f'    {{"{signal_name}({stripped_args}){unstripped_args}", {docstring_ref}, {int(auto_docstring)}, {pymethoddef}, {emitter_helper}}},\n')
 
 
 @dataclass
@@ -405,10 +415,9 @@ class _ClassExtension:
     # Set if /PyQtNoQMetaObject/ was specified.
     no_qmetaobject: bool = False
 
-    # The dict of signal data keyed by the group name.  Each value is a 2-tuple
-    # of the signal group and a bool that is set if there were non-signal
-    # overloads.
-    signal_data: Optional[Dict[str, Tuple[Any, bool]]] = None
+    # The signal data.  Each value is a 2-tuple of the signal group and a bool
+    # that is set if there were non-signal overloads.
+    signal_data: Optional[List[Tuple[Any, bool]]] = None
 
 
 @dataclass
@@ -448,6 +457,12 @@ typedef struct _pyqt6QtSignalDef {
 
     /* The optional docstring. */
     const char *docstring;
+
+    /*
+     * Set if the docstring is automatically generated (ie. has a known
+     * format).
+     */
+    int auto_docstring;
 
     /*
      * If the signal is an overload of regular methods then this points to the
@@ -507,6 +522,12 @@ typedef struct _pyqt5QtSignalDef {
 
     /* The optional docstring. */
     const char *docstring;
+
+    /*
+     * Set if the docstring is automatically generated (ie. has a known
+     * format).
+     */
+    int auto_docstring;
 
     /*
      * If the signal is an overload of regular methods then this points to the

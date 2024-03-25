@@ -5,7 +5,7 @@
 
 from dataclasses import dataclass
 from enum import auto, Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
 from sipbuild import BuildSystemExtension
 

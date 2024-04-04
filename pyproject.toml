@@ -14,6 +14,7 @@ readme = "README.md"
 urls.homepage = "https://github.com/Python-PyQt/PyQt-builder"
 dependencies = ["packaging", "sip >=6.7, <7"]
 requires-python = ">=3.8"
+license = {file = "LICENSE"}
 classifiers = ["License :: OSI Approved :: BSD License"]
 dynamic = ["version"]
 

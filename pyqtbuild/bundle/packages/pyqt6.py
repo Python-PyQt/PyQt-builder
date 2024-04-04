@@ -104,6 +104,26 @@ _QT_METADATA = {
                 qml=True)),
 
     'QtQuick': (
+        VersionedMetadata(version=(6, 7, 0),
+                lib_deps={'': ('QtQuickControls2', 'QtQuickControls2Basic',
+                        'QtQuickControls2BasicStyleImpl',
+                        'QtQuickControls2Fusion',
+                        'QtQuickControls2FusionStyleImpl',
+                        'QtQuickControls2IOSStyleImpl',
+                        'QtQuickControls2Imagine',
+                        'QtQuickControls2ImagineStyleImpl',
+                        'QtQuickControls2Impl',
+                        'QtQuickControls2MacOSStyleImpl',
+                        'QtQuickControls2Material',
+                        'QtQuickControls2MaterialStyleImpl',
+                        'QtQuickControls2Universal',
+                        'QtQuickControls2UniversalStyleImpl',
+                        'QtQuickDialogs2', 'QtQuickDialogs2QuickImpl',
+                        'QtQuickDialogs2Utils', 'QtQuickLayouts',
+                        'QtQuickParticles', 'QtQuickShapes',
+                        'QtQuickTemplates2', 'QtQuickTest',
+                        'QtQuickTimeline', 'QtQuickTimelineBlendTrees')},
+                qml=True),
         VersionedMetadata(version=(6, 6, 3),
                 lib_deps={'': ('QtQuickControls2', 'QtQuickControls2Basic',
                         'QtQuickControls2BasicStyleImpl',
@@ -137,6 +157,16 @@ _QT_METADATA = {
                 qml=True)),
 
     'QtQuick3D': (
+        VersionedMetadata(version=(6, 7, 0),
+                lib_deps={
+                        '': ('QtConcurrent', 'QtQuick3DAssetImport',
+                        'QtQuick3DAssetUtils', 'QtQuick3DEffects',
+                        'QtQuick3DHelpers', 'QtQuick3DHelpersImpl',
+                        'QtQuick3DIblBaker', 'QtQuick3DParticles',
+                        'QtQuick3DPhysics', 'QtQuick3DPhysicsHelpers',
+                        'QtQuick3DRuntimeRender', 'QtQuick3DUtils',
+                        'QtShaderTools')},
+                qml=True),
         VersionedMetadata(version=(6, 6, 0),
                 lib_deps={
                         '': ('QtConcurrent', 'QtQuick3DAssetImport',

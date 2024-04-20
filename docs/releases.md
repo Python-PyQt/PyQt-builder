@@ -1,6 +1,22 @@
 # Release Notes
 
 
+## v1.16.1
+
+### Bundle new QtQuick support libraries
+
+The QtQuick3DHelpersImpl, QtQuickControls2MacOSStyleImpl and
+QtQuickTimelineBlendTrees libraries added to Qt v6.7.0 are now bundled.
+
+Resolves [#8](https://github.com/Python-PyQt/PyQt-builder/issues/8)
+
+### Missing `LICENSE` file
+
+The missing `LICENSE` file was added.
+
+Resolves [#7](https://github.com/Python-PyQt/PyQt-builder/issues/7)
+
+
 ## v1.16.0
 
 ### Migration to GitHub

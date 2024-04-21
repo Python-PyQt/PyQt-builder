@@ -17,6 +17,14 @@ _QT_METADATA = {
         VersionedMetadata(version=(6, 2, 0), qml=True),
 
     'QtCore': (
+        VersionedMetadata(version=(6, 7, 0),
+            other_lib_deps={
+                'linux': ('libicui18n.so.73', 'libicuuc.so.73',
+                          'libicudata.so.73')},
+            translations=('qt_', 'qt_help', 'qtbase', 'qtconnectivity',
+                'qtdeclarative', 'qtlocation', 'qtmultimedia',
+                'qtquickcontrols2', 'qtserialport', 'qtwebsockets'),
+            excluded_plugins=('designer', 'qmltooling')),
         VersionedMetadata(version=(6, 2, 0),
             other_lib_deps={
                 'linux': ('libicui18n.so.56', 'libicuuc.so.56',

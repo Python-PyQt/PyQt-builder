@@ -31,7 +31,7 @@ implemented by the :py:mod:`pyqtbuild` module which also provides an API that
 can be used by a project's :file:`project.py` file.
 
 This documentation assumes you are already familiar with the `SIP documentation
-<https://www.riverbankcomputing.com/static/Docs/sip/>`__.
+<https://python-sip.readthedocs.io>`__.
 
 PyQt-builder is hosted at
 `GitHub <https://github.com/Python-PyQt/PyQt-builder>`__.

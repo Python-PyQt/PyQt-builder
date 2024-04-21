@@ -2,7 +2,7 @@
 ================================
 
 PyQt-builder adds the following keys to those `implemented by SIP
-<https://www.riverbankcomputing.com/static/Docs/sip/pyproject_toml.html>`__.
+<https://python-sip.readthedocs.io/en/latest/pyproject_toml.html>`__.
 
 .. note::
     Individual projects may also add their own project-specific keys.

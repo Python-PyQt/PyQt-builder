@@ -1,6 +1,19 @@
 # Release Notes
 
 
+## v1.16.2
+
+### Broken links to SIP documentation
+
+The links to the SIP documentation have been fixed.
+
+### ICU libraries missing from Linux Qt wheels
+
+The ICU libraries were missing from the Linux Qt v6.7 wheels.
+
+Resolves [#10](https://github.com/Python-PyQt/PyQt-builder/issues/10)
+
+
 ## v1.16.1
 
 ### Bundle new QtQuick support libraries

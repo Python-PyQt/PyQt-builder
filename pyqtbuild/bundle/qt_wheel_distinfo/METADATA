@@ -1,5 +1,5 @@
 Metadata-Version: 2.1
-Name: @RB_PACKAGE@-Qt@RB_MAJOR_VERSION@
+Name: @RB_PACKAGE_NAME@
 Version: @RB_VERSION@
 Summary: The subset of a Qt installation needed by @RB_PACKAGE@.
 Home-page: https://www.riverbankcomputing.com/software/pyqt/
@@ -9,7 +9,7 @@ License: @RB_LICENSE@
 Platform: Linux
 Platform: macOS
 Platform: Windows
-
+@RB_PACKAGE_REQUIRES@
 This package contains the subset of a Qt installation that is required by
 @RB_PACKAGE@.  It would normally be installed automatically by pip when
 you install @RB_PACKAGE@.

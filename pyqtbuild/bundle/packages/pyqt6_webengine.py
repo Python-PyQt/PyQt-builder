@@ -23,7 +23,9 @@ _QT_METADATA = {
                         "Enable QtWebEngineProcess to find it's resources.\n"), )},
             others={
                 'linux': ('resources', 'translations/qtwebengine_locales'),
-                'win':   ('resources', 'translations\\qtwebengine_locales')}),
+                'win':   ('resources', 'translations\\qtwebengine_locales')},
+            subwheel_files={
+                '':      (('qtlib', 'QtWebEngineCore'), )}),
 
     'QtWebEngineQuick':
         VersionedMetadata(version=(6, 2, 0),

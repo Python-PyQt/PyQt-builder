@@ -58,7 +58,7 @@ class AbstractPackage(ABC):
         # This default implementation does nothing.
 
     def bundle_qt(self, target_qt_dir, platform_tag, exclude, ignore_missing,
-            bindings=True):
+            bindings=True, subwheel=None):
         """ Bundle the relevant parts of the Qt installation.  Returns True if
         the LGPL applies to all bundled parts.
         """
@@ -113,7 +113,7 @@ class AbstractPackage(ABC):
             lgpl = lgpl and metadata.lgpl
 
             metadata.bundle(name, target_qt_dir, self._qt_dir, platform_tag,
-                    self.qt_version, ignore_missing)
+                    self.qt_version, ignore_missing, subwheel)
 
         return lgpl
 

@@ -14,7 +14,7 @@ from .wheel import create_wheel, write_record_file
 
 
 def qt_wheel(package, qt_dir, build_tag, suffix, msvc_runtime, openssl,
-        openssl_dir, exclude, arch):
+        openssl_dir, exclude, arch, subwheel):
     """ Create a wheel containing the subset of a Qt installation required for
     a particular PyQt package.
     """
@@ -24,14 +24,12 @@ def qt_wheel(package, qt_dir, build_tag, suffix, msvc_runtime, openssl,
 
     # Normalise the name of the package.
     package_name = package.replace('-', '_')
-    package_title = package_name.replace('_', '-')
 
     # Get the package object.
     package_factory = packages.__dict__.get(package_name)
 
     if package_factory is None:
-        raise UserException(
-                "'{0}' is not a supported package".format(package_title))
+        raise UserException(f"'{package}' is not a supported package")
 
     package = package_factory(qt_dir)
 
@@ -73,8 +71,24 @@ def qt_wheel(package, qt_dir, build_tag, suffix, msvc_runtime, openssl,
     tag_parts = ['py3', 'none', platform_tag]
     tag = '-'.join(tag_parts)
 
+    package_title = package_name.replace('_', '-')
+    qt_version_suffix = '-Qt' + version_str[0]
+
+    # Determine sub-wheel dependent values'
+    subwheel_full_name = f'{package_title}Subwheel{qt_version_suffix}'
+
+    if subwheel is True:
+        package_full_name = subwheel_full_name
+        package_requires = ''
+    elif subwheel is False:
+        package_full_name = package_title + qt_version_suffix
+        package_requires = f'Requires-Dist: {subwheel_full_name} (=={version_str})\n'
+    else:
+        package_full_name = package_title + qt_version_suffix
+        package_requires = ''
+
     # Construct the name of the wheel.
-    name_parts = [package_name + '_Qt' + version_str[0]]
+    name_parts = [package_full_name.replace('-', '_')]
     name_parts.append(version_str)
 
     distinfo_dir = '-'.join(name_parts) + '.dist-info'
@@ -97,7 +111,7 @@ def qt_wheel(package, qt_dir, build_tag, suffix, msvc_runtime, openssl,
     # Bundle the relevant parts of the Qt installation.
     target_qt_dir = package.get_target_qt_dir()
     lgpl = package.bundle_qt(target_qt_dir, platform_tag, exclude,
-            ignore_missing=True, bindings=False)
+            ignore_missing=True, bindings=False, subwheel=subwheel)
 
     if platform_tag in ('win32', 'win_amd64'):
         # Bundle the MSVC runtime if required.
@@ -121,7 +135,9 @@ def qt_wheel(package, qt_dir, build_tag, suffix, msvc_runtime, openssl,
                 metadata = s.read()
 
             metadata = metadata.replace('@RB_PACKAGE@', package_title)
-            metadata = metadata.replace('@RB_MAJOR_VERSION@', version_str[0])
+            metadata = metadata.replace('@RB_PACKAGE_NAME@', package_full_name)
+            metadata = metadata.replace('@RB_PACKAGE_REQUIRES@',
+                    package_requires)
             metadata = metadata.replace('@RB_VERSION@', version_str)
             metadata = metadata.replace('@RB_LICENSE@',
                     "LGPL v3" if lgpl else "GPL v3")

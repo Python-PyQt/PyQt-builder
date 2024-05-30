@@ -58,6 +58,12 @@ def main():
     parser.add_argument(dest='packages', nargs=1, help="the PyQt package",
             metavar="PACKAGE")
 
+    parser.add_argument('--subwheel', choices=('generate', 'exclude'),
+            default=None,
+            help="generate the package's sub-wheel or exclude the sub-wheel "
+                    "contents from the main wheel [default: generate a full "
+                    "wheel]")
+
     args = parser.parse_args()
 
     try:
@@ -68,10 +74,18 @@ def main():
         except AttributeError:
             arch = None
 
+        subwheel = args.subwheel
+
+        if subwheel == 'generate':
+            subwheel = True
+        elif subwheel == 'exclude':
+            subwheel = False
+
         qt_wheel(package=args.packages[0], qt_dir=args.qt_dir,
                 build_tag=args.build_tag, suffix=args.suffix,
                 msvc_runtime=args.msvc_runtime, openssl=args.openssl,
-                openssl_dir=args.openssl_dir, exclude=args.exclude, arch=arch)
+                openssl_dir=args.openssl_dir, exclude=args.exclude, arch=arch,
+                subwheel=subwheel)
     except Exception as e:
         handle_exception(e)
 

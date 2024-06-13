@@ -65,10 +65,27 @@ _QT_METADATA = {
     #'QtLocation':
     #    VersionedMetadata(qml=True),
 
-    'QtMultimedia':
+    'QtMultimedia': (
+        VersionedMetadata(version=(6, 7, 1),
+                lib_deps={'': ('QtMultimediaQuick', )},
+                other_lib_deps={
+                    'macos': ('libavcodec.60.dylib', 'libavformat.60.dylib',
+                            'libavutil.58.dylib', 'libswresample.4.dylib',
+                            'libswscale.7.dylib'),
+                    'win': ('avcodec-60.dll', 'avformat-60.dll',
+                            'avutil-58.dll', 'swresample-4.dll',
+                            'swscale-7.dll')},
+                qml=True),
+        VersionedMetadata(version=(6, 7, 0),
+                lib_deps={'': ('QtMultimediaQuick', )},
+                other_lib_deps={
+                    'win': ('avcodec-60.dll', 'avformat-60.dll',
+                            'avutil-58.dll', 'swresample-4.dll',
+                            'swscale-7.dll')},
+                qml=True),
         VersionedMetadata(version=(6, 2, 0),
                 lib_deps={'': ('QtMultimediaQuick', )},
-                qml=True),
+                qml=True)),
 
     'QtMultimediaWidgets':
         VersionedMetadata(version=(6, 2, 0)),

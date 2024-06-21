@@ -2,7 +2,7 @@ Command Line Tools
 ==================
 
 PyQt-builder adds the following command line options to `SIP's build tools
-<https://python-sip.readthedocs.io/en/latest/command_line_tools.html>`__.
+<https://python-sip.readthedocs.io/en/stable/command_line_tools.html>`__.
 Unless stated otherwise, each option is added to all of the build tools.
 
 .. note::

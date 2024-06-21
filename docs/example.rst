@@ -18,7 +18,7 @@ We show PyQt6-Chart's :file:`pyproject.toml` file (downloadable from
 
 We will now explain each section in turn.  We assume you are familiar with the
 examples described in the `SIP documentation
-<https://python-sip.readthedocs.io/en/latest/examples.html>`__.
+<https://python-sip.readthedocs.io/en/stable/examples.html>`__.
 
 The ``[build-system]`` section is used to specify the build system package
 requirements.  For projects using SIP this will include the version

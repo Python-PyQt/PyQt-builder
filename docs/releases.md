@@ -1,6 +1,32 @@
 # Release Notes
 
 
+## v1.16.3
+
+### Link to the stable SIP documentation
+
+The documentation now links to the stable version of the SIP documentation.
+
+Resolves [#11](https://github.com/Python-PyQt/PyQt-builder/issues/11)
+
+### Missing multimedia libraries in Qt v6.7
+
+In Qt v6.7 the QtMultimedia ffmpeg backends depend on new libraries that
+were not included in the Qt wheels.  This affected macOS (Qt v6.7.1) and
+Windows (Qt v6.7.0).
+
+Resolves [#12](https://github.com/Python-PyQt/PyQt-builder/issues/12)
+
+### Added support for sub-wheels to `pyqt-qt-wheel`
+
+The (undocumented) `pyqt-qt-wheel` utility now supports the splitting of a
+project's wheel into the main wheel and a sub-wheel.  Specifying
+`--sub-wheel generate` will generate the sub-wheel, and
+`--sub-wheel exclude` will generate the main wheel (ie. a normal wheel
+without the contents of the sub-wheel).  By default a normal wheel is
+generated.
+
+
 ## v1.16.2
 
 ### Broken links to SIP documentation

@@ -39,9 +39,12 @@ def qt_wheel(package, qt_dir, build_tag, suffix, msvc_runtime, openssl,
 
     # Construct the tag.
     qt_arch = os.path.basename(qt_dir)
-    if qt_arch == 'gcc_64':
-        platform_tag = 'manylinux{}_x86_64'.format(
-                '_2_28' if package.qt_version[0] == 6 else '2014')
+
+    if qt_arch in ('gcc_64', 'gcc_arm64'):
+        manylinux = '_2_28' if package.qt_version[0] == 6 else '2014'
+        wheel_arch = 'x86_64' if qt_arch == 'gcc_64' else 'aarch64'
+        platform_tag = f'manylinux{manylinux}_{wheel_arch}'
+
     elif qt_arch in ('macos', 'clang_64'):
         if package.qt_version < (5, 15, 10) or (6, 0, 0) <= package.qt_version < (6, 2, 0):
             if arch is not None:
@@ -62,8 +65,10 @@ def qt_wheel(package, qt_dir, build_tag, suffix, msvc_runtime, openssl,
             sdk_version = '10_14'
 
         platform_tag = 'macosx_{}_{}'.format(sdk_version, subarch)
+
     elif qt_arch.startswith('msvc'):
         platform_tag = 'win_amd64' if qt_arch.endswith('_64') else 'win32'
+
     else:
         raise UserException(
                 "Qt architecture '{0}' is unsupported".format(qt_arch))

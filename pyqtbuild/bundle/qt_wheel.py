@@ -67,7 +67,12 @@ def qt_wheel(package, qt_dir, build_tag, suffix, msvc_runtime, openssl,
         platform_tag = 'macosx_{}_{}'.format(sdk_version, subarch)
 
     elif qt_arch.startswith('msvc'):
-        platform_tag = 'win_amd64' if qt_arch.endswith('_64') else 'win32'
+        if qt_arch.endswith('_64'):
+            platform_tag = 'win_amd64'
+        elif qt_arch.endswith('_arm64'):
+            platform_tag = 'win_arm64'
+        else:
+            platform_tag = 'win32'
 
     else:
         raise UserException(

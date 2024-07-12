@@ -1,6 +1,21 @@
 # Release Notes
 
 
+## v1.16.4
+
+### Support for Windows on Arm for Qt6
+
+Support was added for creating Qt6 wheels for Windows on Arm.
+
+Resolves [#14](https://github.com/Python-PyQt/PyQt-builder/issues/14)
+
+### Support for Linux on Arm for Qt6
+
+Support was added for creating Qt6 wheels for Linux on Arm.
+
+Resolves [#13](https://github.com/Python-PyQt/PyQt-builder/issues/13)
+
+
 ## v1.16.3
 
 ### Link to the stable SIP documentation

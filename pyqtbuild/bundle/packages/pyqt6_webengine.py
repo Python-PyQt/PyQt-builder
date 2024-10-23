@@ -30,7 +30,7 @@ _QT_METADATA = {
     'QtWebEngineQuick':
         VersionedMetadata(version=(6, 2, 0),
             lib_deps={'': ('QtWebEngineQuickDelegatesQml', )},
-            qml=True, qml_names=['QtWebEngine']),
+            qml_names=['QtWebEngine']),
 
     'QtWebEngineWidgets':
         VersionedMetadata(version=(6, 2, 0)),

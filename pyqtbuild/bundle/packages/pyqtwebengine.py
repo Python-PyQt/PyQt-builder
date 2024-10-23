@@ -10,7 +10,7 @@ from ..qt_metadata import VersionedMetadata
 # The Qt meta-data for this package.
 _QT_METADATA = {
     'QtWebEngine':
-        VersionedMetadata(qml=True, translations=('qtwebengine', )),
+        VersionedMetadata(translations=('qtwebengine', )),
 
     'QtWebEngineCore':
         VersionedMetadata(

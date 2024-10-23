@@ -5,7 +5,6 @@
 
 import os
 import sys
-import sysconfig
 
 from sipbuild import (Buildable, BuildableModule, Builder, Option, Project,
         PyProjectOptionException, UserException)
@@ -98,10 +97,19 @@ class QmakeBuilder(Builder):
             # Set the default minimum GLIBC version.  This is actually a
             # function of the build platform and it should really be determined
             # by inspecting the compiled extension module.  These defaults
-            # reflect the minimum versions provided by the supported Qt
-            # platforms at any particular time.
+            # reflect the minimum versions required by the Qt online installer
+            # for a particular version.
             if not project.minimum_glibc_version:
-                if self.qt_version >= 0x060000:
+                if self.qt_version >= 0x060800:
+                    from platform import processor
+
+                    # The arm64 build is based on Ubuntu 24.04 rather than
+                    # 22.04.
+                    if processor() == 'aarch64':
+                        project.minimum_glibc_version = '2.39'
+                    else:
+                        project.minimum_glibc_version = '2.35'
+                elif self.qt_version >= 0x060000:
                     project.minimum_glibc_version = '2.28'
                 else:
                     project.minimum_glibc_version = '2.17'

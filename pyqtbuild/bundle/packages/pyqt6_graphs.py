@@ -9,13 +9,16 @@ from ..qt_metadata import VersionedMetadata
 
 # The Qt meta-data for this package.
 _QT_METADATA = {
-    'QtPurchasing':
-        VersionedMetadata(),
+    'QtGraphs':
+        VersionedMetadata(version=(6, 8, 0), lgpl=False),
+
+    'QtGraphsWidgets':
+        VersionedMetadata(version=(6, 8, 0), lgpl=False),
 }
 
 
-class PyQtPurchasing(AbstractPackage):
-    """ The PyQtPurchasing package. """
+class PyQt6_Graphs(AbstractPackage):
+    """ The PyQt6-Graphs package. """
 
     def get_qt_metadata(self):
         """ Return the package-specific meta-data describing the parts of Qt to

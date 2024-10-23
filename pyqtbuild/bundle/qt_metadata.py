@@ -20,9 +20,8 @@ class VersionedMetadata:
 
     def __init__(self, *, version=None, name=None, lib_deps=None,
             other_lib_deps=None, exes=None, files=None, others=None, dll=True,
-            qml=False, qml_names=None, translations=None,
-            excluded_plugins=None, lgpl=True, legacy=False,
-            subwheel_files=None):
+            qml_names=None, translations=None, excluded_plugins=None,
+            lgpl=True, legacy=False, subwheel_files=None):
         """ Initialise the versioned bindings. """
 
         self._version = version
@@ -33,7 +32,6 @@ class VersionedMetadata:
         self._files = {} if files is None else files
         self._others = {} if others is None else others
         self._dll = dll
-        self._qml = qml
         self._qml_names = qml_names
         self._translations = () if translations is None else translations
         self._excluded_plugins = excluded_plugins
@@ -158,15 +156,12 @@ class VersionedMetadata:
                             skip_files=skip_files)
 
         # Bundle any QML files.
-        if self._qml:
-            qml_names = self._qml_names
-            if qml_names is None:
-                qml_names = [self._name]
+        qml_names = self._qml_names if qml_names is not None else [self._name]
 
-            for qml_subdir in qml_names:
-                self._bundle_nondebug(os.path.join('qml', qml_subdir),
-                        target_qt_dir, qt_dir, platform_tag, macos_thin_arch,
-                        ignore_missing, skip_files=skip_files)
+        for qml_subdir in qml_names:
+            self._bundle_nondebug(os.path.join('qml', qml_subdir),
+                    target_qt_dir, qt_dir, platform_tag, macos_thin_arch,
+                    ignore_missing, skip_files=skip_files)
 
         # Bundle any plugins.  We haven't done the analysis of which plugins
         # belong to which package so we assume that only the QtCore package

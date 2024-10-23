@@ -13,8 +13,8 @@ _QT_METADATA = {
         # It's likely that the QML library was required from the start.
         VersionedMetadata(version=(6, 5, 0),
                 lib_deps={'': ('QtChartsQml', )},
-                qml=True, lgpl=False),
-        VersionedMetadata(version=(6, 1, 0), qml=True, lgpl=False))
+                lgpl=False),
+        VersionedMetadata(version=(6, 1, 0), lgpl=False))
 }
 
 

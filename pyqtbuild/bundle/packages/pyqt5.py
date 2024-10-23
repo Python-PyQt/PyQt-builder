@@ -27,7 +27,7 @@ _QT_METADATA = {
             lib_deps={
                 'linux': ('QtConcurrent', ),
                 'macos': ('QtConcurrent', )},
-            qml=True),
+            ),
 
     'QtCore':
         VersionedMetadata(
@@ -60,9 +60,7 @@ _QT_METADATA = {
         VersionedMetadata(),
 
     'QtLocation':
-        VersionedMetadata(
-            lib_deps={'': ('QtPositioningQuick', )},
-            qml=True),
+        VersionedMetadata(lib_deps={'': ('QtPositioningQuick', )}),
 
     'QtMacExtras':
         VersionedMetadata(),
@@ -73,7 +71,7 @@ _QT_METADATA = {
                 '': ('QtMultimediaQuick', ),
                 'linux': ('QtMultimediaGstTools', )
             },
-            qml=True, qml_names=('QtAudioEngine', 'QtMultimedia')),
+            qml_names=('QtAudioEngine', 'QtMultimedia')),
 
     'QtMultimediaWidgets':
         VersionedMetadata(),
@@ -85,27 +83,24 @@ _QT_METADATA = {
         VersionedMetadata(legacy=True),
 
     'QtNfc':
-        VersionedMetadata(qml=True),
+        VersionedMetadata(),
 
     'QtOpenGL':
         VersionedMetadata(),
 
     'QtPositioning':
-        VersionedMetadata(qml=True),
+        VersionedMetadata(),
 
     'QtPrintSupport':
         VersionedMetadata(),
 
     'QtQml':
-        VersionedMetadata(
-            lib_deps={'': ('QtQmlModels', 'QtQmlWorkerScript')},
-            qml=True),
+        VersionedMetadata(lib_deps={'': ('QtQmlModels', 'QtQmlWorkerScript')}),
 
     'QtQuick':
         VersionedMetadata(
             lib_deps={'': ('QtQuickControls2', 'QtQuickParticles',
                     'QtQuickShapes', 'QtQuickTemplates2', 'QtQuickTest')},
-            qml=True,
             qml_names=('QtCanvas3D', 'QtGraphicalEffects', 'QtQuick',
                     'QtQuick.2')),
 
@@ -114,16 +109,16 @@ _QT_METADATA = {
             lib_deps={
                     '': ('QtQuick3DAssetImport', 'QtQuick3DRender',
                             'QtQuick3DRuntimeRender', 'QtQuick3DUtils')},
-            qml=True),
+            ),
 
     'QtQuickWidgets':
         VersionedMetadata(),
 
     'QtRemoteObjects':
-        VersionedMetadata(qml=True),
+        VersionedMetadata(),
 
     'QtSensors':
-        VersionedMetadata(qml=True),
+        VersionedMetadata(),
 
     'QtSerialPort':
         VersionedMetadata(),
@@ -135,19 +130,19 @@ _QT_METADATA = {
         VersionedMetadata(),
 
     'QtTest':
-        VersionedMetadata(qml=True),
+        VersionedMetadata(),
 
     'QtTextToSpeech':
         VersionedMetadata(),
 
     'QtWebChannel':
-        VersionedMetadata(qml=True),
+        VersionedMetadata(),
 
     'QtWebSockets':
-        VersionedMetadata(qml=True),
+        VersionedMetadata(),
 
     'QtWebView':
-        VersionedMetadata(qml=True),
+        VersionedMetadata(),
 
     'QtWidgets':
         VersionedMetadata(),
@@ -162,9 +157,7 @@ _QT_METADATA = {
         VersionedMetadata(),
 
     'QtXmlPatterns':
-        VersionedMetadata(
-            qml=True,
-            qml_names=('Qt', )),
+        VersionedMetadata(qml_names=('Qt', )),
 }
 
 

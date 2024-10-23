@@ -16,7 +16,6 @@ _QT_METADATA = {
     'Qt3DCore':
         VersionedMetadata(
             lib_deps={'': ('QtConcurrent', )},
-            qml=True,
             qml_names=('Qt3D', )),
 
     'Qt3DExtras':

@@ -16,7 +16,6 @@ _QT_METADATA = {
     'Qt3DCore':
         VersionedMetadata(
             lib_deps={'': ('Qt3DQuick', )},
-            qml=True,
             qml_names=('Qt3D', )),
 
     'Qt3DExtras':

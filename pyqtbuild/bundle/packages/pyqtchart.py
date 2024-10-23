@@ -10,7 +10,7 @@ from ..qt_metadata import VersionedMetadata
 # The Qt meta-data for this package.
 _QT_METADATA = {
     'QtChart':
-        VersionedMetadata(name='QtCharts', qml=True, lgpl=False),
+        VersionedMetadata(name='QtCharts', lgpl=False),
 }
 
 

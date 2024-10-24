@@ -156,7 +156,7 @@ class VersionedMetadata:
                             skip_files=skip_files)
 
         # Bundle any QML files.
-        qml_names = self._qml_names if qml_names is not None else [self._name]
+        qml_names = self._qml_names if self._qml_names is not None else [self._name]
 
         for qml_subdir in qml_names:
             self._bundle_nondebug(os.path.join('qml', qml_subdir),

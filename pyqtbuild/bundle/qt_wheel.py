@@ -41,7 +41,13 @@ def qt_wheel(package, qt_dir, build_tag, suffix, msvc_runtime, openssl,
     qt_arch = os.path.basename(qt_dir)
 
     if qt_arch in ('gcc_64', 'gcc_arm64'):
-        manylinux = '_2_28' if package.qt_version[0] == 6 else '2014'
+        if package.qt_version >= (6, 8, 0):
+            manylinux = '_2_35' if qt_arch == 'gcc_64' else '_2_39'
+        elif package.qt_version >= (6, 0, 0):
+            manylinux = '_2_28'
+        else:
+            manylinux = '2014'
+
         wheel_arch = 'x86_64' if qt_arch == 'gcc_64' else 'aarch64'
         platform_tag = f'manylinux{manylinux}_{wheel_arch}'
 

@@ -62,7 +62,7 @@ class VersionedMetadata:
                 raise UserException(
                         "'lipo' from Xcode must be installed on your system")
 
-            if macos_thin_arch == 'arm64' and AbstractPackage.missing_executable('codesign'):
+            if macos_thin_arch is not None and AbstractPackage.missing_executable('codesign'):
                 raise UserException(
                         "'codesign' from Xcode must be installed on your system")
         # Bundle any sub-wheel files.
@@ -283,6 +283,9 @@ class VersionedMetadata:
                 except:
                     # If there is any sort of error then just copy it.
                     shutil.copy2(src, dst)
+
+                subprocess.run(['codesign', '--force', '--sign', '-', dst],
+                        stderr=stderr, check=True)
             else:
                 shutil.copy2(src, dst)
         elif ignore_missing:
@@ -361,8 +364,10 @@ class VersionedMetadata:
         with open(exe, 'wb') as f:
             f.write(contents)
 
-        if macos_thin_arch == 'arm64':
-            subprocess.run(['codesign', '-s', '-', exe])
+        if macos_thin_arch is not None:
+            stderr = None if is_verbose() else subprocess.DEVNULL
+            subprocess.run(['codesign', '--force', '--sign', '-', exe],
+                    stderr=stderr, check=True)
 
     @classmethod
     def _fix_win_executable(cls, exe):

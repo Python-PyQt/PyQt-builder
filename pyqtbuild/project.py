@@ -50,6 +50,9 @@ class PyQtProject(Project):
 
         super().apply_user_defaults(tool)
 
+        major = self.py_major_version
+        minor = self.py_minor_version
+
         # Get the details of the default Python interpreter library.  Note that
         # these are actually non-user options but we need the 'link_full_dll'
         # user option in order to set them.
@@ -60,18 +63,16 @@ class PyQtProject(Project):
 
             # See if we are using the limited API.
             if self.py_debug or self.link_full_dll:
-                pylib_lib = 'python{}{}{}'.format(self.py_major_version,
-                        self.py_minor_version, debug_suffix)
+                pylib_lib = f'python{major}{minor}{debug_suffix}'
             else:
-                pylib_lib = 'python{}{}'.format(self.py_major_version,
-                        debug_suffix)
+                pylib_lib = f'python{major}{debug_suffix}'
 
             # Assume Python is a DLL on Windows.
             pylib_shlib = pylib_lib
         else:
             abi = getattr(sys, 'abiflags', '')
-            pylib_lib = 'python{}.{}{}'.format(self.py_major_version,
-                    self.py_minor_version, abi)
+
+            pylib_lib = f'python{major}.{minor}{abi}'
             pylib_dir = pylib_shlib = ''
 
             # Get the additional configuration.
@@ -87,18 +88,21 @@ class PyQtProject(Project):
                 dynamic_pylib = '--enable-framework' in config_args
 
             if dynamic_pylib:
-                pylib_shlib = ducfg.get('LDLIBRARY', '')
-
                 exec_prefix = ducfg['exec_prefix']
                 multiarch = ducfg.get('MULTIARCH', '')
                 libdir = ducfg['LIBDIR']
 
-                if glob('{}/lib/libpython{}.{}*'.format(exec_prefix, self.py_major_version, self.py_minor_version)):
-                    pylib_dir = exec_prefix + '/lib'
-                elif multiarch != '' and glob('{}/lib/{}/libpython{}.{}*'.format(exec_prefix, multiarch, self.py_major_version, self.py_minor_version)):
-                    pylib_dir = exec_prefix + '/lib/' + multiarch
-                elif glob('{}/libpython{}.{}*'.format(libdir, self.py_major_version, self.py_minor_version)):
+                pattern = f'libpython{major}.{minor}*'
+
+                if glob(os.path.join(exec_prefix, 'lib', pattern)):
+                    pylib_dir = os.path.join(exec_prefix, 'lib')
+                elif multiarch != '' and glob(os.path.join(exec_prefix, 'lib', multiarch, pattern)):
+                    pylib_dir = os.path.join(exec_prefix, 'lib', multiarch)
+                elif glob(os.path.join(libdir, pattern)):
                     pylib_dir = libdir
+
+                if pylib_dir != '':
+                    pylib_shlib = os.path.join(pylib_dir, 'lib' + pylib_lib)
 
         # Apply the defaults if necessary.
         if self.py_pylib_dir == '':

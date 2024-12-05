@@ -1,6 +1,32 @@
 # Release Notes
 
 
+## v1.17.0
+
+### Added support for Qt v6.8
+
+- Added support for the QtGraphs module.
+- Linux wheels now require GLIBC v2.35 (eg. Ubuntu 22.04) on Intel and v2.39
+  (eg. Ubuntu 24.04) on Arm.
+
+Resolves [#16](https://github.com/Python-PyQt/PyQt-builder/issues/16)
+
+### Re-signing of bundled macOS Qt dynamic libraries
+
+Prior to Qt v6.8 the macOS dynamic libraries were not signed.  They are
+signed in v6.8 and the signature becomes invalid when `lipo` is used to
+extract the individual architecture-specific libraries (which is done to
+produce smaller wheels). The individual architecture-specific libraries are
+now re-signed by `pyqt-bundle`.
+
+Resolves [#21](https://github.com/Python-PyQt/PyQt-builder/issues/21)
+
+### Python shared library name on macOS incorrect
+
+The name of the Python shared library on macOS was incorrect which broke
+PyQt's `qmlscene` and `Designer` plugins.
+
+
 ## v1.16.4
 
 ### Support for Windows on Arm for Qt6

@@ -51,7 +51,7 @@ def qt_wheel(package, qt_dir, build_tag, suffix, msvc_runtime, openssl,
         wheel_arch = 'x86_64' if qt_arch == 'gcc_64' else 'aarch64'
         platform_tag = f'manylinux{manylinux}_{wheel_arch}'
 
-    elif qt_arch in ('macos', 'clang_64'):
+    elif qt_arch in ('macos', 'clang_64', 'x86_64', 'arm64'):
         if package.qt_version < (5, 15, 10) or (6, 0, 0) <= package.qt_version < (6, 2, 0):
             if arch is not None:
                 raise UserException(
@@ -59,7 +59,9 @@ def qt_wheel(package, qt_dir, build_tag, suffix, msvc_runtime, openssl,
 
             subarch = 'x86_64'
         elif arch is None:
-            subarch = 'universal2'
+            # Assume it is universal unless the installed Qt architecture is
+            # specific.
+            subarch = qt_arch if qt_arch in ('x86_64', 'arm64') else 'universal2'
         else:
             subarch = arch
 

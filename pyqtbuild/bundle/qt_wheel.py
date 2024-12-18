@@ -172,6 +172,9 @@ def qt_wheel(package, qt_dir, build_tag, suffix, msvc_runtime, openssl,
 
                 if build_tag:
                     d.write('Build: {}\n'.format(build_tag))
+        elif proto.startswith('LICENSE.'):
+            if proto.endswith('.lgpl3' if lgpl else '.gpl3'):
+                shutil.copy(src, os.path.join(distinfo_dir, 'LICENSE'))
         else:
             shutil.copy(src, dst)
 

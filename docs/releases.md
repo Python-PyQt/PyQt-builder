@@ -1,6 +1,40 @@
 # Release Notes
 
 
+## v1.17.1
+
+### Updated the default ABIs used
+
+The default ABIs used now match those explicitly specified by PyQt5 and
+PyQt6.
+
+Resolves [#28](https://github.com/Python-PyQt/PyQt-builder/issues/28)
+
+### Set the minimum `glibc` version on x86-64 to v2.28
+
+The minimum version of `glibc` required for Qt v6.8 has been reduced to
+v2.28.  This is the same requirement as older versions of Qt6 and
+corresponds to the oldest version used by any currently (supported Linux
+distribution)[https://doc.qt.io/qt-6/supported-platforms.html].
+
+Resolves [#27](https://github.com/Python-PyQt/PyQt-builder/issues/27)
+
+### Include specific (L)GPL LICENSE file in Qt wheels
+
+Instead of including a generic LICENSE file containing the text of both the
+LGPL and the GPL in Qt wheels, a specific LGPL or GPL LICENSE file is now
+included.
+
+Resolves [#24](https://github.com/Python-PyQt/PyQt-builder/issues/24)
+
+### Bug fix
+
+A regression that prevented single architecture Qt installations being
+bundled on macOS was fixed.
+
+Resolves [#26](https://github.com/Python-PyQt/PyQt-builder/issues/26)
+
+
 ## v1.17.0
 
 ### Added support for Qt v6.8

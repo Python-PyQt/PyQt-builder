@@ -69,6 +69,15 @@ _QT_METADATA = {
         VersionedMetadata(version=(6, 8, 0),
                 lib_deps={'': ('QtMultimediaQuick', )},
                 other_lib_deps={
+                    'linux': (
+                            'libQt6FFmpegStub-crypto.so.3',
+                            'libQt6FFmpegStub-ssl.so.3',
+                            'libQt6FFmpegStub-va.so.2',
+                            'libQt6FFmpegStub-va-drm.so.2',
+                            'libQt6FFmpegStub-va-x11.so.2',
+                            'libavcodec.so.61', 'libavformat.so.61',
+                            'libavutil.so.59', 'libswresample.so.5',
+                            'libswscale.so.8'),
                     'macos': ('libavcodec.61.dylib', 'libavformat.61.dylib',
                             'libavutil.59.dylib', 'libswresample.5.dylib',
                             'libswscale.8.dylib'),

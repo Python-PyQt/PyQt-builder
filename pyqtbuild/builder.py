@@ -132,8 +132,8 @@ class QmakeBuilder(Builder):
 
             # Set the default ABI major version of the sip module.  These
             # should track the versions specified by the latest versions of
-            # PyQt5 and PyQt6 (and vice versa).  In future this can be removed
-            # completely.
+            # PyQt5 and PyQt6 (and vice versa).  This can be removed completely
+            # when PyQt5 and PyQt6 use %MinimumABIVersion unconditionaly.
             if not project.abi_version:
                 if project.sip_module == 'PyQt5.sip':
                     project.abi_version = '12.15'

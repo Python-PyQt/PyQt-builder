@@ -1,6 +1,16 @@
 # Release Notes
 
 
+## v1.17.2
+
+### Missing Linux multimedia libraries in Qt v6.8
+
+In Qt v6.8 the QtMultimedia ffmpeg Linux backend depends on new libraries
+that were not included in the Qt wheels.
+
+Resolves [#29](https://github.com/Python-PyQt/PyQt-builder/issues/29)
+
+
 ## v1.17.1
 
 ### Updated the default ABIs used

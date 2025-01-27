@@ -304,6 +304,10 @@ _QT_METADATA = {
     'QtSql':
         VersionedMetadata(),
 
+    'QtStateMachine':
+        VersionedMetadata(
+                lib_deps={'': ('QtStateMachineQml', )}),
+
     'QtSvg':
         VersionedMetadata(),
 

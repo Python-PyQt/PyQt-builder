@@ -1,5 +1,11 @@
 # Release Notes
 
+## v1.18.0
+
+### `pyqt-bundle`
+
+Added support for the `QtStateMachine` module.
+
 
 ## v1.17.2
 
@@ -24,8 +30,8 @@ Resolves [#28](https://github.com/Python-PyQt/PyQt-builder/issues/28)
 
 The minimum version of `glibc` required for Qt v6.8 has been reduced to
 v2.28.  This is the same requirement as older versions of Qt6 and
-corresponds to the oldest version used by any currently (supported Linux
-distribution)[https://doc.qt.io/qt-6/supported-platforms.html].
+corresponds to the oldest version used by any currently [supported Linux
+distribution](https://doc.qt.io/qt-6/supported-platforms.html).
 
 Resolves [#27](https://github.com/Python-PyQt/PyQt-builder/issues/27)
 

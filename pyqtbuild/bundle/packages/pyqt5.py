@@ -51,7 +51,8 @@ _QT_METADATA = {
 
     'QtGui':
         VersionedMetadata(
-            lib_deps={'linux': ('QtWaylandClient', 'QtXcbQpa')},
+            lib_deps={'linux': ('QtEglFSDeviceIntegration', 'QtWaylandClient',
+                                'QtXcbQpa')},
             other_lib_deps={
                 'win': ('d3dcompiler_47.dll', 'libEGL.dll', 'libGLESv2.dll',
                         'opengl32sw.dll')}),

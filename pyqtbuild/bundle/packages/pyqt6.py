@@ -50,7 +50,8 @@ _QT_METADATA = {
     'QtGui': (
         VersionedMetadata(version=(6, 2, 0),
                 lib_deps={
-                        'linux': ('QtWaylandClient',
+                        'linux': ('QtEglFSDeviceIntegration',
+                                'QtWaylandClient',
                                 'QtWaylandEglClientHwIntegration',
                                 'QtWlShellIntegration', 'QtXcbQpa')},
                 other_lib_deps={

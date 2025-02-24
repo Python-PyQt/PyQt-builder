@@ -1,5 +1,12 @@
 # Release Notes
 
+## v1.18.1
+
+### Bug fix
+
+The `QtEglFSDeviceIntegration` library is now bundled for Qt5 and Qt6.
+
+
 ## v1.18.0
 
 ### `pyqt-bundle`

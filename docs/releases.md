@@ -1,5 +1,19 @@
 # Release Notes
 
+## v1.18.2
+
+### `pyproject.toml` now conforms to PEP 639
+
+The licensing information in `pyproject.toml` now conforms to PEP 639.
+This means that the minimum setuptools version is v77.  That in itself
+means that the wheel name conforms to the current PyPI requirements.
+
+### Bug fixes
+
+- The wheels created by `pyqt-qt-wheel` now have lower case names.  Resolves
+  [#31](https://github.com/Python-PyQt/PyQt-builder/issues/31)
+
+
 ## v1.18.1
 
 ### Bug fix

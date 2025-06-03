@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: BSD-2-Clause
 
-# Copyright (c) 2024 Phil Thompson <phil@riverbankcomputing.com>
+# Copyright (c) 2025 Phil Thompson <phil@riverbankcomputing.com>
 
 
 import os
@@ -109,7 +109,7 @@ def qt_wheel(package, qt_dir, build_tag, suffix, msvc_runtime, openssl,
         package_requires = ''
 
     # Construct the name of the wheel.
-    name_parts = [package_full_name.replace('-', '_')]
+    name_parts = [package_full_name.replace('-', '_').lower()]
     name_parts.append(version_str)
 
     distinfo_dir = '-'.join(name_parts) + '.dist-info'

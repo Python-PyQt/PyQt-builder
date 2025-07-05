@@ -12,6 +12,7 @@ from sipbuild import UserException
 from . import packages
 from .verbose import verbose
 from .wheel import create_wheel, unpack_wheel, write_record_file
+from .abstract_package import AbstractPackage
 
 
 def bundle(wheel_path, qt_dir, build_tag_suffix, msvc_runtime, openssl,
@@ -61,6 +62,19 @@ def bundle(wheel_path, qt_dir, build_tag_suffix, msvc_runtime, openssl,
     if package_factory is None:
         raise UserException(
                 "'{0}' is not a supported package".format(package_title))
+
+    def isPackageObject(o) -> bool:
+        try:
+            return issubclass(o, AbstractPackage)
+        except TypeError:
+            return False
+
+    if not isPackageObject(package_factory):
+        permittedPackages = [k for k, v in packages.__dict__.items() if isPackageObject(v)]
+        raise UserException(
+            "'{0}' (found in the wheel filename) is not a permissible package name.  Only permissible package names are: {1}.".format(
+                package_name, permittedPackages))
+
 
     package = package_factory(qt_dir, parts[1])
 

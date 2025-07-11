@@ -10,6 +10,7 @@ import shutil
 from sipbuild import UserException
 
 from . import packages
+from .abstract_package import AbstractPackage
 from .verbose import verbose
 from .wheel import create_wheel, unpack_wheel, write_record_file
 
@@ -50,15 +51,23 @@ def bundle(wheel_path, qt_dir, build_tag_suffix, msvc_runtime, openssl,
                     "'{0}' is not supported by {1}".format(arch, wheel_name))
 
     # Get the package object.
-    sub_parts = parts[0].split('_')
-    if sub_parts[-1] == 'commercial':
-        sub_parts.pop()
+    package_title = parts[0]
+    if package_title.endswith('_commercial'):
+        package_title = package_title[:-11]
 
-    package_name = '_'.join(sub_parts)
-    package_title = package_name.replace('_', '-')
-    package_factory = packages.__dict__.get(package_name)
+    package_name = package_title.lower()
 
-    if package_factory is None:
+    # Look for the factory corresponding to the normalised package name.
+    for key, value in packages.__dict__.items():
+        # This is the name of an intermediate class so explicity exclude it.
+        # It can only happen if the user has been changing the wheel names.
+        if key == 'PyQt':
+            continue
+
+        if key.lower() == package_name and isinstance(value, type) and issubclass(value, AbstractPackage):
+            package_factory = value
+            break
+    else:
         raise UserException(
                 "'{0}' is not a supported package".format(package_title))
 

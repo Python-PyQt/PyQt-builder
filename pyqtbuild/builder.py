@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: BSD-2-Clause
 
-# Copyright (c) 2024 Phil Thompson <phil@riverbankcomputing.com>
+# Copyright (c) 2025 Phil Thompson <phil@riverbankcomputing.com>
 
 
 import os
@@ -103,9 +103,13 @@ class QmakeBuilder(Builder):
                 if self.qt_version >= 0x060000:
                     from platform import processor
 
-                    # The arm64 build is based on Ubuntu 24.04 specifically.
                     if processor() == 'aarch64':
+                        # The arm64 build is based on Ubuntu 24.04.
                         project.minimum_glibc_version = '2.39'
+                    elif self.qt_version >= 0x060a00:
+                        # The Qt v6.10 installer seems to be based on Ubuntu
+                        # 22.04 or similar.
+                        project.minimum_glibc_version = '2.34'
                     else:
                         project.minimum_glibc_version = '2.28'
                 else:

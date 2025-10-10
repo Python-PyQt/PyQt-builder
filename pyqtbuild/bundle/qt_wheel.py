@@ -47,7 +47,9 @@ def qt_wheel(package, qt_dir, build_tag, suffix, msvc_runtime, openssl,
         else:
             wheel_arch = 'x86_64'
 
-            if package.qt_version >= (6, 0, 0):
+            if package.qt_version >= (6, 10, 0):
+                manylinux = '_2_34'
+            elif package.qt_version >= (6, 0, 0):
                 manylinux = '_2_28'
             else:
                 manylinux = '2014'

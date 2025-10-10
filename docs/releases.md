@@ -1,5 +1,23 @@
 # Release Notes
 
+## v1.19.0
+
+### Support for Qt v6.10
+
+The Qt v6.10.0 installation for Linux on Intel created by the online
+installer was built using Red Hat Linux v9.4.  This means that glibc v2.34
+is now required.  Earlier versions of Qt required glibc v2.28.  The
+`manylinux` wheel tags that are generated now reflect the revised
+dependency.
+
+### `pyqt-bundle` support for lower case wheel names
+
+`pyqt-bundle` now properly handles lower case wheel names as well as the
+legacy mixed case names.
+
+Resolves [#33](https://github.com/Python-PyQt/PyQt-builder/issues/33)
+
+
 ## v1.18.2
 
 ### `pyproject.toml` now conforms to PEP 639

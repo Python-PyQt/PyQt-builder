@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: BSD-2-Clause
 
-# Copyright (c) 2024 Phil Thompson <phil@riverbankcomputing.com>
+# Copyright (c) 2025 Phil Thompson <phil@riverbankcomputing.com>
 
 
 import os
@@ -22,9 +22,14 @@ class PyQt(AbstractPackage):
 
         verbose("Bundling the MSVC runtime")
 
-        self._bundle_dlls(target_qt_dir,
-                os.path.join(_DLLS_DIR,
-                        'msvc-64' if platform_tag == 'win_amd64' else 'msvc-32'))
+        if platform_tag == 'win_arm64':
+            subdir = 'msvc-arm64'
+        elif platform_tag == 'win_amd64':
+            subdir = 'msvc-64'
+        else:
+            subdir = 'msvc-32'
+
+        self._bundle_dlls(target_qt_dir, os.path.join(_DLLS_DIR, subdir))
 
     def bundle_openssl(self, target_qt_dir, openssl_dir, platform_tag):
         """ Bundle the OpenSSL DLLs. """

@@ -1,5 +1,13 @@
 # Release Notes
 
+## v1.19.1
+
+### Bundled MSVC runtime DLLs
+
+- The MSVC DLLs bundled by `pyqt-bundle` and `pyqt-qt-wheel` have been updated.
+- The MSVC DLLs now include those for Windows on ARM.
+
+
 ## v1.19.0
 
 ### Support for Qt v6.10

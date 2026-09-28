@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: BSD-2-Clause
 
-# Copyright (c) 2024 Phil Thompson <phil@riverbankcomputing.com>
+# Copyright (c) 2026 Phil Thompson <phil@riverbankcomputing.com>
 
 
 from ..qt_metadata import VersionedMetadata
@@ -138,6 +138,13 @@ _QT_METADATA = {
         VersionedMetadata(),
 
     'QtQml': (
+        VersionedMetadata(version=(6, 9, 0),
+                lib_deps={'': ('QtQmlCore', 'QtQmlMeta', 'QtQmlModels',
+                        'QtQmlWorkerScript', 'QtLabsAnimation',
+                        'QtLabsFolderListModel', 'QtLabsPlatform',
+                        'QtLabsQmlModels', 'QtLabsSettings',
+                        'QtLabsSharedImage', 'QtLabsWavefrontMesh')},
+                ),
         VersionedMetadata(version=(6, 8, 0),
                 lib_deps={'': ('QtQmlMeta', 'QtQmlModels', 'QtQmlWorkerScript',
                         'QtLabsAnimation', 'QtLabsFolderListModel',

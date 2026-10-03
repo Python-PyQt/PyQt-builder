@@ -96,6 +96,14 @@ used by a project's :file:`project.py` file.
         overridden in the :file:`pyproject.toml` file or by using a tool
         command line option.
 
+    .. py:method:: get_version_tag()
+
+        Return the version tag (ie. a '_' separated 3-tuple version number) to
+        be used in the default tags.  This allows a project to use a version
+        tag that is not based on the Qt version number.
+
+        :return: the version tag.
+
 
 :py:class:`~pyqtbuild.QmakeBuilder`
 -----------------------------------

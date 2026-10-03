@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: BSD-2-Clause
 
-# Copyright (c) 2024 Phil Thompson <phil@riverbankcomputing.com>
+# Copyright (c) 2026 Phil Thompson <phil@riverbankcomputing.com>
 
 
 import fnmatch
@@ -18,13 +18,15 @@ class VersionedMetadata:
     version of Qt.
     """
 
-    def __init__(self, *, version=None, name=None, lib_deps=None,
-            other_lib_deps=None, exes=None, files=None, others=None, dll=True,
-            qml_names=None, translations=None, excluded_plugins=None,
-            lgpl=True, legacy=False, subwheel_files=None):
+    def __init__(self, *, version=None, until_version=None, name=None,
+            lib_deps=None, other_lib_deps=None, exes=None, files=None,
+            others=None, dll=True, qml_names=None, translations=None,
+            excluded_plugins=None, included_plugins=None, lgpl=True,
+            legacy=False, subwheel_files=None):
         """ Initialise the versioned bindings. """
 
         self._version = version
+        self._until_version = until_version
         self._name = name
         self._lib_deps = {} if lib_deps is None else lib_deps
         self._other_lib_deps = {} if other_lib_deps is None else other_lib_deps
@@ -35,6 +37,7 @@ class VersionedMetadata:
         self._qml_names = qml_names
         self._translations = () if translations is None else translations
         self._excluded_plugins = excluded_plugins
+        self._included_plugins = included_plugins
         self._subwheel_files = {} if subwheel_files is None else subwheel_files
 
         self.lgpl = lgpl
@@ -163,13 +166,22 @@ class VersionedMetadata:
                     target_qt_dir, qt_dir, platform_tag, macos_thin_arch,
                     ignore_missing, skip_files=skip_files)
 
-        # Bundle any plugins.  We haven't done the analysis of which plugins
-        # belong to which package so we assume that only the QtCore package
-        # will specify any to exclude and we bundle all of them with that.
+        # If any excluded plugins have been specified then assume we should
+        # bundle the rest.
         if self._excluded_plugins is not None:
             self._bundle_nondebug('plugins', target_qt_dir, qt_dir,
                     platform_tag, macos_thin_arch, ignore_missing,
                     skip_files=skip_files, exclude=self._excluded_plugins)
+
+        # Bundle any explicitly included plugins.  Note that it makes no sense
+        # to specify excluded and included plugins for the same module.
+        if self._included_plugins is not None:
+            for plugin_subdir, plugin in self._included_plugins:
+                plugin_impl = self._impl_from_plugin(plugin, platform_tag)
+                self._bundle_file(
+                        os.path.join('plugins', plugin_subdir, plugin_impl),
+                        target_qt_dir, qt_dir, platform_tag, macos_thin_arch,
+                        ignore_missing, skip_files=skip_files)
 
         # Bundle any translations:
         if self._translations:
@@ -208,6 +220,9 @@ class VersionedMetadata:
         version.
         """
 
+        if self._until_version is not None and qt_version >= self._until_version:
+            return False
+
         return self._version is None or qt_version >= self._version
 
     @classmethod
@@ -220,23 +235,31 @@ class VersionedMetadata:
 
         for dirpath, dirnames, filenames in os.walk(os.path.join(qt_dir, src_dir)):
             for ignore in exclude:
-                try:
+                if ignore in dirnames:
+                    verbose(f"Excluding {ignore} plugin directory.")
                     dirnames.remove(ignore)
-                except ValueError:
-                    pass
 
             for name in list(dirnames):
                 if cls._is_debug(name, platform_tag):
+                    verbose(f"Excluding {name} plugin directory.")
                     dirnames.remove(name)
 
             for name in filenames:
                 if cls._is_debug(name, platform_tag):
                     continue
 
-                cls._bundle_file(
-                        os.path.relpath(os.path.join(dirpath, name), qt_dir),
-                        target_qt_dir, qt_dir, platform_tag, macos_thin_arch,
-                        ignore_missing, skip_files=skip_files)
+                for ignore in exclude:
+                    plugin = cls._impl_from_plugin(ignore, platform_tag)
+                    if plugin == name:
+                        verbose(f"Excluding {ignore} plugin.")
+                        break
+                else:
+                    cls._bundle_file(
+                            os.path.relpath(
+                                    os.path.join(dirpath, name), qt_dir),
+                            target_qt_dir, qt_dir, platform_tag,
+                            macos_thin_arch, ignore_missing,
+                            skip_files=skip_files)
 
     @classmethod
     def _bundle_exe(cls, name, target_qt_dir, qt_dir, qt_version, platform_tag,
@@ -424,6 +447,19 @@ class VersionedMetadata:
 
         if cls._is_platform('win', platform_tag):
             return 'Qt{}{}.dll'.format(qt_major, name[2:])
+
+    @classmethod
+    def _impl_from_plugin(cls, name, platform_tag):
+        """ Return the architecture-specific name of a plugin. """
+
+        if cls._is_platform('linux', platform_tag):
+            return 'lib{}.so'.format(name)
+
+        if cls._is_platform('macos', platform_tag):
+            return 'lib{}.dylib'.format(name)
+
+        if cls._is_platform('win', platform_tag):
+            return name + '.dll'
 
     @classmethod
     def _is_debug(cls, name, platform_tag):

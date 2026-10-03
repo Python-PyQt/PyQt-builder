@@ -115,9 +115,14 @@ class QmakeBuilder(Builder):
                 else:
                     project.minimum_glibc_version = '2.17'
 
-            # Set the default minimum macOS version.
+            # Set the default minimum macOS version.  These may not be exact
+            # as they have to be supported by pip (see 'pip debug --verbose')
+            # which tends not only support '.0' versions.  Note that we didn't
+            # keep these up to date for Qt6 until v6.12.
             if not project.minimum_macos_version:
-                if self.qt_version >= 0x060000:
+                if self.qt_version >= 0x060c00:
+                    project.minimum_macos_version = '14.0'
+                elif self.qt_version >= 0x060000:
                     project.minimum_macos_version = '10.14'
                 elif self.qt_version >= 0x050e00:
                     project.minimum_macos_version = '10.13'

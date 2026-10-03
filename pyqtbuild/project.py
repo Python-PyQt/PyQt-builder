@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: BSD-2-Clause
 
-# Copyright (c) 2024 Phil Thompson <phil@riverbankcomputing.com>
+# Copyright (c) 2026 Phil Thompson <phil@riverbankcomputing.com>
 
 
 import os
@@ -192,3 +192,12 @@ class PyQtProject(Project):
                 metavar="DIR", tools=['wheel']))
 
         return options
+
+    def get_version_tag(self):
+        """ Return the version tag (ie. a '_' separated 3-tuple version number)
+        to be used in the default tags.  This allows a project to use a version
+        tag that is not based on the Qt version number.
+        """
+
+        # The default is the version tag provided by the builder.
+        return self.builder.qt_version_tag

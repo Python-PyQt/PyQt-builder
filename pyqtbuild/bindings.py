@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: BSD-2-Clause
 
-# Copyright (c) 2024 Phil Thompson <phil@riverbankcomputing.com>
+# Copyright (c) 2026 Phil Thompson <phil@riverbankcomputing.com>
 
 
 import glob
@@ -51,7 +51,7 @@ class PyQtBindings(Bindings):
             project = self.project
 
             self.tags = ['{}_{}'.format(project.tag_prefix,
-                    project.builder.qt_version_tag)]
+                    project.get_version_tag())]
 
         super().apply_user_defaults(tool)
 

@@ -17,6 +17,15 @@ _QT_METADATA = {
         VersionedMetadata(version=(6, 2, 0)),
 
     'QtCore': (
+        VersionedMetadata(version=(6, 12, 0),
+            other_lib_deps={
+                'linux': ('libicui18n.so.73', 'libicuuc.so.73',
+                          'libicudata.so.73')},
+            translations=('qt_', 'qt_help', 'qtbase', 'qtconnectivity',
+                'qtdeclarative', 'qtlocation', 'qtmultimedia',
+                'qtquickcontrols2', 'qtserialport', 'qtwebsockets'),
+            excluded_plugins=('designer', 'qmltooling',
+                'qtwebview_webengine')),
         VersionedMetadata(version=(6, 7, 0),
             other_lib_deps={
                 'linux': ('libicui18n.so.73', 'libicuuc.so.73',
@@ -67,6 +76,25 @@ _QT_METADATA = {
     #    VersionedMetadata(),
 
     'QtMultimedia': (
+        VersionedMetadata(version=(6, 12, 0),
+                lib_deps={'': ('QtMultimediaQuick', )},
+                other_lib_deps={
+                    'linux': (
+                            'libQt6FFmpegStub-crypto.so.3',
+                            'libQt6FFmpegStub-ssl.so.3',
+                            'libQt6FFmpegStub-va.so.2',
+                            'libQt6FFmpegStub-va-drm.so.2',
+                            'libQt6FFmpegStub-va-x11.so.2',
+                            'libavcodec.so.63', 'libavformat.so.63',
+                            'libavutil.so.61', 'libswresample.so.7',
+                            'libswscale.so.10'),
+                    'macos': ('libavcodec.63.dylib', 'libavformat.63.dylib',
+                            'libavutil.61.dylib', 'libswresample.7.dylib',
+                            'libswscale.10.dylib'),
+                    'win': ('avcodec-63.dll', 'avformat-63.dll',
+                            'avutil-61.dll', 'swresample-7.dll',
+                            'swscale-10.dll')},
+                ),
         VersionedMetadata(version=(6, 8, 0),
                 lib_deps={'': ('QtMultimediaQuick', )},
                 other_lib_deps={
@@ -123,11 +151,11 @@ _QT_METADATA = {
         VersionedMetadata(),
 
     'QtPdf':
-        VersionedMetadata(version=(6, 4, 0),
+        VersionedMetadata(version=(6, 4, 0), until_version=(6, 12, 0),
                 lib_deps={'': ('QtPdfQuick', )}),
 
     'QtPdfWidgets':
-        VersionedMetadata(version=(6, 4, 0)),
+        VersionedMetadata(version=(6, 4, 0), until_version=(6, 12, 0)),
 
     'QtPositioning':
         VersionedMetadata(version=(6, 2, 0),

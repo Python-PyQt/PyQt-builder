@@ -13,7 +13,7 @@ project = 'PyQt-builder'
 copyright = '{0} Phil Thompson <phil@riverbankcomputing.com>'.format(
         date.today().year)
 author = 'Phil Thompson'
-version = 'v1.19.1'
+version = 'v1.20.0'
 
 
 # -- General configuration ---------------------------------------------------

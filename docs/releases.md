@@ -1,5 +1,29 @@
 # Release Notes
 
+## v1.20.0
+
+### Support for Qt v6.12
+
+- The minimum MacOS version for Qt v6.12 is v14.0.
+- Updated QtMultimedia for the new versions of support libraries.
+- The QtPdf and QtPdfWidgets modules and the `qtwebview_webengine` plugin have
+  been moved from PyQt6 to PyQt6-WebEngine.
+- Added the PyQt6-CanvasPainter package.
+
+### Module API
+
+Added `PyQtProject.get_version_tag()` to allow version tags to be independent
+of the Qt version.
+
+### Updated minimum ABI versions
+
+The minimum ABI versions have been updated to v12.20 and v13.13.
+
+### Bug fixes
+
+- Bundle the missing QtQmlCore library.
+
+
 ## v1.19.1
 
 ### Bundled MSVC runtime DLLs

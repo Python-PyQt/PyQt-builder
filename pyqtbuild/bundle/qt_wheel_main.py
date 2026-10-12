@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: BSD-2-Clause
 
-# Copyright (c) 2024 Phil Thompson <phil@riverbankcomputing.com>
+# Copyright (c) 2026 Phil Thompson <phil@riverbankcomputing.com>
 
 
 from argparse import ArgumentParser
@@ -49,6 +49,9 @@ def main():
     parser.add_argument('--openssl-dir', metavar='DIR',
             help="replace the OpenSSL DLLs with the versions in DIR")
 
+    parser.add_argument('--package-version', metavar='VERSION',
+            help="use VERSION in the wheel name instead of the Qt version")
+
     parser.add_argument('--qt-dir', metavar='DIR', required=True,
             help="the Qt installation in DIR to be copied to the wheel")
 
@@ -85,7 +88,7 @@ def main():
                 build_tag=args.build_tag, suffix=args.suffix,
                 msvc_runtime=args.msvc_runtime, openssl=args.openssl,
                 openssl_dir=args.openssl_dir, exclude=args.exclude, arch=arch,
-                subwheel=subwheel)
+                subwheel=subwheel, package_version=args.package_version)
     except Exception as e:
         handle_exception(e)
 

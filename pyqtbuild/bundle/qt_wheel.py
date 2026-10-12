@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: BSD-2-Clause
 
-# Copyright (c) 2025 Phil Thompson <phil@riverbankcomputing.com>
+# Copyright (c) 2026 Phil Thompson <phil@riverbankcomputing.com>
 
 
 import os
@@ -14,7 +14,7 @@ from .wheel import create_wheel, write_record_file
 
 
 def qt_wheel(package, qt_dir, build_tag, suffix, msvc_runtime, openssl,
-        openssl_dir, exclude, arch, subwheel):
+        openssl_dir, exclude, arch, subwheel, package_version):
     """ Create a wheel containing the subset of a Qt installation required for
     a particular PyQt package.
     """
@@ -36,6 +36,10 @@ def qt_wheel(package, qt_dir, build_tag, suffix, msvc_runtime, openssl,
     version_str = package.qt_version_str
     if suffix:
         version_str += suffix
+
+    # The package version defaults to the Qt version.
+    if not package_version:
+        package_version = version_str
 
     # Construct the tag.
     qt_arch = os.path.basename(qt_dir)
@@ -112,7 +116,7 @@ def qt_wheel(package, qt_dir, build_tag, suffix, msvc_runtime, openssl,
 
     # Construct the name of the wheel.
     name_parts = [package_full_name.replace('-', '_').lower()]
-    name_parts.append(version_str)
+    name_parts.append(package_version)
 
     distinfo_dir = '-'.join(name_parts) + '.dist-info'
 
@@ -161,7 +165,7 @@ def qt_wheel(package, qt_dir, build_tag, suffix, msvc_runtime, openssl,
             metadata = metadata.replace('@RB_PACKAGE_NAME@', package_full_name)
             metadata = metadata.replace('@RB_PACKAGE_REQUIRES@',
                     package_requires)
-            metadata = metadata.replace('@RB_VERSION@', version_str)
+            metadata = metadata.replace('@RB_VERSION@', package_version)
             metadata = metadata.replace('@RB_LICENSE@',
                     "LGPL v3" if lgpl else "GPL v3")
 

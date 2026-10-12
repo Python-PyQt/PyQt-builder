@@ -10,7 +10,8 @@ from ..qt_metadata import VersionedMetadata
 # The Qt meta-data for this package.
 _QT_METADATA = {
     'QtCanvasPainter':
-        VersionedMetadata(version=(6, 12, 0), lgpl=False),
+        VersionedMetadata(version=(6, 12, 0), lgpl=False,
+            lib_deps={'': ('QtCanvas2D', )}),
 }
 
 

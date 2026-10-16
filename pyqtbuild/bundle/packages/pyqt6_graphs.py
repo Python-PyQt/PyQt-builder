@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: BSD-2-Clause
 
-# Copyright (c) 2024 Phil Thompson <phil@riverbankcomputing.com>
+# Copyright (c) 2026 Phil Thompson <phil@riverbankcomputing.com>
 
 
 from ..abstract_package import AbstractPackage
@@ -9,8 +9,12 @@ from ..qt_metadata import VersionedMetadata
 
 # The Qt meta-data for this package.
 _QT_METADATA = {
-    'QtGraphs':
-        VersionedMetadata(version=(6, 8, 0), lgpl=False),
+    'QtGraphs': (
+        VersionedMetadata(version=(6, 12, 0), lgpl=False,
+            lib_deps={'': ('QtGraphs2DImpl', )},
+        ),
+        VersionedMetadata(version=(6, 8, 0), lgpl=False)
+    ),
 
     'QtGraphsWidgets':
         VersionedMetadata(version=(6, 8, 0), lgpl=False),

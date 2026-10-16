@@ -1,5 +1,16 @@
 # Release Notes
 
+## v1.20.1
+
+### `pyqt-qt-wheel`
+
+- The `--package-version` option was added to allow the package version to be
+  set explicitly rather than defaulting to the Qt version.
+- The newer QtLabs libraries are now included in the PyQt6-Qt6 wheel.
+- The QtGraphs2DImpl library is now included in the PyQt6-Graphs-Qt6 wheel.
+- The QtCanvas2D library is now included in the PyQt6-CanvasPainter-Qt6 wheel.
+
+
 ## v1.20.0
 
 ### Support for Qt v6.12

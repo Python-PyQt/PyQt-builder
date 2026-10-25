@@ -14,7 +14,7 @@ from .wheel import create_wheel, write_record_file
 
 
 def qt_wheel(package, qt_dir, build_tag, suffix, msvc_runtime, openssl,
-        openssl_dir, exclude, arch, subwheel, package_version):
+        openssl_dir, exclude, arch, subwheel, package_version, ignore_missing):
     """ Create a wheel containing the subset of a Qt installation required for
     a particular PyQt package.
     """
@@ -138,7 +138,7 @@ def qt_wheel(package, qt_dir, build_tag, suffix, msvc_runtime, openssl,
     # Bundle the relevant parts of the Qt installation.
     target_qt_dir = package.get_target_qt_dir()
     lgpl = package.bundle_qt(target_qt_dir, platform_tag, exclude,
-            ignore_missing=True, bindings=False, subwheel=subwheel)
+            ignore_missing=ignore_missing, bindings=False, subwheel=subwheel)
 
     if platform_tag in ('win32', 'win_amd64', 'win_arm64'):
         # Bundle the MSVC runtime if required.

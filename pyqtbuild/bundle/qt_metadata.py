@@ -234,6 +234,8 @@ class VersionedMetadata:
             exclude = ()
 
         for dirpath, dirnames, filenames in os.walk(os.path.join(qt_dir, src_dir)):
+            dirnames.sort()
+
             for ignore in exclude:
                 if ignore in dirnames:
                     verbose(f"Excluding {ignore} plugin directory.")
@@ -244,7 +246,7 @@ class VersionedMetadata:
                     verbose(f"Excluding {name} plugin directory.")
                     dirnames.remove(name)
 
-            for name in filenames:
+            for name in sorted(filenames):
                 if cls._is_debug(name, platform_tag):
                     continue
 

@@ -1,5 +1,19 @@
 # Release Notes
 
+## v1.20.2
+
+### `pyqt-qt-wheel`
+
+- `pyqt-qt-wheel` will now complain about missing files in the Qt installation.
+  The new `--ignore-missing` option restores the original behaviour.
+- The QtQuickControls2Windows and QtQuickControls2WindowsStyleImpl libraries
+  are now included in the PyQt6-Qt6 Windows wheel.
+
+### Reproduceable builds
+
+The order in which Qt components are bundled is now reproduceable.
+
+
 ## v1.20.1
 
 ### `pyqt-qt-wheel`

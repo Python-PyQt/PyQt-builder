@@ -1,5 +1,12 @@
 # Release Notes
 
+## v1.20.3
+
+### `pyqt-qt-wheel`
+
+- Fixed a bug in the PyQt6-CanvasPainter support.
+
+
 ## v1.20.2
 
 ### `pyqt-qt-wheel`

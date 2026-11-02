@@ -1,5 +1,17 @@
 # Release Notes
 
+## v1.21.0
+
+### PyQt6-Pdf
+
+The PyQt6-Pdf package has been added containing the QtPdf and QtPdfWidgets
+modules from PyQt6-WebEngine.
+
+### `pyqt-qt-wheel`
+
+The `--package-version` option has been renamed `--qt-module-version`.
+
+
 ## v1.20.3
 
 ### `pyqt-qt-wheel`

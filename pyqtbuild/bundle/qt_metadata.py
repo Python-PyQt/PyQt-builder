@@ -215,15 +215,15 @@ class VersionedMetadata:
                             platform_tag, macos_thin_arch, ignore_missing,
                             skip_files=skip_files, might_be_code=False)
 
-    def is_applicable(self, qt_version):
-        """ Returns True if this meta-data is applicable for a particular Qt
+    def is_applicable(self, version):
+        """ Returns True if this meta-data is applicable for a Qt module
         version.
         """
 
-        if self._until_version is not None and qt_version >= self._until_version:
+        if self._until_version is not None and version >= self._until_version:
             return False
 
-        return self._version is None or qt_version >= self._version
+        return self._version is None or version >= self._version
 
     @classmethod
     def _bundle_nondebug(cls, src_dir, target_qt_dir, qt_dir, platform_tag,

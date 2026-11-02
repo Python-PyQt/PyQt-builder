@@ -52,8 +52,9 @@ def main():
     parser.add_argument('--openssl-dir', metavar='DIR',
             help="replace the OpenSSL DLLs with the versions in DIR")
 
-    parser.add_argument('--package-version', metavar='VERSION',
-            help="use VERSION in the wheel name instead of the Qt version")
+    parser.add_argument('--qt-module-version', metavar='VERSION',
+            help="use VERSION as the Qt module version instead of the Qt "
+                    "installation version")
 
     parser.add_argument('--qt-dir', metavar='DIR', required=True,
             help="the Qt installation in DIR to be copied to the wheel")
@@ -91,7 +92,7 @@ def main():
                 build_tag=args.build_tag, suffix=args.suffix,
                 msvc_runtime=args.msvc_runtime, openssl=args.openssl,
                 openssl_dir=args.openssl_dir, exclude=args.exclude, arch=arch,
-                subwheel=subwheel, package_version=args.package_version,
+                subwheel=subwheel, qt_module_version=args.qt_module_version,
                 ignore_missing=args.ignore_missing)
     except Exception as e:
         handle_exception(e)

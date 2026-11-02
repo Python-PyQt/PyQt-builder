@@ -11,6 +11,7 @@ from .pyqt6_charts import PyQt6_Charts
 from .pyqt6_datavisualization import PyQt6_DataVisualization
 from .pyqt6_graphs import PyQt6_Graphs
 from .pyqt6_networkauth import PyQt6_NetworkAuth
+from .pyqt6_pdf import PyQt6_Pdf
 from .pyqt6_webengine import PyQt6_WebEngine
 
 from .pyqt5 import PyQt5

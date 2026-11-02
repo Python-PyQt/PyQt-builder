@@ -16,12 +16,17 @@ from .verbose import verbose
 class AbstractPackage(ABC):
     """ This specifies the API of a package. """
 
+    # This is set if the version of the Qt module is not the same as the
+    # version of the Qt installation and so must be specified on the command
+    # line.
+    qt_module_version_required = False
+
     def __init__(self, qt_dir, version_str=None):
         """ Initialise the package. """
 
         self._qt_dir = os.path.abspath(qt_dir)
 
-        # Get the Qt version.
+        # Get the Qt installation version.
         self.qt_version = self._parse_version(
                 os.path.basename(os.path.dirname(self._qt_dir)))
 
@@ -30,21 +35,26 @@ class AbstractPackage(ABC):
             raise UserException(
                     "Version of Qt older than v5.15 are not supported")
 
-        # Parse any package version string.
+        # Parse any Qt module version string.
         if version_str:
             self._version = self._parse_version(version_str)
 
-            # If we set the maintenance number to 0 then this will be the
-            # version of Qt the wheel was built against.  (This is not a valid
-            # assumption on Windows because of the QAxContainer problem but
-            # this is handled elsewhere.)
-            min_qt_version = (self._version[0], self._version[1], 0)
+            if not self.qt_module_version_required:
+                # If we set the maintenance number to 0 then this will be the
+                # version of Qt the wheel was built against.  (This is not a
+                # valid assumption on Windows because of the QAxContainer
+                # problem but this is handled elsewhere.)
+                min_qt_version = (self._version[0], self._version[1], 0)
 
-            # Check the versions are compatible.
-            if self.qt_version < min_qt_version:
-                raise UserException(
-                        "The version of Qt being bundled is too old")
+                # Check the versions are compatible.
+                if self.qt_version < min_qt_version:
+                    raise UserException(
+                            "The version of Qt being bundled is too old")
         else:
+            if self.qt_module_version_required:
+                raise UserException(
+                        "The version of the Qt module must be specified")
+
             self._version = None
 
     def bundle_msvc_runtime(self, target_qt_dir, platform_tag):
@@ -82,12 +92,12 @@ class AbstractPackage(ABC):
             if name in exclude:
                 continue
 
-            # Get the metadata for the Qt version.
+            # Get the metadata for the Qt module version.
             if isinstance(metadata, VersionedMetadata):
                 metadata = [metadata]
 
             metadata = [md for md in metadata
-                    if md.is_applicable(self.qt_version)]
+                    if md.is_applicable(self._version)]
 
             if len(metadata) == 0:
                 continue

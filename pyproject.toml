@@ -1,11 +1,8 @@
 # The project configuration for PyQt-builder.
 
 [build-system]
-requires = ["setuptools>=77", "setuptools_scm>=8"]
+requires = ["setuptools>=88", "setuptools_scm[simple]>=9.2"]
 build-backend = "setuptools.build_meta"
-
-[tool.setuptools_scm]
-version_file = "pyqtbuild/_version.py"
 
 [project]
 name = "PyQt-builder"

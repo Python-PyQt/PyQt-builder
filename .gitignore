@@ -1,6 +1,3 @@
-# Local additions to Python.gitignore from GitHub.
-pyqtbuild/_version.py
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

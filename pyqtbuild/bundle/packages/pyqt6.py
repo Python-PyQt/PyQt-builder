@@ -81,8 +81,7 @@ _QT_METADATA = {
             lib_deps={
                 'linux': (
                     'QtEglFSDeviceIntegration', 'QtWaylandClient',
-                    'QtWaylandEglClientHwIntegration', 'QtWlShellIntegration',
-                    'QtXcbQpa',
+                    'QtWlShellIntegration', 'QtXcbQpa',
                 ),
             },
             other_lib_deps={'win': ('opengl32sw.dll', )},

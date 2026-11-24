@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: BSD-2-Clause
 
-# Copyright (c) 2024 Phil Thompson <phil@riverbankcomputing.com>
+# Copyright (c) 2026 Phil Thompson <phil@riverbankcomputing.com>
 
 
 from abc import ABC, abstractmethod
@@ -55,7 +55,8 @@ class AbstractPackage(ABC):
                 raise UserException(
                         "The version of the Qt module must be specified")
 
-            self._version = None
+            # Default to the Qt version.
+            self._version = self.qt_version
 
     def bundle_msvc_runtime(self, target_qt_dir, platform_tag):
         """ Bundle the MSVC runtime. """
